@@ -1,49 +1,35 @@
 ---
 permalink: /
-title: "Academic Pages is a ready-to-fork GitHub Pages template for academic personal websites"
+title: "Greatings and Welcome to My Homepage"
 author_profile: true
 redirect_from: 
   - /about/
   - /about.html
 ---
 
-This is the front page of a website that is powered by the [Academic Pages template](https://github.com/academicpages/academicpages.github.io) and hosted on GitHub pages. [GitHub pages](https://pages.github.com) is a free service in which websites are built and hosted from code and data stored in a GitHub repository, automatically updating when a new commit is made to the repository. This template was forked from the [Minimal Mistakes Jekyll Theme](https://mmistakes.github.io/minimal-mistakes/) created by Michael Rose, and then extended to support the kinds of content that academics have: publications, talks, teaching, a portfolio, blog posts, and a dynamically-generated CV. You can fork [this template](https://github.com/academicpages/academicpages.github.io) right now, modify the configuration and markdown files, add your own PDFs and other content, and have your own site for free, with no ads!
 
-A data-driven personal website
-======
-Like many other Jekyll-based GitHub Pages templates, Academic Pages makes you separate the website's content from its form. The content & metadata of your website are in structured markdown files, while various other files constitute the theme, specifying how to transform that content & metadata into HTML pages. You keep these various markdown (.md), YAML (.yml), HTML, and CSS files in a public GitHub repository. Each time you commit and push an update to the repository, the [GitHub pages](https://pages.github.com/) service creates static HTML pages based on these files, which are hosted on GitHub's servers free of charge.
+Biography
+-----
+I am currently an Assistnat Professor at Sun Yat-Sen University. Before that, I was a Postdoctoral Fellow, working with Prof. [XiaoFeng Wang](https://homes.luddy.indiana.edu/xw7/) and Prof. [Haixu Tang](https://luddy.indiana.edu/contact/profile/?Haixu_Tang). I received my Ph.D. degree with honors in Information Engineering from the Chinese University of Hong Kong, advised by Prof. [Kehuan Zhang](https://staff.ie.cuhk.edu.hk/~khzhang/) and Prof. [Dahua Lin](http://dahua.site/). 
 
-Many of the features of dynamic content management systems (like Wordpress) can be achieved in this fashion, using a fraction of the computational resources and with far less vulnerability to hacking and DDoSing. You can also modify the theme to your heart's content without touching the content of your site. If you get to a point where you've broken something in Jekyll/HTML/CSS beyond repair, your markdown files describing your talks, publications, etc. are safe. You can rollback the changes or even delete the repository and start over - just be sure to save the markdown files! Finally, you can also write scripts that process the structured data on the site, such as [this one](https://github.com/academicpages/academicpages.github.io/blob/master/talkmap.ipynb) that analyzes metadata in pages about talks to display [a map of every location you've given a talk](https://academicpages.github.io/talkmap.html).
 
-Getting started
-======
-1. Register a GitHub account if you don't have one and confirm your e-mail (required!)
-1. Fork [this template](https://github.com/academicpages/academicpages.github.io) by clicking the "Use this template" button in the top right. 
-1. Go to the repository's settings (rightmost item in the tabs that start with "Code", should be below "Unwatch"). Rename the repository "[your GitHub username].github.io", which will also be your website's URL.
-1. Set site-wide configuration and create content & metadata (see below -- also see [this set of diffs](http://archive.is/3TPas) showing what files were changed to set up [an example site](https://getorg-testacct.github.io) for a user with the username "getorg-testacct")
-1. Upload any files (like PDFs, .zip files, etc.) to the files/ directory. They will appear at https://[your GitHub username].github.io/files/example.pdf.  
-1. Check status by going to the repository settings, in the "GitHub pages" section
 
-Site-wide configuration
+My research is centered on **AI Security**, with a particular emphasis on **Trustworthy ML** and **Responsible AI**. Recently, I have been focusing on exploring the security challenges associated with emerging **Large Generative Models** (e.g., ChatGPT and DeepSeek). In my view, an AI system that lacks trustworthiness---or can be deemed irresponsible---pertains to a system whose functionality deviates from its original design, either due to intentional manipulation or unintentional defects. An adversary may deliberately alter an AI system to generate unreliable results, while unintentional bias within the AI model itself can also lead to outputs that lack trustworthiness. In my research, I alwasy strive to deliver dependable **Security Guarantees** for AI models.
+
+
+In my existing research, I examined how adversaries could compromise the functionality of an AI system and identified countermeasures against such attacks. Specifically, I discovered carefully crafted patterns on web pages capable of manipulating search engine rankings (such as Google, Bing, etc.) [(CCS'22)](https://dl.acm.org/doi/abs/10.1145/3548606.3560683) (which earned the **Best Paper Honorable Mention Award**). Additionally, I discovered how malicious users on shared cloud platforms can hijack the output of deployed AI systems [(Usenix'24)](https://www.usenix.org/conference/usenixsecurity24/presentation/wang-zihao-tossing), and I proposed a simple yet highly effective method to bypass widely adopted AI backdoor detection techniques [(NDSS'24)](https://www.ndss-symposium.org/ndss-paper/gradient-shaping-enhancing-backdoor-attack-against-reverse-engineering/). From a defense perspective, I introduced a technique using reflected light to detect fake faces in front of AI-based face recognition systems [(NDSS'18)](https://www.ndss-symposium.org/wp-content/uploads/2019/02/ndss2018_03B-5_Tang_paper-updated.pdf). This method has since been adopted by WeChat and is now used by billions of people daily [(news](https://www.ie.cuhk.edu.hk/the-system-security-lab-led-by-prof-zhang-kehuan-designed-face-flashing-protocol-to-increase-precision-of-face-recognition-and-blocks-log-in-attacks/)[,news)](https://news.qq.com/rain/a/20210723A0B4RT00). Additionally, I emphasized the latent space’s role in distinguishing benign from malicious inputs into AI models [(Usenix'21)](https://www.usenix.org/conference/usenixsecurity21/presentation/tang-di), and introduced a theoretical framework for evaluating the detection difficulty of various AI backdoors [(paper)](https://arxiv.org/abs/2210.06509). This backdoor-related research helped secure $704,980 in funding for the TrojAI project [(TrojAI)](https://pages.nist.gov/trojai/), where I played a pivotal role, as well as an additional $1,133,213 in in follow-up funding. Moreover, the backdoor detection method that I proposed helped me **Win the First Place** in the Trojan Detection Competition 2022, hosted by NeurIPS [(homepage)](https://2022.trojandetection.ai/index).
+In addition to the general trustworthiness of AI, I also enhanced the reliability of specific AI tools for particular tasks. I improved the robustness of an AI for identifying the root cause of bugs across diverse code bases [(Usenix'24)](https://www.usenix.org/conference/usenixsecurity24/presentation/xu-dandan), reduced the false positives of an AI model that is designed to detect logic flaws in 5G documentation [(Usenix'22)](https://www.usenix.org/conference/usenixsecurity22/presentation/chen-yi), and ensured that the AI tool for conformance testing covered all scenarios [(Usenix'23)](https://www.usenix.org/conference/usenixsecurity23/presentation/chen-yi).
+
+
+
+For Potential Students and Collaborators
+-----
+I am always seeking highly **motivated students** who are passionate about advancing research in AI Security. I firmly believe that groundbreaking ideas are born through collaboration, and I am thrilled to partner with researchers who are driven to push the boundaries of knowledge and create meaningful, real-world impact. If you are enthusiastic, intellectually curious, and committed to achieving excellence, I would love to explore opportunities to work together and deliver impactful, cutting-edge results. **Let’s join forces to tackle the most pressing challenges in AI Security and shape the future of trustworthy and responsible AI!**<br>
+Drop me an [Email](mailto:tangd9@mail.sysu.edu.cn) if you are interested!
+
+
+
+
+News
 ------
-The main configuration file for the site is in the base directory in [_config.yml](https://github.com/academicpages/academicpages.github.io/blob/master/_config.yml), which defines the content in the sidebars and other site-wide features. You will need to replace the default variables with ones about yourself and your site's github repository. The configuration file for the top menu is in [_data/navigation.yml](https://github.com/academicpages/academicpages.github.io/blob/master/_data/navigation.yml). For example, if you don't have a portfolio or blog posts, you can remove those items from that navigation.yml file to remove them from the header. 
-
-Create content & metadata
-------
-For site content, there is one markdown file for each type of content, which are stored in directories like _publications, _talks, _posts, _teaching, or _pages. For example, each talk is a markdown file in the [_talks directory](https://github.com/academicpages/academicpages.github.io/tree/master/_talks). At the top of each markdown file is structured data in YAML about the talk, which the theme will parse to do lots of cool stuff. The same structured data about a talk is used to generate the list of talks on the [Talks page](https://academicpages.github.io/talks), each [individual page](https://academicpages.github.io/talks/2012-03-01-talk-1) for specific talks, the talks section for the [CV page](https://academicpages.github.io/cv), and the [map of places you've given a talk](https://academicpages.github.io/talkmap.html) (if you run this [python file](https://github.com/academicpages/academicpages.github.io/blob/master/talkmap.py) or [Jupyter notebook](https://github.com/academicpages/academicpages.github.io/blob/master/talkmap.ipynb), which creates the HTML for the map based on the contents of the _talks directory).
-
-**Markdown generator**
-
-The repository includes [a set of Jupyter notebooks](https://github.com/academicpages/academicpages.github.io/tree/master/markdown_generator
-) that converts a CSV containing structured data about talks or presentations into individual markdown files that will be properly formatted for the Academic Pages template. The sample CSVs in that directory are the ones I used to create my own personal website at stuartgeiger.com. My usual workflow is that I keep a spreadsheet of my publications and talks, then run the code in these notebooks to generate the markdown files, then commit and push them to the GitHub repository.
-
-How to edit your site's GitHub repository
-------
-Many people use a git client to create files on their local computer and then push them to GitHub's servers. If you are not familiar with git, you can directly edit these configuration and markdown files directly in the github.com interface. Navigate to a file (like [this one](https://github.com/academicpages/academicpages.github.io/blob/master/_talks/2012-03-01-talk-1.md) and click the pencil icon in the top right of the content preview (to the right of the "Raw | Blame | History" buttons). You can delete a file by clicking the trashcan icon to the right of the pencil icon. You can also create new files or upload files by navigating to a directory and clicking the "Create new file" or "Upload files" buttons. 
-
-Example: editing a markdown file for a talk
-![Editing a markdown file for a talk](/images/editing-talk.png)
-
-For more info
-------
-More info about configuring Academic Pages can be found in [the guide](https://academicpages.github.io/markdown/), the [growing wiki](https://github.com/academicpages/academicpages.github.io/wiki), and you can always [ask a question on GitHub](https://github.com/academicpages/academicpages.github.io/discussions). The [guides for the Minimal Mistakes theme](https://mmistakes.github.io/minimal-mistakes/docs/configuration/) (which this theme was forked from) might also be helpful.
+* 01/2025: I have joined Sun Yat-Sen University as an Assistant Professor.
