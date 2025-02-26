@@ -17,7 +17,7 @@ Zihao Wang, **Di Tang** (corresponding author), XiaoFeng Wang, Wei He, Zhaoyang 
 **USENIX Security**, 2024.  
 
 * [Racing on the Negative Force: Efficient Vulnerability Root-Cause Analysis through Reinforcement Learning on Counterexamples](https://www.usenix.org/conference/usenixsecurity24/presentation/xu-dandan)<br>
-Dandan Xu, **Di Tang** (corresponding author), Yi Chen, XiaoFeng Wang, Kai Chen, Haixu Tang and Longxing Li.<br>
+Dandan Xu, **Di Tang**, Yi Chen, XiaoFeng Wang, Kai Chen, Haixu Tang and Longxing Li.<br>
 **USENIX Security**, 2024.
 
 
