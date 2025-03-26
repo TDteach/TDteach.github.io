@@ -1,5 +1,5 @@
 # Base image: Ruby with necessary dependencies for Jekyll
-FROM ruby:3.2
+FROM ruby:3.4.2
 
 # Install dependencies
 RUN apt-get update && apt-get install -y \
@@ -14,7 +14,8 @@ WORKDIR /usr/src/app
 COPY Gemfile ./
 
 # Install bundler and dependencies
-RUN gem install bundler:2.3.26 && bundle install
+# RUN gem install bundler:2.3.26 && bundle install
+RUN gem install bundler && bundle install
 
 # Expose port 4000 for Jekyll server
 EXPOSE 4000

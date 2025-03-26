@@ -122,7 +122,7 @@ atom_feed:
 
 
 # SEO Related
-google_site_verification :
+google_site_verification : AhQKKLDAPm_dtSYNmdbI97_D8YHN7DU5w26QOCj6wSI
 bing_site_verification   :
 alexa_site_verification  :
 yandex_site_verification :
@@ -298,6 +298,7 @@ timezone: Etc/UTC # http://en.wikipedia.org/wiki/List_of_tz_database_time_zones
 
 # Plugins
 plugins:
+  - jekyll-seo-tag
   - jekyll-feed
   - jekyll-gist
   - jekyll-paginate
@@ -307,6 +308,7 @@ plugins:
 
 # Mimic GitHub Pages with --safe
 whitelist:
+  - jekyll-seo-tag
   - jekyll-feed
   - jekyll-gist
   - jekyll-paginate
