@@ -26,8 +26,9 @@ author:
   pronouns         : # example: "she/her"  
   bio              : "Assistant Professor, SYSU"
   location         : "China"
+  #employer         : [Sun Yat-Sen University]"https://google.com"
   employer         : "Sun Yat-Sen University"
-  uri              : # URL
+  uri              : "https://google.com"
   email            : "tangd9@mail.sysu.edu.cn" 
 
   # Academic websites

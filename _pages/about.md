@@ -10,7 +10,7 @@ redirect_from:
 
 Biography
 -----
-I am currently an Assistant Professor at Sun Yat-Sen University. Before that, I was a Postdoctoral Fellow, working with Prof. [XiaoFeng Wang](https://homes.luddy.indiana.edu/xw7/) and Prof. [Haixu Tang](https://luddy.indiana.edu/contact/profile/?Haixu_Tang). I received my Ph.D. degree with honors in Information Engineering from the Chinese University of Hong Kong, advised by Prof. [Kehuan Zhang](https://staff.ie.cuhk.edu.hk/~khzhang/) and Prof. [Dahua Lin](http://dahua.site/). 
+I am currently an Assistant Professor at Sun Yat-Sen University. Before that, I was a Postdoctoral Fellow, working with Prof. [XiaoFeng Wang](https://wangxiaofeng7.github.io) and Prof. [Haixu Tang](https://luddy.indiana.edu/contact/profile/?Haixu_Tang). I received my Ph.D. degree with honors in Information Engineering from the Chinese University of Hong Kong, advised by Prof. [Kehuan Zhang](https://staff.ie.cuhk.edu.hk/~khzhang/) and Prof. [Dahua Lin](http://dahua.site/). 
 
 
 
