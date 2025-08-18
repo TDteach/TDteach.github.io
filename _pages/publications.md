@@ -12,6 +12,15 @@ Please refer to the [Google Scholar](https://scholar.google.com/citations?user=3
 ## Selected Conference Papers
 
 
+* [One Surrogate to Fool Them All: Universal, Transferable, and Targeted Adversarial Attacks with CLIP](https://arxiv.org/abs/2507.05113)<br>
+Binyan Xu, Fan Yang, Xinlin Dai, **Di Tang** (corresponding author), Kehuan Zhang  
+**ACM MM (accepted)**, 2025.  
+
+* [One Surrogate to Fool Them All: Universal, Transferable, and Targeted Adversarial Attacks with CLIP](https://arxiv.org/pdf/2505.19840)<br>
+Binyan Xu, Xinlin Dai, **Di Tang** (corresponding author), Kehuan Zhang  
+**ACM CCS (accepted)**, 2025.  
+
+
 * [Tossing in the Dark: Practical Bit-Flipping on Gray-box Deep Neural Networks for Runtime Trojan Injection](https://www.usenix.org/conference/usenixsecurity24/presentation/wang-zihao-tossing)<br>
 Zihao Wang, **Di Tang** (corresponding author), XiaoFeng Wang, Wei He, Zhaoyang Geng, Wenhao Wang  
 **USENIX Security**, 2024.  
