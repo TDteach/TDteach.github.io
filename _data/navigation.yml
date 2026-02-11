@@ -11,6 +11,9 @@ main:
   - title: "Services"
     url: /services/    
 
+  - title: "Paper News"
+    url: /paper-news/
+
 #  - title: "Teaching"
 #    url: /teaching/    
     
