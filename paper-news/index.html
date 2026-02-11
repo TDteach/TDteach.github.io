@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI & AI Safety 每日论文报告</title>
+    <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🦞 AI & AI Safety 每日论文报告</h1>
+            <p class="subtitle">由小龙虾自动生成</p>
+        </header>
+
+        <div class="stats">
+            <div class="stat-card">
+                <h3>报告总数</h3>
+                <p class="stat-number">2</p>
+            </div>
+            <div class="stat-card">
+                <h3>最后更新</h3>
+                <p class="stat-number">2026-02-11 08:29:12</p>
+            </div>
+        </div>
+
+        <main id="main-content">
+            <!-- Today's report (always expanded) -->
+            <div class="report-full">
+                <div class="report-full-header">
+                    <h2>AI & AI Safety 论文报告 - 2026-02-10</h2>
+                    <span class="report-badge">今天</span>
+                </div>
+                <div class="report-content">
+                    <h1>AI & AI Safety 论文报告 - 2026-02-10 (UTC)</h1>
+<h2>今日概览</h2>
+<li>本次流水线按“UTC 昨天=2026-02-10”口径执行，但 arXiv API 在抓取时返回的最新论文发布时间仍停留在 <strong>2026-02-09 (UTC)</strong>（见下文说明），导致 <strong>2026-02-10</strong> 当天在目标分类（cs.AI/cs.CR/cs.LG/stat.ML/cs.CL）下未抓到任何候选论文。</li>
+<li>因此：selector / deepread / summary 阶段均无可处理论文；本报告为“空跑”结果，主要记录原因与产物状态。</li>
+<h2>产物状态（按步骤）</h2>
+<h3>A) 预筛选准备（标题+摘要）</h3>
+<li>candidates.json：0 篇</li>
+<li>selector_pool.json：0 篇</li>
+<li>selector_chunks_compact：0 个 chunk 文件</li>
+<li>selector_results：未生成（无 chunk）</li>
+<li>selected.json：0 篇（由合并脚本生成的空列表）</li>
+<h3>B) 精读与报告</h3>
+<li>PDF 下载/正文抽取：跳过（selected=0）</li>
+<li>paper-agent 精读：跳过（无 batch）</li>
+<li>summary-agent 汇总：本文件（空跑说明）</li>
+<h2>可能原因（不编造，只基于观测）</h2>
+<li>观测到 arXiv Atom API（export.arxiv.org）在本次运行时返回的前 20 条记录的 `published` 时间戳均为 <strong>2026-02-09T..Z</strong>，没有出现 2026-02-10；因此用 `published.startswith('2026-02-10')` 过滤后候选集为空。</li>
+<li>这可能是 API 更新延迟/时区切换窗口导致的“日期对不上”。</li>
+<h2>建议（供后续改进）</h2>
+<li>如果你希望日报覆盖“最近一个实际有数据的 UTC 日期”，可以增加一个 fallback：当目标 dateUTC 候选数=0 时，自动回退到最近出现的 `published` 日期（例如 2026-02-09）并重新跑全流程。</li>
+                </div>
+            </div>
+
+            <!-- Collapsible previous reports section -->
+            <div id="previous-reports">
+                <h3 style="margin-bottom: 20px; color: #667eea;">📅 历史报告</h3>
+                <div id="collapsible-reports"></div>
+            </div>
+        </main>
+
+        <footer>
+            <p>由 <strong>小龙虾 🦞</strong> 自动生成 | 使用 OpenClaw</p>
+            <p class="footer-note">每天更新最新的AI研究进展</p>
+        </footer>
+    </div>
+
+    <script>
+        // Available previous reports
+        const previousReports = [
+            "2026-02-09"
+        ];
+
+        // Function to load and parse markdown file
+        async function loadReport(filename) {
+            try {
+                const response = await fetch(filename);
+                if (!response.ok) throw new Error('File not found');
+                const text = await response.text();
+
+                // Convert markdown to HTML
+                let html = text
+                    .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+                    .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+                    .replace(/^# (.*$)/gim, '<h1>$1</h1>')
+                    .replace(/\*\*(.*?)\*\*/gim, '<strong>$1</strong>')
+                    .replace(/\*(.*?)\*/gim, '<em>$1</em>')
+                    .replace(/\[([^\]]+)\]\(([^)]+)\)/gim, '<a href="$2">$1</a>')
+                    .replace(/^- (.*$)/gim, '<li>$1</li>')
+                    .replace(/---$/gim, '<hr>');
+
+                // Wrap text blocks in paragraphs
+                let lines = html.split('\n');
+                let result = [];
+                let inPara = false;
+
+                for (let line of lines) {
+                    line = line.trim();
+                    if (!line) {
+                        if (inPara) { result.push('</p>'); inPara = false; }
+                        continue;
+                    }
+                    if (line.startsWith('<') && !line.startsWith('<p>')) {
+                        if (inPara) { result.push('</p>'); inPara = false; }
+                        result.push(line);
+                    } else {
+                        if (!inPara) { result.push('<p>'); inPara = true; }
+                        result.push(line);
+                    }
+                }
+                if (inPara) result.push('</p>');
+
+                return result.join('\n');
+            } catch (error) {
+                console.error('Error loading report:', error);
+                return '<p style="color: red; padding: 20px;">加载失败: ' + error.message + '</p>';
+            }
+        }
+
+        // Function to create collapsible report element
+        function createCollapsibleReport(date) {
+            const container = document.createElement('div');
+            container.className = 'report-collapsible';
+            container.dataset.date = date;
+
+            container.innerHTML = `
+                <div class="report-collapsible-header" onclick="toggleReport('${date}')">
+                    <div class="collapsible-title">
+                        <span class="collapsible-date">${date}</span>
+                        <span class="collapsible-label">AI & AI Safety 论文报告</span>
+                    </div>
+                    <span class="collapsible-icon">▼</span>
+                </div>
+                <div class="report-collapsible-content">
+                    <div class="collapsible-content-inner" id="content-${date}">
+                        <div class="loading-spinner">
+                            <div class="spinner"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            return container;
+        }
+
+        // Function to toggle report visibility
+        async function toggleReport(date) {
+            const collapsible = document.querySelector(`.report-collapsible[data-date="${date}"]`);
+            const contentDiv = document.getElementById(`content-${date}`);
+
+            if (collapsible.classList.contains('expanded')) {
+                // Collapse
+                collapsible.classList.remove('expanded');
+            } else {
+                // Expand and load content
+                collapsible.classList.add('expanded');
+
+                // Only load content once
+                if (contentDiv.querySelector('.loading-spinner')) {
+                    const html = await loadReport(`${date}-ai-papers-report.md`);
+                    contentDiv.innerHTML = `<div class="report-content">${html}</div>`;
+                }
+            }
+        }
+
+        // Initialize previous reports
+        function initializePreviousReports() {
+            const container = document.getElementById('collapsible-reports');
+
+            previousReports.forEach(date => {
+                const reportElement = createCollapsibleReport(date);
+                container.appendChild(reportElement);
+            });
+        }
+
+        // Page load initialization
+        document.addEventListener('DOMContentLoaded', () => {
+            initializePreviousReports();
+        });
+    </script>
+</body>
+</html>
