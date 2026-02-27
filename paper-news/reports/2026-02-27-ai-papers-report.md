@@ -1,0 +1,143 @@
+# AI Paper Insight Brief
+## 2026-02-27
+
+### 0) Executive takeaways (read this first)
+- **Agent safety is shifting from “prompt-level” to “systems-level”**: edge/IoT deployments inherit security properties from coordination infrastructure (e.g., MQTT), creating provenance forgery, replay, and multi-second audit blind spots that don’t show up in centralized orchestration. ([2602.22525](https://arxiv.org/abs/2602.22525v1))
+- **Inference-time defenses and adaptation are getting more “operational”**: policy-grounded debate can swap governance rules zero-shot (CourtGuard), and causal counterfactual “shadow runs” can stop indirect prompt injection while preserving utility (AgentSentry). ([2602.22557](https://arxiv.org/abs/2602.22557v1), [2602.22724](https://arxiv.org/abs/2602.22724v1))
+- **GRPO is becoming a common backbone for agentic training**, but papers increasingly focus on *stability/credit assignment* (length heterogeneity, entropy collapse, path-level rewards) rather than just “RL works.” ([2602.22556](https://arxiv.org/abs/2602.22556v1), [2602.22642](https://arxiv.org/abs/2602.22642v1), [2602.22576](https://arxiv.org/abs/2602.22576v1))
+- **Long-horizon agents are hitting infrastructure bottlenecks** (KV cache growth, memory reliability, stochasticity). New work proposes learned KV “garbage collection” (SideQuest), hardware-aware KV quantization (InnerQ), and agent-centric memory benchmarks (AMA-Bench). ([2602.22603](https://arxiv.org/abs/2602.22603v1), [2602.23200](https://arxiv.org/abs/2602.23200v1), [2602.22769](https://arxiv.org/abs/2602.22769v1))
+- **Evaluation methodology is under active repair**: auditing hidden behaviors now has a systematic benchmark (AuditBench), and human-rating noise is being modeled explicitly (IRT/MFRM; HealthBench disagreement decomposition). ([2602.22755](https://arxiv.org/abs/2602.22755v1), [2602.22585](https://arxiv.org/abs/2602.22585v1), [2602.22758](https://arxiv.org/abs/2602.22758v1))
+- **Biosecurity risk evidence is getting more direct**: a human-subject uplift study finds LLM access makes novices ~4.16× more accurate on in-silico bio tasks, and most participants report little difficulty overcoming safeguards. ([2602.23329](https://arxiv.org/abs/2602.23329v1))
+
+### 2) Key themes (clusters)
+
+#### Theme: Systems security for agents in the wild (edge, tools, provenance, privacy)
+- **Why it matters**: As agents move into physical and tool-rich environments, the dominant risks become *coordination-plane integrity*, *audit latency*, and *trust-boundary crossings*—not just prompt injection.
+- **Representative papers**:  
+  - [Systems-Level Attack Surface of Edge Agent Deployments on IoT](https://arxiv.org/abs/2602.22525v1)  
+  - [AgentSentry: Mitigating Indirect Prompt Injection…](https://arxiv.org/abs/2602.22724v1)  
+  - [Assessing Deanonymization Risks with Stylometry-Assisted LLM Agent](https://arxiv.org/abs/2602.23079v1)
+- **Common approach**:
+  - Treat the agent as a *distributed system* (edge swarm, tool-return boundaries, multi-stage pipelines).
+  - Make security measurable (actuation→audit delay; ASR/UA; candidate coverage; failover windows).
+  - Prefer inference-time layers that can wrap black-box models (counterfactual re-executions; context purification; tool gating).
+- **Open questions / failure modes**:
+  - Edge IoT: MQTT brokers accepting spoof/replay/direct publishes suggests **provenance is unenforced by default**; mitigation prototypes aren’t evaluated. ([2602.22525](https://arxiv.org/abs/2602.22525v1))
+  - AgentSentry: counterfactual overhead scales with boundaries/re-executions; benchmarks may under-represent long-horizon delayed takeovers. ([2602.22724](https://arxiv.org/abs/2602.22724v1))
+  - Deanonymization: open-world attribution remains low even with DB augmentation; mitigation quality/coverage beyond reported metrics is unclear. ([2602.23079](https://arxiv.org/abs/2602.23079v1))
+
+#### Theme: Inference-time alignment that can *adapt* (policies, languages, humans)
+- **Why it matters**: Deployed systems face shifting policies, multilingual jailbreak surfaces, and domain-specific gaps; retraining is slow and data-hungry.
+- **Representative papers**:  
+  - [CourtGuard: Zero-Shot Policy Adaptation in LLM Safety](https://arxiv.org/abs/2602.22557v1)  
+  - [Multilingual Safety Alignment Via Sparse Weight Editing](https://arxiv.org/abs/2602.22554v1)  
+  - [Requesting Expert Reasoning… Learned Collaborative Intervention](https://arxiv.org/abs/2602.22546v1)
+- **Common approach**:
+  - Swap *governing documents* at inference time via RAG + structured adjudication (debate + judge).  
+  - Transfer safety across languages via **training-free sparse low-rank weight edits** targeting “safety neurons.”  
+  - Reduce long-tail domain failures by learning **when to ask** and structuring human feedback into executable plans.
+- **Open questions / failure modes**:
+  - CourtGuard: latency increases from retrieval + multi-turn debate; smaller backbones may fail strict formatting. ([2602.22557](https://arxiv.org/abs/2602.22557v1))
+  - Sparse weight editing: evaluation uses translated prompts and an automated guard model; robustness to adaptive attacks is open. ([2602.22554](https://arxiv.org/abs/2602.22554v1))
+  - Human collaboration: results are strong in Minecraft, but limitations/failure cases aren’t clearly enumerated in provided text. ([2602.22546](https://arxiv.org/abs/2602.22546v1))
+
+#### Theme: RL for agents/reasoning is converging on “process signals” (not just outcomes)
+- **Why it matters**: Outcome-only rewards are sparse and unstable for long-horizon reasoning/search; efficiency pressure (shorter CoT) can collapse exploration.
+- **Representative papers**:  
+  - [Search-P1: Path-Centric Reward Shaping for Agentic RAG](https://arxiv.org/abs/2602.22576v1)  
+  - [Stable Adaptive Thinking… Advantage Shaping + Length-Aware Gradients](https://arxiv.org/abs/2602.22556v1)  
+  - [Compress the Easy, Explore the Hard… Entropy Regularization](https://arxiv.org/abs/2602.22642v1)
+- **Common approach**:
+  - Use GRPO-style RL with **denser process rewards** (plan execution, step coverage, partial credit).
+  - Explicitly correct optimization pathologies: group-normalized advantage bias (CPAS), length-heterogeneous gradients (LAGR), entropy collapse (difficulty-aware entropy).
+  - Make efficiency conditional on difficulty (adaptive think/no-think; hard-only exploration boosts).
+- **Open questions / failure modes**:
+  - Reliance on external evaluators/reference planners can be brittle and costly; smaller evaluators degrade performance. ([2602.22576](https://arxiv.org/abs/2602.22576v1))
+  - Scaling beyond 7B not established for adaptive thinking method. ([2602.22556](https://arxiv.org/abs/2602.22556v1))
+  - CEEH numeric gains are partly plot-based in provided text; limitations section not explicit. ([2602.22642](https://arxiv.org/abs/2602.22642v1))
+
+#### Theme: Long-horizon agent infrastructure: memory, KV cache, stochasticity, and throughput
+- **Why it matters**: Agent capability is increasingly bounded by *serving constraints* (KV memory/bandwidth), *memory correctness*, and *run-to-run reliability*.
+- **Representative papers**:  
+  - [SideQuest: Model-Driven KV Cache Management](https://arxiv.org/abs/2602.22603v1)  
+  - [AMA-Bench: Evaluating Long-Horizon Memory](https://arxiv.org/abs/2602.22769v1)  
+  - [Evaluating Stochasticity in Deep Research Agents](https://arxiv.org/abs/2602.23271v1)  
+  - [InnerQ: Tuning-free Quantization of KV Cache](https://arxiv.org/abs/2602.23200v1)
+- **Common approach**:
+  - Replace heuristics with model-driven or hardware-aligned decisions (aux-thread eviction; inner-dimension grouping).
+  - Benchmark memory on *agent-environment trajectories* (causal/state updates), not just dialogue recall.
+  - Quantify reliability as variance over answers/findings/citations; mitigate with structured outputs + early ensembling.
+- **Open questions / failure modes**:
+  - SideQuest: eviction limited to tool outputs; OOD accuracy drops up to 5% on BrowseComp. ([2602.22603](https://arxiv.org/abs/2602.22603v1))
+  - InnerQ: latency evidence is microbenchmarked (RTX 4090, batch=1) and task eval is limited (few-shot GSM8K). ([2602.23200](https://arxiv.org/abs/2602.23200v1))
+  - Stochasticity: temperature=0 doesn’t eliminate API nondeterminism; exact module attribution is intractable (uses interventions). ([2602.23271](https://arxiv.org/abs/2602.23271v1))
+
+#### Theme: Evaluation & auditing: from “scores” to *auditability under noise and concealment*
+- **Why it matters**: Safety claims depend on measurement; rater effects, disagreement ceilings, and concealed behaviors can invalidate naive comparisons.
+- **Representative papers**:  
+  - [AuditBench: Evaluating Alignment Auditing Techniques…](https://arxiv.org/abs/2602.22755v1)  
+  - [Correcting Human Labels… Item Response Theory](https://arxiv.org/abs/2602.22585v1)  
+  - [Decomposing Physician Disagreement in HealthBench](https://arxiv.org/abs/2602.22758v1)
+- **Common approach**:
+  - Build *model organisms* with hidden behaviors and evaluate end-to-end investigator agents (tool-to-agent gap).
+  - Use psychometrics (MFRM) and mixed models to separate rater/rubric/case variance.
+  - Diagnose where disagreement is reducible (information gaps) vs structural.
+- **Open questions / failure modes**:
+  - AuditBench targets are fine-tunes; may be easier to audit than organically emergent behaviors; single base model. ([2602.22755](https://arxiv.org/abs/2602.22755v1))
+  - IRT approach needs sufficient linkage/ratings; policy-as-facet model not estimable in their attempt. ([2602.22585](https://arxiv.org/abs/2602.22585v1))
+  - HealthBench: most cases have only two graders; can’t separate pattern vs occasion noise without test–retest. ([2602.22758](https://arxiv.org/abs/2602.22758v1))
+
+### 3) Technical synthesis
+- **GRPO is a unifying training primitive** across: adaptive thinking (CPAS/LAGR), agentic RAG (Search-P1), industrial RAG co-adaptation (GRPO for faithfulness/URL validity), and human-feedback tool-use (AHCE’s HFM). ([2602.22556](https://arxiv.org/abs/2602.22556v1), [2602.22576](https://arxiv.org/abs/2602.22576v1), [2602.22584](https://arxiv.org/abs/2602.22584v1), [2602.22546](https://arxiv.org/abs/2602.22546v1))
+- **Process supervision is being operationalized as “trajectory structure”**: explicit plans + step coverage (Search-P1), think/no-think control tokens (adaptive thinking), and difficulty-conditioned exploration (CEEH).  
+- **Inference-time “wrappers” are trending**: CourtGuard (policy RAG + debate), AgentSentry (counterfactual diagnostics + purification), and edge-IoT metrics (actuation→audit delay, provenance completeness) all aim to be deployable without retraining the base model.  
+- **Agent reliability is increasingly treated as a systems property**: stochasticity decomposed by module and timestep; edge failover windows measured in seconds; KV cache management/quantization measured in throughput and memory reads. ([2602.23271](https://arxiv.org/abs/2602.23271v1), [2602.22525](https://arxiv.org/abs/2602.22525v1), [2602.22603](https://arxiv.org/abs/2602.22603v1))
+- **Benchmarks are moving closer to real deployment artifacts**: AMA-Bench uses action–observation logs with symbolic data; OmniGAIA requires omni-modal tool use; General Agent Evaluation focuses on protocol-faithful cross-environment harnessing and cost. ([2602.22769](https://arxiv.org/abs/2602.22769v1), [2602.22897](https://arxiv.org/abs/2602.22897v1), [2602.22953](https://arxiv.org/abs/2602.22953v1))
+- **Auditing is being evaluated end-to-end with agents**, revealing a tool-to-agent gap: tools that surface evidence don’t necessarily improve investigator success. ([2602.22755](https://arxiv.org/abs/2602.22755v1))
+- **Faithfulness is getting domain-specific operationalizations**: industrial advertising QA treats URL hallucination as a first-class failure with explicit validation (evidence/prefix/HTTP status). ([2602.22584](https://arxiv.org/abs/2602.22584v1))
+- **Attribution/provenance is splitting into two lines**: (i) systems provenance (MQTT sender fields, replay acceptance) and (ii) model-internal knowledge-source attribution via probes (ATTRIWIKI). ([2602.22525](https://arxiv.org/abs/2602.22525v1), [2602.22787](https://arxiv.org/abs/2602.22787v1))
+- **Human factors show up as both capability and measurement risk**: bio uplift shows real novice gains; IRT/HealthBench show rater noise can dominate conclusions. ([2602.23329](https://arxiv.org/abs/2602.23329v1), [2602.22585](https://arxiv.org/abs/2602.22585v1), [2602.22758](https://arxiv.org/abs/2602.22758v1))
+
+### 4) Top 5 papers (with “why now”)
+
+1) [AgentSentry: Mitigating Indirect Prompt Injection…](https://arxiv.org/abs/2602.22724v1)
+- Turns IPI into a **temporal causal takeover** problem and localizes risk at tool-return boundaries via controlled counterfactual re-executions.
+- Reports **ASR = 0%** across three IPI families and multiple black-box LLMs on AgentDojo, with high utility (UA) and FPR=0% in reported tables.
+- Provides a *continuation-friendly* mitigation (context purification + gated action revision) rather than terminate-on-suspicion.
+- **Skepticism**: added inference overhead (multiple regimes/re-executions); evaluation may under-cover long-horizon delayed takeovers.
+
+2) [Systems-Level Attack Surface of Edge Agent Deployments on IoT](https://arxiv.org/abs/2602.22525v1)
+- Makes edge-agent security concrete with **measurable metrics** (actuation→audit delay, provenance completeness, sovereignty egress, failover windows).
+- Empirically shows default MQTT coordination can accept **spoofing/replay/direct publishes**, and failover can create **~35.7s monitoring blind spots**.
+- Highlights “silent sovereignty degradation” where fallback triggers external API access (DNS to api.anthropic.com) without MQTT-layer anomalies.
+- **Skepticism**: single small testbed; no mitigation prototypes evaluated; cloud egress comparison not workload-matched.
+
+3) [AuditBench: Evaluating Alignment Auditing Techniques on Models with Hidden Behaviors](https://arxiv.org/abs/2602.22755v1)
+- Provides 56 concealed-behavior targets across 14 behavior types with anti-confession training, enabling repeatable auditing evaluation.
+- Evaluates **agentic investigators** with tool suites, surfacing the **tool-to-agent gap** and dependence on target training configuration (TD vs SDF; SFT vs KTO).
+- Finds scaffolded black-box tools best overall; white-box tools degrade on harder targets.
+- **Skepticism**: targets are fine-tunes on one base model; may not reflect naturally emerging hidden behaviors.
+
+4) [Search-P1: Path-Centric Reward Shaping for Stable and Efficient Agentic RAG Training](https://arxiv.org/abs/2602.22576v1)
+- Replaces sparse outcome-only RL with **dual-track path rewards** (self-consistency + reference-alignment) and **soft outcome scoring** for partial credit.
+- Reports strong average accuracy gains (e.g., Qwen2.5-7B avg ACC 47.3 vs 39.6 for Search-R1; AD-QA 86.2 vs 65.6).
+- Shows faster convergence (~60 steps to reach Search-R1’s final accuracy vs >150).
+- **Skepticism**: depends on external evaluator and offline reference planner generation; evaluator choice sensitivity is non-trivial.
+
+5) [LLM Novice Uplift on Dual-Use, In Silico Biology Tasks](https://arxiv.org/abs/2602.23329v1)
+- Human-subject evidence that LLM access yields **~4.16× higher novice accuracy** (internet-only vs LLM-enabled) across biosecurity-relevant tasks.
+- Treatment beats Control on 7/8 benchmarks; sometimes exceeds expert baselines (e.g., HPCT, VCT).
+- Reports most participants **did not indicate difficulty overcoming safeguards** (89.6%).
+- **Skepticism**: not double-blind; model availability changed mid-study; confined to in-silico tasks (wet-lab translation unknown).
+
+### 5) Practical next steps
+- **For tool-using agent security**: implement a tool-return-boundary “shadow run” harness (even K=1) to estimate whether mediator content causally drives next actions; measure UA/ASR trade-offs and overhead. (Inspired by [2602.22724](https://arxiv.org/abs/2602.22724v1))
+- **For edge/IoT agent deployments**: add *application-layer provenance enforcement* (e.g., signed sender IDs / topic ACLs) and measure the same metrics used in the paper: spoof acceptance rate, actuation→audit delay, and failover blackout windows. ([2602.22525](https://arxiv.org/abs/2602.22525v1))
+- **For policy compliance teams**: prototype a policy-swap evaluator (RAG + structured verdict + threat scores) and track latency vs adaptability; test formatting robustness on smaller backbones. ([2602.22557](https://arxiv.org/abs/2602.22557v1))
+- **For agentic RAG training**: add path-centric rewards (plan execution + essential-step coverage) and soft outcome scoring; run ablations on evaluator size and reference-plan generation cost. ([2602.22576](https://arxiv.org/abs/2602.22576v1))
+- **For long-horizon serving**: evaluate SideQuest-style semantic eviction (tool outputs) vs InnerQ-style KV quantization; compare end-to-end throughput, completion reliability, and accuracy on your agent workloads. ([2602.22603](https://arxiv.org/abs/2602.22603v1), [2602.23200](https://arxiv.org/abs/2602.23200v1))
+- **For evaluation pipelines**: if you rely on human Likert ratings, fit an MFRM (severity + threshold centrality) and report both raw and adjusted rankings; add rater diagnostics to QA. ([2602.22585](https://arxiv.org/abs/2602.22585v1))
+- **For biosecurity governance**: treat “uplift” as a first-class metric; replicate novice-uplift studies on your task set and explicitly measure safeguard friction (not just refusal rates). ([2602.23329](https://arxiv.org/abs/2602.23329v1))
+
+---
+*Generated from per-paper analyses; no external browsing.*
