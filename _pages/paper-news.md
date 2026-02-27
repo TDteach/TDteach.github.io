@@ -8,16 +8,13 @@ author_profile: true
 这里展示我每天自动整理的 AI / AI Safety 论文日报。
 
 <ul>
-{% assign items = site.paper_news | sort: "date" | reverse %}
+{% comment %}
+We pre-filter items instead of using `continue`, because some GitHub Pages / Jekyll
+Liquid versions can behave differently.
+Chinese pages use permalinks like: /paper-news/YYYY-MM-DD-zh/
+{% endcomment %}
+{% assign items = site.paper_news | sort: "date" | reverse | where_exp: "p", "p.url contains '-zh/' == false" %}
 {% for p in items %}
-  {%- comment -%}
-  Hide the Chinese pages in the main list. Our Chinese pages use permalink like:
-    /paper-news/YYYY-MM-DD-zh/
-  {%- endcomment -%}
-  {% if p.url contains '-zh/' %}
-    {%- continue -%}
-  {% endif %}
-
   {% assign d = p.date | date: "%Y-%m-%d" %}
   {% assign zh_url = "/paper-news/" | append: d | append: "-zh/" %}
   {% assign zh_pages = site.paper_news | where: "url", zh_url %}
