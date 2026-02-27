@@ -1,16 +1,88 @@
 {% include base_path %}
 
-{% if page.previous or page.next %}
-  <nav class="pagination">
-    {% if page.previous %}
-      <a href="{{ base_path }}{{ page.previous.url }}" class="pagination--pager" title="{{ page.previous.title | markdownify | strip_html }}">{{ site.data.ui-text[site.locale].pagination_previous | default: "Previous" }}</a>
+{%- comment -%}
+Custom pagination for the paper_news collection.
+
+Reason: the collection contains both EN and ZH pages; Jekyll's built-in
+page.previous/page.next will interleave languages. We want language-stable
+navigation:
+- On EN pages: Previous/Next navigate EN-only.
+- On ZH pages: 上一篇/下一篇 navigate ZH-only.
+
+Supports both legacy ZH URLs (/zh/) and new ZH URLs (-zh/).
+{%- endcomment -%}
+
+{% if page.collection == 'paper_news' %}
+  {% assign is_zh = false %}
+  {% if page.url contains '-zh/' or page.url contains '/zh/' %}
+    {% assign is_zh = true %}
+  {% endif %}
+
+  {% assign prev_doc = nil %}
+  {% assign next_doc = nil %}
+  {% assign last_doc = nil %}
+  {% assign found = false %}
+
+  {%- assign docs = site.paper_news | sort: 'date' | reverse -%}
+  {% for d in docs %}
+    {%- comment -%}Skip docs of the other language{%- endcomment -%}
+    {% if is_zh %}
+      {% unless d.url contains '-zh/' or d.url contains '/zh/' %}
+        {%- continue -%}
+      {% endunless %}
     {% else %}
-      <a href="#" class="pagination--pager disabled">{{ site.data.ui-text[site.locale].pagination_previous | default: "Previous" }}</a>
+      {% if d.url contains '-zh/' or d.url contains '/zh/' %}
+        {%- continue -%}
+      {% endif %}
     {% endif %}
-    {% if page.next %}
-      <a href="{{ base_path }}{{ page.next.url }}" class="pagination--pager" title="{{ page.next.title | markdownify | strip_html }}">{{ site.data.ui-text[site.locale].pagination_next | default: "Next" }}</a>
-    {% else %}
-      <a href="#" class="pagination--pager disabled">{{ site.data.ui-text[site.locale].pagination_next | default: "Next" }}</a>
+
+    {% if found and next_doc == nil %}
+      {% assign next_doc = d %}
     {% endif %}
-  </nav>
+
+    {% if d.url == page.url %}
+      {% assign prev_doc = last_doc %}
+      {% assign found = true %}
+    {% endif %}
+
+    {% assign last_doc = d %}
+  {% endfor %}
+
+  {% assign label_prev = site.data.ui-text[site.locale].pagination_previous | default: 'Previous' %}
+  {% assign label_next = site.data.ui-text[site.locale].pagination_next | default: 'Next' %}
+  {% if is_zh %}
+    {% assign label_prev = '上一篇' %}
+    {% assign label_next = '下一篇' %}
+  {% endif %}
+
+  {% if prev_doc or next_doc %}
+    <nav class="pagination">
+      {% if prev_doc %}
+        <a href="{{ base_path }}{{ prev_doc.url }}" class="pagination--pager" title="{{ prev_doc.title | markdownify | strip_html }}">{{ label_prev }}</a>
+      {% else %}
+        <a href="#" class="pagination--pager disabled">{{ label_prev }}</a>
+      {% endif %}
+
+      {% if next_doc %}
+        <a href="{{ base_path }}{{ next_doc.url }}" class="pagination--pager" title="{{ next_doc.title | markdownify | strip_html }}">{{ label_next }}</a>
+      {% else %}
+        <a href="#" class="pagination--pager disabled">{{ label_next }}</a>
+      {% endif %}
+    </nav>
+  {% endif %}
+{% else %}
+  {% if page.previous or page.next %}
+    <nav class="pagination">
+      {% if page.previous %}
+        <a href="{{ base_path }}{{ page.previous.url }}" class="pagination--pager" title="{{ page.previous.title | markdownify | strip_html }}">{{ site.data.ui-text[site.locale].pagination_previous | default: "Previous" }}</a>
+      {% else %}
+        <a href="#" class="pagination--pager disabled">{{ site.data.ui-text[site.locale].pagination_previous | default: "Previous" }}</a>
+      {% endif %}
+      {% if page.next %}
+        <a href="{{ base_path }}{{ page.next.url }}" class="pagination--pager" title="{{ page.next.title | markdownify | strip_html }}">{{ site.data.ui-text[site.locale].pagination_next | default: "Next" }}</a>
+      {% else %}
+        <a href="#" class="pagination--pager disabled">{{ site.data.ui-text[site.locale].pagination_next | default: "Next" }}</a>
+      {% endif %}
+    </nav>
+  {% endif %}
 {% endif %}
