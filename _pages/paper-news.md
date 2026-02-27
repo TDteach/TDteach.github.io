@@ -13,7 +13,8 @@ author_profile: true
   {% if p.url contains '/zh/' %}
     {%- continue -%}
   {% endif %}
-  {% assign zh_url = p.url | append: 'zh/' %}
+  {% assign d = p.date | date: "%Y-%m-%d" %}
+  {% assign zh_url = "/paper-news/" | append: d | append: "-zh/" %}
   {% assign zh_pages = site.paper_news | where: "url", zh_url %}
   <li>
     <a href="{{ p.url | relative_url }}">{{ p.title }}</a>
