@@ -10,9 +10,14 @@ author_profile: true
 <ul>
 {% assign items = site.paper_news | sort: "date" | reverse %}
 {% for p in items %}
-  {% if p.url contains '/zh/' %}
+  {%- comment -%}
+  Hide the Chinese pages in the main list. Our Chinese pages use permalink like:
+    /paper-news/YYYY-MM-DD-zh/
+  {%- endcomment -%}
+  {% if p.url contains '-zh/' %}
     {%- continue -%}
   {% endif %}
+
   {% assign d = p.date | date: "%Y-%m-%d" %}
   {% assign zh_url = "/paper-news/" | append: d | append: "-zh/" %}
   {% assign zh_pages = site.paper_news | where: "url", zh_url %}
