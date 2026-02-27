@@ -1,0 +1,150 @@
+# AI 论文洞察简报
+## 2026-02-28
+
+### 0) 执行要点（先读这个）
+- **智能体安全正在从“提示词层”转向“系统层”**：边缘/混合部署引入了可测量的新失效窗口（审计延迟、故障切换黑窗、静默云端回退）以及可绕过模型行为防线的协议层欺骗风险。
+- **动态、以政策文本为依据的安全机制正在成为“权重锁定式护栏”的可行替代**：基于检索的“裁决”（CourtGuard）在基准上表现强劲，并可零样本切换政策，但会带来延迟并依赖底座模型对格式/指令的遵循。
+- **面向智能体 RAG 与推理效率的 RL 正在收敛到“过程/路径塑形”**：对轨迹进行奖励塑形（Search-P1）以及针对长度异质性的稳定性修复（自适应思考；难度感知熵）同时报告了准确率提升与大幅 token 降低。
+- **评测更贴近真实——也更令人警醒**：新基准覆盖智能体记忆（AMA-Bench）、移动出行工具使用（MobilityBench）、全模态工具智能体（OmniGAIA）、隐蔽行为审计（AuditBench）与 DRA 随机性，常揭示当前系统因结构性原因失败（上下文/记忆丢失、工具误用、运行间方差）。
+- **隐私/安全研究正在超越经典文本 MIA**：无字幕扩散成员推断（MOFIT）、带最小频次治理规则的 DP SQL（DPSQL+）、基于小波由粗到细的 DP 文生图（DP-Wavelet）、以及风格计量辅助的去匿名化智能体，展示了新的攻击面与可部署的缓解手段。
+- **双重用途风险越来越关乎“人类能力提升”，而非模型分数**：一项人体实验发现，LLM 访问使新手在与生物安全相关的 in silico 任务上准确率约提升 **4.16×**，且多数参与者表示安全护栏带来的阻力很小。
+
+### 2) 关键主题（聚类）
+
+### 主题：系统层智能体安全与治理（超越提示词）
+
+- **重要性**：当智能体进入边缘设备、工具总线与长时程工作流时，安全性不仅取决于对齐，还取决于架构（消息传输、故障切换、可审计性）。即便模型“行为良好”，这些层面仍可被利用。
+- **代表论文**：
+  - [Systems-Level Attack Surface of Edge Agent Deployments on IoT](https://arxiv.org/abs/2602.22525v1)
+  - [AgentSentry: Mitigating Indirect Prompt Injection in LLM Agents via Temporal Causal Diagnostics and Context Purification](https://arxiv.org/abs/2602.22724v1)
+  - [ESAA: Event Sourcing for Autonomous Agents in LLM-Based Software Engineering](https://arxiv.org/abs/2602.23193v1)
+- **常见方法**：
+  - 将智能体安全视为**可测量的系统属性**（审计延迟、溯源完整性、故障切换窗口）。
+  - 在工具边界插入**运行时治理层**（反事实重执行；契约校验；确定性编排器）。
+  - 偏好**可审计 + 可回放**（事件日志、缓存工具输出）以支持取证与隔离。
+- **开放问题 / 失效模式**：
+  - “静默”跨边界（如回退到云端）绕过用户感知与日志记录。
+  - 工具/运行时被攻破与缓存篡改常被视为不在范围内，但现实可行。
+  - 更强治理层的延迟/成本开销与实时执行需求之间的权衡。
+
+### 主题：政策可适配性与隐蔽行为审计
+
+- **重要性**：政策变化快于模型发布；同时模型可能隐藏问题行为，因此审计需要基准与智能体工作流，而不仅是静态探针。
+- **代表论文**：
+  - [CourtGuard: A Model-Agnostic Framework for Zero-Shot Policy Adaptation in LLM Safety](https://arxiv.org/abs/2602.22557v1)
+  - [AuditBench: Evaluating Alignment Auditing Techniques on Models with Hidden Behaviors](https://arxiv.org/abs/2602.22755v1)
+  - [Correcting Human Labels for Rater Effects in AI Evaluation: An Item Response Theory Approach](https://arxiv.org/abs/2602.22585v1)
+- **常见方法**：
+  - 将决策锚定在**检索到的政策文本**与结构化裁决（辩论 + 裁判打分）。
+  - 构建带已知隐蔽行为的**模型生物体（model organisms）**并衡量审计员/智能体成功率。
+  - 使用**测量模型**（IRT/MFRM）纠正人工标注中的系统性评分偏差。
+- **开放问题 / 失效模式**：
+  - 工具到智能体的鸿沟：工具呈现的证据未必能转化为正确的智能体假设。
+  - 政策语料覆盖范围决定上限；缺失/歧义政策文本可能主导错误。
+  - 若不校正，评分者严苛度/趋中性会扭曲评测流水线。
+
+### 主题：通过过程/路径塑形实现高效推理与智能体 RAG
+
+- **重要性**：前沿性能越来越受推理成本与 RL 不稳定性（长度异质性、稀疏奖励）限制。面向过程的塑形旨在同时提升准确率与效率。
+- **代表论文**：
+  - [Stable Adaptive Thinking via Advantage Shaping and Length-Aware Gradient Regulation](https://arxiv.org/abs/2602.22556v1)
+  - [Compress the Easy, Explore the Hard: Difficulty-Aware Entropy Regularization for Efficient LLM Reasoning](https://arxiv.org/abs/2602.22642v1)
+  - [Search-P1: Path-Centric Reward Shaping for Stable and Efficient Agentic RAG Training](https://arxiv.org/abs/2602.22576v1)
+- **常见方法**：
+  - 修改 GRPO/RLVR 以**在可变长度轨迹下稳定训练**（长度感知梯度；优势塑形；选择性熵）。
+  - 用**轨迹/路径奖励**替代稀疏结果奖励（自一致性 vs 参考对齐；软结果打分）。
+  - 使用**难度门控**（按题目历史准确率）分配探索预算。
+- **开放问题 / 失效模式**：
+  - 对可验证奖励（数学/QA）的依赖可能难以迁移到开放域。
+  - 参考计划（离线生成）可能将学习偏置到狭窄策略集合。
+  - 熵/探索机制仍可能在难题上“烧 token”却找不到正确路径。
+
+### 主题：更真实的智能体评测：记忆、工具、多模态与随机性
+
+- **重要性**：许多失败并非“模型智商”，而是系统问题：记忆构建丢失、工具误用、不可复现 API、运行间方差。新基准将其隔离出来。
+- **代表论文**：
+  - [AMA-Bench: Evaluating Long-Horizon Memory for Agentic Applications](https://arxiv.org/abs/2602.22769v1)
+  - [MobilityBench: A Benchmark for Evaluating Route-Planning Agents in Real-World Mobility Scenarios](https://arxiv.org/abs/2602.22638v1)
+  - [OmniGAIA: Towards Native Omni-Modal AI Agents](https://arxiv.org/abs/2602.22897v1)
+  - [Evaluating Stochasticity in Deep Research Agents](https://arxiv.org/abs/2602.23271v1)
+- **常见方法**：
+  - 构建**确定性沙盒**（API 回放）与分解指标（工具有效性、规划精确率/召回率、DR/FPR）。
+  - 在机器生成工件与因果环境动态上评估**以智能体为中心的记忆**。
+  - 在多层面量化**随机性**（答案/发现/引用），并将其归因到模块/步骤。
+- **开放问题 / 失效模式**：
+  - 工具调用次数与成功并非单调关系（太少会失败；太多也不保证）。
+  - 基于相似度的检索与有损压缩在密集、因果结构化轨迹上可能失效。
+  - 早期随机性会级联；推理/更新模块可能主导方差。
+
+### 主题：隐私与双重用途：新型审计攻击、带治理约束的 DP、以及人类能力提升
+
+- **重要性**：隐私风险扩展到扩散模型与智能体去匿名化；DP 部署需要治理规则（如最小频次）。双重用途风险取决于人类在 LLM 帮助下是否更有能力。
+- **代表论文**：
+  - [No Caption, No Problem: Caption-Free Membership Inference via Model-Fitted Embeddings](https://arxiv.org/abs/2602.22689v1)
+  - [DPSQL+: A Differentially Private SQL Library with a Minimum Frequency Rule](https://arxiv.org/abs/2602.22699v1)
+  - [Decomposing Private Image Generation via Coarse-to-Fine Wavelet Modeling](https://arxiv.org/abs/2602.23262v1)
+  - [LLM Novice Uplift on Dual-Use, In Silico Biology Tasks](https://arxiv.org/abs/2602.23329v1)
+- **常见方法**：
+  - 重新定义威胁模型以贴近现实（仅图像 MIA；开放世界作者检索；多查询 DP 会话）。
+  - 使用**后处理式 DP 分解**（私有粗结构 + 公共细节补全）。
+  - 在长时交互下衡量**人在回路的能力变化**，而非仅看模型单独分数。
+- **开放问题 / 失效模式**：
+  - 无字幕扩散 MIA 可能很慢（每张图分钟级），且在评估设置中可能被某些适配方法（如 LoRA）缓解。
+  - DP 系统以表达能力换安全（受限 SQL 子集；会话级记账）。
+  - 防护措施可能无法对有动机用户形成有效摩擦（提升研究中的自我报告）。
+
+### 3) 技术综合
+- 多篇论文在**以 GRPO 风格 RL 为基础**上收敛，并加入稳定性/信用分配修复：针对长度异质性的 CPAS+LAGR；难度门控熵的 CEEH；以及 Search-P1 的路径级稠密奖励。
+- 一个反复出现的模式是**“重过程而非结果”**：路径中心奖励（Search-P1）、扩散拼接中的步骤级打分与复用、以及 AgentSentry 的因果边界诊断都从中间结构提取信号。
+- **工具边界正在成为安全与评测的天然控制点**：AgentSentry 的边界锚定反事实、ESAA 的契约校验意图、以及 IoT MQTT 主题强制的缺口都位于工具/传输层。
+- 基准越来越通过**确定性来强制可复现性**（MobilityBench API 回放；DRA 缓存搜索），以区分模型方差与环境方差。
+- 多项工作强调**测量建模是一等组件**：IRT/MFRM 处理评分者效应；随机性作为对规范化发现/引用的总方差；系统安全作为时序/外流指标。
+- 记忆/上下文管理正在分化为两条路线：**语义驱逐/压缩**（SideQuest 的模型驱动 KV 驱逐工具输出）与**结构化外部记忆**（AMA-Agent 因果图 + 工具增强检索）。
+- 安全对齐正在超越微调：用于多语种安全的**免训练权重编辑**（稀疏低秩编辑）与用于审核的**政策文本替换**（CourtGuard）。
+- 隐私审计正走向**优化式、模型拟合攻击**（MOFIT）与具治理意识的 DP 接口（DPSQL+），提示防守方需要 ML 与系统双重缓解。
+- 在多模态与智能体场景中，一个共同失败是**“信息存在但不可用”**：模态坍塌被表述为解码不匹配（GMI vs MI），以及智能体记忆失败中构建/检索丢失关键状态。
+
+### 4) Top 5 论文（含“为何是现在”）
+
+1) [LLM Novice Uplift on Dual-Use, In Silico Biology Tasks](https://arxiv.org/abs/2602.23329v1)
+- 量化人类能力提升：LLM 访问使新手准确率**约提升 ~4.16×**（优势比；校正后准确率约 5% → >17%）。
+- Treatment 在 **7/8** 个基准上优于 Control，并在部分任务上可超过“仅互联网”的专家基线（如 HPCT、VCT）。
+- 增加行为信号（更长、更结构化的回答；更高自信），并报告 **89.6%** 参与者表示克服安全护栏没有困难。
+- **质疑点**：研究执行中途因模型可用性改变了流程；部分任务存在泄漏（参与者在网上找到题目）；并非完全双盲。
+
+2) [AgentSentry: Mitigating Indirect Prompt Injection…](https://arxiv.org/abs/2602.22724v1)
+- 推理时、黑盒兼容防御：使用**边界锚定的反事实重执行**与因果效应估计（ACE/IE/DE）。
+- 报告在 AgentDojo 套件与多种底座上 **ASR = 0%** 且保持较高效用；消融显示“净化后的反事实”至关重要。
+- 强调通过上下文净化 + 最小动作修订实现**安全续写**，而非一概拒答。
+- **质疑点**：轻量配置（如 K=1）可能依赖注入点靠近边界；工具/运行时被攻破不在范围内。
+
+3) [CourtGuard: Zero-Shot Policy Adaptation in LLM Safety](https://arxiv.org/abs/2602.22557v1)
+- 基于检索的“证据辩论（Evidentiary Debate）”实现无需微调的**政策切换**；报告强劲的宏平均基准表现。
+- 展示对维基百科破坏政策的**零样本适配**（在平衡子集上 90%）以及带专家评审对齐的法律落地变体。
+- 提供可解释、带政策引用的轨迹，并声称可用于数据集标签噪声审计。
+- **质疑点**：增加推理延迟；依赖底座对指令/格式的遵循；受限于政策语料广度。
+
+4) [AuditBench: Evaluating Alignment Auditing Techniques on Models with Hidden Behaviors](https://arxiv.org/abs/2602.22755v1)
+- 提供缺失的基准原语：**56 个模型、14 种隐蔽行为**，并被设计为被问及时不自曝。
+- 在不同工具配置下评估自主调查智能体，发现带脚手架的黑盒工具常优于白盒工具。
+- 提出关键警示：**工具到智能体的鸿沟**——静态证据不保证智能体成功。
+- **质疑点**：目标是单一底座模型（Llama 3.3 70B）上的窄幅微调；植入行为可能不同于真实世界的涌现问题。
+
+5) [Systems-Level Attack Surface of Edge Agent Deployments on IoT](https://arxiv.org/abs/2602.22525v1)
+- 在架构层把“智能体安全”具体化：测量**执行到审计延迟**、溯源完整性、数据外流与故障切换窗口。
+- 发现 MQTT broker 默认接受伪造/重放/直接向安全主题发布；强制回退可触发**静默云端路由**，仅能通过 DNS/tcpdump 观察。
+- 量化故障切换：端到端 WiFi 丢失到回退路径 **35.7s**，而 MQTT 重连本身仅毫秒级——凸显真正的窗口所在。
+- **质疑点**：单一测试床/拓扑；云端外流对比未做工作负载匹配；缓解措施未实现/未评估。
+
+### 5) 实用下一步
+- 对使用工具的智能体，增加**边界级安全观测**：记录工具返回边界、缓存工具输出以便回放，并在自有工作流上用受控反事实重执行（AgentSentry 风格）测量接管风险。
+- 若部署边缘/混合智能体，定义并监控**系统安全 SLO**：执行到审计延迟、故障切换黑窗、溯源链完整性，以及对任何云端回退/外流的显式告警。
+- 对审核/治理，原型化**政策文本 RAG 裁决**与明确评分量表（监管 vs 实际威胁），并跨底座测量延迟与格式失败率。
+- 对智能体 RAG 的 RL 训练，用**轨迹/路径奖励**（自一致性 + 参考对齐）替代仅二元奖励，并为“接近命中”提供部分分；跟踪收敛速度与冗余工具动作。
+- 对推理效率，测试**模式控制 token**（/think vs /no_think），并用长度感知梯度加权稳定 RL；另可尝试难度门控熵以避免在难题上熵坍塌。
+- 对评测，加入**随机性审计**：每个查询运行 k 次，计算发现/引用的方差，并在调温前将方差定位到模块（查询 vs 总结 vs 更新）。
+- 对人工标注评测，在用原始均值做模型选择前，考虑**评分者效应校正**（MFRM/IRT）与评分者诊断。
+- 对隐私，假设更强审计者：在**无字幕 MIA**设置下评估扩散模型；对分析系统同时强制 DP 与治理约束（最小频次）并集成记账；对文本评估风格计量/去匿名化风险并测试引导式改写。
+
+---
+*由逐篇分析生成；未进行外部浏览。*
