@@ -39,3 +39,45 @@
 @import "vendor/font-awesome/brands";
 @import "vendor/magnific-popup/magnific-popup";
 @import "print";
+
+/* ===== paper-news custom UI (generated in sync_paper_news_to_github.py) ===== */
+.paper-news-stats {
+  border: 1px solid #e5e7eb;
+  border-left: 4px solid #3b82f6;
+  background: #f8fafc;
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin: 14px 0 18px 0;
+}
+.paper-news-stats p { margin: 0 0 8px 0; }
+.paper-news-stats ul { margin: 0; padding-left: 1.2rem; }
+.paper-news-stats li { margin: 2px 0; }
+
+.paper-news-details { margin: 10px 0 18px 0; }
+.paper-news-details summary {
+  cursor: pointer;
+  user-select: none;
+  padding: 8px 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #ffffff;
+}
+.paper-news-details[open] summary {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.paper-news-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 8px;
+  font-size: 0.92em;
+}
+.paper-news-table th,
+.paper-news-table td {
+  border: 1px solid #e5e7eb;
+  padding: 8px 10px;
+  vertical-align: top;
+}
+.paper-news-table th { background: #f3f4f6; font-weight: 700; }
+.paper-news-table code { font-size: 0.9em; }
