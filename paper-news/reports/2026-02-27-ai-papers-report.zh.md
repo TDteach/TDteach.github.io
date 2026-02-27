@@ -2,155 +2,164 @@
 ## 2026-02-27
 
 ### 0) 执行要点（先读这个）
-- **Agent 安全正在从“提示词层”转向“系统层”**：边缘/IoT 部署继承了不安全的协同控制平面（例如 MQTT 接受欺骗/重放），并在故障切换期间产生*多秒级审计盲区*——这些风险无法仅靠模型级护栏捕获。
-- **推理时、免训练的安全自适应正在走向成熟**，主要有两条路线：(i) 用于快速策略切换的*基于政策的裁决*（CourtGuard），以及 (ii) 可驱动 AgentDojo 上攻击成功率降至 **0% ASR** 且保持效用的*因果反事实诊断*（AgentSentry）。
-- **GRPO 正在成为默认的 RL 主干**，但前沿已转向*稳定性/效率塑形*：自适应思考（CPAS+LAGR）与难度感知熵正则（CEEH）都在针对长度/熵的病态；面向 agentic RAG 的（Search-P1）则用路径中心的过程奖励来缓解奖励稀疏。
-- **长时程 agent 性能越来越受基础设施而非模型智力限制**：KV-cache 管理（SideQuest）与 KV 量化布局（InnerQ）带来显著吞吐/时延收益；记忆能力也开始在 agent 原生轨迹上评测（AMA-Bench），而不只是对话/文档 QA。
-- **评测方法学正在被积极修复**：人类评测中的评分者效应建模（MFRM）可能颠覆系统排名；HealthBench 中医生分歧主要是案例特定残差；深度研究 agent 的运行间方差很高，但可用结构化输出 + 查询集成降低。
-- **生物安全风险证据更直接**：一项“人类能力提升”研究发现，LLM 访问使新手在 in silico 生物任务上比仅用互联网 **准确 4.16×**，且多数参与者表示绕过安全措施几乎不费力。
+- **Agent 安全正在向“技术栈更底层”迁移**：多篇论文显示，部署架构（边缘 IoT 群体、工具返回边界、KV/记忆管理）往往主导风险/鲁棒性结果，并可能绕过提示词/模型层防护。
+- **推理时、免训练干预正在成熟**，覆盖安全与效率：针对间接提示注入的因果反事实防御（报告 ASR 为 0%）、用于零样本策略切换的基于策略文本的辩论裁决、以及用于多语种安全迁移的稀疏权重编辑。
+- **GRPO 正成为能力与安全/忠实性调优的默认骨架**（自适应思考、agentic RAG 奖励塑形、工业 RAG 忠实性、人机协作模块），新工作聚焦在长度/路径异质性下稳定梯度与奖励。
+- **长时程 Agent 正遭遇系统瓶颈**（KV cache 增长、记忆检索失败、跨运行随机性）。新基准与机制（AMA-Bench、随机性方差指标、SideQuest）让这些失效模式可测量、可优化。
+- **评测方法学正在被积极修复**：评分者效应建模（MFRM/IRT）与医生分歧分解表明，原始人工标签可能重排系统排名，且大量分歧是案例特异的——意味着“更好的裁判”可能需要更好的任务设计，而不只是更好的模型。
+- **生物安全能力提升（uplift）证据已进入人类受试、多模型、长时程阶段**：报告称可使用 LLM 的新手比仅用互联网的新手准确率高 **4.16×**，且多数人表示绕过防护几乎不费力——提高了对真实 uplift 评估的优先级。
 
 ### 2) 关键主题（聚类）
 
-### 主题：工具使用型 agent 的系统安全（边缘 + 提示注入）
+### 主题：面向 Agent 的推理时安全层（策略、提示注入、边缘系统）
 
-- **重要性**：当 agent 进入物理/边缘场景并运行长时程工具循环时，主导性失败会变成*协同平面完整性*、*审计延迟*与*信任边界违规*——而不再只是单轮对话里的提示注入。
+- **重要性**：当 Agent 通过工具与物理系统行动时，关键故障常发生在边界处（工具返回、消息总线、回退路径），而经典提示防御在这些位置往往不适用或不可观测。
 - **代表论文**：
-  - Systems-Level Attack Surface of Edge Agent Deployments on IoT（IoT 上边缘 Agent 部署的系统级攻击面） — https://arxiv.org/abs/2602.22525v1
-  - AgentSentry: Mitigating Indirect Prompt Injection in LLM Agents via Temporal Causal Diagnostics and Context Purification（通过时间因果诊断与上下文净化缓解 LLM Agent 的间接提示注入） — https://arxiv.org/abs/2602.22724v1
+  - [AgentSentry: Mitigating Indirect Prompt Injection in LLM Agents via Temporal Causal Diagnostics and Context Purification（通过时间因果诊断与上下文净化缓解 LLM Agent 的间接提示注入）](https://arxiv.org/abs/2602.22724v1)
+  - [CourtGuard: A Model-Agnostic Framework for Zero-Shot Policy Adaptation in LLM Safety（用于 LLM 安全的零样本策略自适应、模型无关框架）](https://arxiv.org/abs/2602.22557v1)
+  - [Systems-Level Attack Surface of Edge Agent Deployments on IoT（IoT 上边缘 Agent 部署的系统级攻击面）](https://arxiv.org/abs/2602.22525v1)
 - **共同方法**：
-  - 将 agent 安全视为**边界管理**（工具返回边界；MQTT 作为 C2 平面）。
-  - 使用**可度量的系统指标**（执行到审计延迟、溯源完整性、故障切换窗口）。
-  - 在不重训的前提下增加**推理时安全层**（反事实“影子运行”、上下文净化）。
+  - 将防御下沉到**决策边界**（工具返回检查点；基于策略的裁决；MQTT 控制平面）。
+  - 使用**结构化协议**（检索支撑的辩论裁决；因果反事实机制；溯源元数据封装）。
+  - 强调**可度量的运行指标**（ASR/UA/FPR；延迟；执行到审计延迟；出站/主权；故障切换窗口）。
 - **开放问题 / 失效模式**：
-  - 如何在不破坏时延/可用性的情况下，用可执行的溯源/ACL 加固协同平面（如 MQTT）。
-  - 反事实防御会带来开销；对**长时程渐进式接管**的行为尚不清楚（文中指出基准缺口）。
-  - 故障切换可能产生**数十秒监控空窗**；如何在黑窗期间保证安全执行。
+  - 开销/延迟：反事实重执行与多 Agent 辩论会增加推理成本。
+  - 骨干脆弱性：格式遵循问题可能破坏解析（CourtGuard）；边缘异构性使执行更难（IoT）。
+  - 信任边界缺口：MQTT broker 接受伪造/重放/直接发布；静默回退跨越主权边界。
 
-### 主题：推理时对齐与策略敏捷（不重训）
+### 主题：用于 agentic RAG、忠实性与协作的 RL（常为 GRPO）
 
-- **重要性**：上线系统面临不断变化的政策（ToS、合规制度）与多语言越狱面；基于重训的对齐跟不上运营需求。
+- **重要性**：Agent 系统需要比最终答案正确性更稠密的学习信号；工业部署还需要可操作测试的忠实性约束（如 URL 幻觉）。
 - **代表论文**：
-  - CourtGuard: A Model-Agnostic Framework for Zero-Shot Policy Adaptation in LLM Safety（LLM 安全的零样本策略自适应、模型无关框架） — https://arxiv.org/abs/2602.22557v1
-  - Multilingual Safety Alignment Via Sparse Weight Editing（通过稀疏权重编辑实现多语言安全对齐） — https://arxiv.org/abs/2602.22554v1
+  - [Search-P1: Path-Centric Reward Shaping for Stable and Efficient Agentic RAG Training（以路径为中心的奖励塑形，用于稳定高效的 agentic RAG 训练）](https://arxiv.org/abs/2602.22576v1)
+  - [Towards Faithful Industrial RAG: A Reinforced Co-adaptation Framework for Advertising QA（迈向忠实的工业 RAG：面向广告问答的强化协同自适应框架）](https://arxiv.org/abs/2602.22584v1)
+  - [Requesting Expert Reasoning: Augmenting LLM Agents with Learned Collaborative Intervention（请求专家推理：用学习到的协作式干预增强 LLM Agent）](https://arxiv.org/abs/2602.22546v1)
 - **共同方法**：
-  - **基于政策的 RAG** + 结构化裁决（辩论 + 裁判并输出威胁分数）。
-  - **免训练参数编辑**：稀疏神经元选择 + 闭式低秩更新，将安全性迁移到多语言。
-  - 与现有方法组合（如 MPO + editing）。
+  - 用**过程/路径奖励**替代稀疏结果奖励（双轨步骤覆盖；软结果评分）。
+  - 使用 **GRPO 风格 RL** + 结构化格式（先规划的轨迹；带标签的交互协议）。
+  - 加入**领域特定忠实性约束**（证据忠实性；URL 有效性检查与惩罚）。
 - **开放问题 / 失效模式**：
-  - CourtGuard 在小模型骨干上的时延与格式脆弱性。
-  - 多语言基准/评测依赖**机器翻译**与自动化 guard 模型；对自适应攻击的鲁棒性尚未建立。
+  - 依赖 **LLM 评估器/裁判**打分（奖励投机 / 评估器敏感性）。
+  - 离线工件：参考规划器与指示器类资源增加流水线复杂度。
+  - 泛化：训练常锚定在特定领域（Minecraft、广告 QA、QA 基准）。
 
-### 主题：面向推理/agentic RAG 的效率与稳定性 RL
+### 主题：不牺牲准确率的推理效率（自适应思考、熵/长度控制）
 
-- **重要性**：“多想一点”不再是免费收益；token 成本与不稳定性（熵塌缩、长度异质性、稀疏奖励）已成为一阶约束。
+- **重要性**：长 CoT 成本高；朴素长度惩罚会导致探索坍塌或在极端长度异质性下使 RL 不稳定。
 - **代表论文**：
-  - Stable Adaptive Thinking via Advantage Shaping and Length-Aware Gradient Regulation（通过优势塑形与长度感知梯度调节实现稳定自适应思考） — https://arxiv.org/abs/2602.22556v1
-  - Compress the Easy, Explore the Hard: Difficulty-Aware Entropy Regularization for Efficient LLM Reasoning（压缩易题、探索难题：难度感知熵正则用于高效 LLM 推理） — https://arxiv.org/abs/2602.22642v1
-  - Search-P1: Path-Centric Reward Shaping for Stable and Efficient Agentic RAG Training（Search-P1：以路径为中心的奖励塑形，用于稳定高效的 agentic RAG 训练） — https://arxiv.org/abs/2602.22576v1
+  - [Stable Adaptive Thinking via Advantage Shaping and Length-Aware Gradient Regulation（通过优势塑形与长度感知梯度调节实现稳定自适应思考）](https://arxiv.org/abs/2602.22556v1)
+  - [Compress the Easy, Explore the Hard: Difficulty-Aware Entropy Regularization for Efficient LLM Reasoning（易题压缩、难题探索：难度感知熵正则用于高效 LLM 推理）](https://arxiv.org/abs/2602.22642v1)
+  - [Test-Time Scaling with Diffusion Language Models via Reward-Guided Stitching（通过奖励引导的拼接实现扩散语言模型的测试时扩展）](https://arxiv.org/abs/2602.22871v1)
 - **共同方法**：
-  - 采用 GRPO 风格 RL，并加入**显式长度/效率目标**。
-  - 修复已知 RL 病态：组归一化优势偏置（CPAS）、长度异质性导致的梯度失衡（LAGR）、熵塌缩（难度感知熵）。
-  - 通过**过程/路径奖励**与部分得分，为 agentic RAG 稠密化监督。
+  - **按实例自适应控制**（think/no-think token；难/易熵缩放；按题最短正确长度基线）。
+  - 在长度异质性下用**优势塑形 + 梯度重加权**稳定 RL。
+  - 将测试时扩展从“单条长轨迹”转向**步骤级复用**（PRM 评分拼接 + AR 重计算）。
 - **开放问题 / 失效模式**：
-  - 超出数学/可验证领域的泛化仍有限（自适应思考论文明确指出）。
-  - 依赖 LLM 评估器/参考规划器（Search-P1）会引入对评估器选择的敏感性与离线成本。
+  - 部分工作尚未证明可扩展到大模型（自适应思考在 1.5B/7B 上评估）。
+  - 依赖 PRM 与采样轨迹多样性；共享错误会限制拼接恢复。
+  - 难度估计代理（历史准确率 EMA）跨领域可能脆弱。
 
-### 主题：长时程 agent 扩展：记忆、KV cache 与上下文管理
+### 主题：长时程 Agent 基础设施：记忆、KV cache、随机性与评测
 
-- **重要性**：长时程 agent 越来越受**GPU 显存带宽与上下文增长**限制，也受制于在结构化动作–观测日志上失效的记忆系统。
+- **重要性**：Agent 运行更久后，失败会变成系统失败：记忆压缩丢失因果状态、KV cache 成为服务瓶颈、即便温度为 0（API 场景）跨运行随机性仍削弱可靠性。
 - **代表论文**：
-  - SideQuest: Model-Driven KV Cache Management for Long-Horizon Agentic Reasoning（面向长时程 agent 推理的模型驱动 KV cache 管理） — https://arxiv.org/abs/2602.22603v1
-  - InnerQ: Hardware-aware Tuning-free Quantization of KV Cache for Large Language Models（硬件感知、免调参的 LLM KV cache 量化） — https://arxiv.org/abs/2602.23200v1
-  - AMA-Bench: Evaluating Long-Horizon Memory for Agentic Applications（AMA-Bench：评测面向 agent 应用的长时程记忆） — https://arxiv.org/abs/2602.22769v1
+  - [SideQuest: Model-Driven KV Cache Management for Long-Horizon Agentic Reasoning（面向长时程 agentic 推理的模型驱动 KV cache 管理）](https://arxiv.org/abs/2602.22603v1)
+  - [AMA-Bench: Evaluating Long-Horizon Memory for Agentic Applications（评估 agentic 应用的长时程记忆：AMA-Bench）](https://arxiv.org/abs/2602.22769v1)
+  - [Evaluating Stochasticity in Deep Research Agents（评估深度研究 Agent 的随机性）](https://arxiv.org/abs/2602.23271v1)
+  - [InnerQ: Hardware-aware Tuning-free Quantization of KV Cache for Large Language Models（面向硬件、免调参的 LLM KV cache 量化：InnerQ）](https://arxiv.org/abs/2602.23200v1)
 - **共同方法**：
-  - 将工具输出视为一等上下文对象，并积极**驱逐/量化**。
-  - 让压缩与硬件原语（向量–矩阵解码注意力）及服务栈（SGLang/H100 评测）对齐。
-  - 在**agent-环境轨迹**上评测记忆，覆盖因果/状态类问题（Recall、Causal Inference、State Updating、Abstraction）。
+  - 让隐藏瓶颈**可测量**（峰值 token 利用率、KV 读取、答案/发现/引用的归一化总方差、needle 协议）。
+  - 使用**模型驱动或硬件对齐**机制（辅线程语义驱逐；KV 内维度分组）。
+  - 加入**结构化缓解**（结构化输出；查询交集集成；基于因果图的工具增强检索）。
 - **开放问题 / 失效模式**：
-  - SideQuest 目前只驱逐工具响应（不含“思考”token），并出现一定 OOD 退化。
-  - InnerQ 证据主要限于 GSM8K + 单 GPU 的 matmul 微基准；跨工作负载的端到端解码收益仍待证明。
-  - 记忆构建/压缩是主要损失点（needle 消融显示大幅下降）。
+  - OOD 退化（SideQuest 在 BrowseComp 上准确率最多下降 5%）。
+  - 记忆构建/检索损失主导端到端性能（AMA-Bench needle 消融）。
+  - 微基准 vs 端到端延迟（InnerQ 报告 matmul 加速；更广泛服务影响未充分展示）。
 
-### 主题：评测可靠性：评分者效应、分歧上限与 agent 随机性
+### 主题：评测可靠性、审计与隐藏行为
 
-- **重要性**：若测量不稳定，优化目标会漂移；对 agent 而言，*运行间方差*可能主导感知质量。
+- **重要性**：安全与能力主张依赖测量；评分者效应与分歧上限可能颠倒排名，而审计工具必须在模型主动抗拒披露时仍能被检验。
 - **代表论文**：
-  - Correcting Human Labels for Rater Effects in AI Evaluation: An Item Response Theory Approach（用项目反应理论校正 AI 评测中的评分者效应） — https://arxiv.org/abs/2602.22585v1
-  - Decomposing Physician Disagreement in HealthBench（分解 HealthBench 中医生分歧） — https://arxiv.org/abs/2602.22758v1
-  - Evaluating Stochasticity in Deep Research Agents（评估深度研究 agent 的随机性） — https://arxiv.org/abs/2602.23271v1
+  - [AuditBench: Evaluating Alignment Auditing Techniques on Models with Hidden Behaviors（在具有隐藏行为的模型上评估对齐审计技术：AuditBench）](https://arxiv.org/abs/2602.22755v1)
+  - [Correcting Human Labels for Rater Effects in AI Evaluation: An Item Response Theory Approach（用 IRT 校正 AI 评测中的评分者效应）](https://arxiv.org/abs/2602.22585v1)
+  - [Decomposing Physician Disagreement in HealthBench（分解 HealthBench 中医生分歧）](https://arxiv.org/abs/2602.22758v1)
 - **共同方法**：
-  - 显式方差分解（评分者严苛度/居中倾向；医生 vs 量表 vs 残差；传播性 vs 内生随机性）。
-  - 诊断上限并提出缓解杠杆（评分者监控；不确定性标签；结构化输出 + 查询集成）。
+  - 将评测视为**测量问题**（MFRM 严苛度/阈值；方差分解；agentic 审计成功率）。
+  - 用**对抗性目标**做压力测试（植入隐藏行为 + 反坦白训练）。
+  - 报告**诊断信息**而非仅分数（评分者中心性；工具到 Agent 的差距；残余分歧占主导）。
 - **开放问题 / 失效模式**：
-  - 多面向模型需要足够的链接/重叠；某些面向在实践中不可估。
-  - HealthBench 分歧主要是残差/案例特定；许多预测因子解释的方差很少。
-  - 即使温度为 0，API 非确定性仍存在；缓解必须是算法层面的。
+  - 工具到 Agent 的差距：工具揭示的证据未必转化为调查者成功。
+  - 评分者模型的识别/可估计性约束（MFRM 尝试中策略维度不可估）。
+  - 大量残余分歧表明：若无更好 rubric/上下文，仅改进“裁判模型”存在上限。
 
-### 主题：审计与红队：隐藏行为与关系性伤害
+### 主题：Agent 时代的隐私与双重用途风险
 
-- **重要性**：隐藏行为与多轮伤害难以用静态测试暴露；agent 审计员与对抗仿真正在成为可扩展替代方案。
+- **重要性**：Agent + 工具/记忆会放大隐私伤害（去匿名化）与双重用途能力提升；防御必须在真实、长时程的人类使用条件下评估。
 - **代表论文**：
-  - AuditBench: Evaluating Alignment Auditing Techniques on Models with Hidden Behaviors（AuditBench：在具有隐藏行为的模型上评估对齐审计技术） — https://arxiv.org/abs/2602.22755v1
-  - TherapyProbe: Generating Design Knowledge for Relational Safety in Mental Health Chatbots Through Adversarial Simulation（TherapyProbe：通过对抗仿真为心理健康聊天机器人生成关系安全设计知识） — https://arxiv.org/abs/2602.22775v1
+  - [Assessing Deanonymization Risks with Stylometry-Assisted LLM Agent（用文体计量辅助的 LLM Agent 评估去匿名化风险）](https://arxiv.org/abs/2602.23079v1)
+  - [Decomposing Private Image Generation via Coarse-to-Fine Wavelet Modeling（通过由粗到细的小波建模分解私有图像生成）](https://arxiv.org/abs/2602.23262v1)
+  - [LLM Novice Uplift on Dual-Use, In Silico Biology Tasks（LLM 对双重用途、计算生物任务中新手能力提升的影响）](https://arxiv.org/abs/2602.23329v1)
 - **共同方法**：
-  - 构建带有隐藏行为的**模型生物体**，并评估端到端调查 agent（工具到 agent 的差距）。
-  - 使用对抗式多智能体仿真（MCTS）发现**多轮失败路径**，并抽象为模式库。
+  - 端到端流水线：**搜索 + 聚合 + 反思**（文体计量 Agent；多模型访问的 uplift 研究）。
+  - 形式化隐私：**DP + 后处理**（仅对粗小波 token 做 DP；细节用公共先验）。
+  - 不只测准确率，还测**操作性风险信号**（候选覆盖；引导式重组缓解；受试者报告的防护摩擦）。
 - **开放问题 / 失效模式**：
-  - AuditBench 目标是微调模型；可能比自然涌现的问题更易审计。
-  - TherapyProbe 的检测器性能有上限（macro-F1 0.71；部分类别更难），且从业者验证样本较小。
+  - 开放世界去匿名化即便有 DB 增强仍偏低（top-3 仍有限），但定向场景提升显著。
+  - 严格 ε 下 DP 质量差距仍在（如 ε=1 伪影；对公共先验强度敏感）。
+  - 将 in-silico uplift 映射到湿实验风险仍未解决。
 
 ### 3) 技术综合
-- GRPO 反复出现，成为 RL 的主力（自适应思考、人机协作模块、agentic RAG 奖励塑形、工业 RAG RL），但论文越来越聚焦于**方差/异质性控制**（长度感知梯度、熵塌缩预防、部分得分结果）。
-- agent 训练论文的共同模式：**用结构化中间信号替代稀疏终局奖励**（Search-P1 路径奖励；通过 PRM 的扩散步评分；AgentDropoutV2 的指示器触发验证）。
-- “推理时脚手架”正在收敛：CourtGuard（RAG+辩论）、AgentSentry（反事实影子运行）、AgentDropoutV2（纠正或拒绝）、SideQuest（并行辅助线程）都在基座模型周围增加**辅助决策回路**，而非改动核心权重。
-- 多项工作强调：**工具输出主导长时程上下文**，因此是压缩/驱逐（SideQuest）与安全边界（AgentSentry）的自然单位。
-- 评测论文共同指向新的默认：不仅报告平均准确率，还要报告**测量稳定性**（评分者校正后的潜在特质；分歧分解；agent 的运行间方差 TV）。
-- “策略层”正在外置化：CourtGuard 用检索到的治理文本为决策奠基；ESAA 强制 JSON 合约 + 确定性回放；IoT 边缘论文将溯源完整性与审计延迟作为一等指标。
-- 基准正在变得更*agent 原生*：AMA-Bench 使用动作–观测轨迹；OmniGAIA 要求多模态工具使用；AuditBench 评估的是调查 agent，而非仅分类器。
-- 多篇论文显示：**系统约束会硬性击穿能力**（General Agent Evaluation：工具数量限制导致 AppWorld 上 0.00；IoT 故障切换窗口；KV cache 显存带宽）。
-- 安全迁移正从两端推进：用于多语言安全的**参数编辑**（稀疏权重编辑）与用于策略切换的**运行时裁决**（CourtGuard），暗示混合栈可能可行。
+- **GRPO 作为统一优化原语**出现在：自适应思考（CPAS/LAGR）、agentic RAG（Search-P1）、工业忠实性 RL（广告 QA）、人机协作工具使用（AHCE HFM）。
+- **反复出现的稳定化模式**：当轨迹长度/结构差异巨大时，方法会加入*显式归一化/加权*（LAGR 长度权重；CPAS 优势偏移；路径中心奖励；难度感知熵）。
+- **“边界中心”的 Agent 安全正在收敛**：AgentSentry 在工具返回边界防御；IoT 边缘论文强调 MQTT 作为命令边界；CourtGuard 将裁决锚定在检索到的策略文本而非参数化“直觉”。
+- **检索被视为策略学习问题，而非固定模块**：Search-P1 围绕计划执行与参考步骤覆盖塑形奖励；工业 GraphRAG 用 RL 协同自适应检索与生成。
+- **长时程可靠性正在用新指标被操作化**：随机性用答案/发现/引用的归一化总方差；记忆用召回/因果/状态更新/抽象类别；系统安全用执行到审计延迟与故障切换黑窗。
+- **模型驱动的系统优化正在超越“更好提示词”**：SideQuest 用模型做 KV cache 垃圾回收；InnerQ 将量化分组与解码时向量-矩阵访问模式对齐。
+- **评测正走向“测量模型”**：IRT/MFRM 校正评分者严苛度/中心性；HealthBench 分歧分解显示残余占主导；AuditBench 衡量端到端调查者成功而非仅工具信号。
+- **安全迁移越来越偏参数或推理时**：多语种安全的稀疏权重编辑；CourtGuard 的策略切换；AgentSentry 的纯推理反事实净化——降低对大规模新数据集的依赖。
+- **基准更贴近真实 Agent**：AMA-Bench 使用带符号工件的行动-观测日志；OmniGAIA 需要全模态工具使用；General Agent Evaluation 聚焦跨环境、协议保持的可比性。
 
 ### 4) Top 5 论文（含“为何是现在”）
 
-1) AgentSentry: Mitigating Indirect Prompt Injection in LLM Agents via Temporal Causal Diagnostics and Context Purification（通过时间因果诊断与上下文净化缓解 LLM Agent 的间接提示注入） — https://arxiv.org/abs/2602.22724v1
-- 引入边界级反事实重执行（orig/mask/mask_sanitized/orig_sanitized），以估计因果接管信号（ACE/IE/DE）。
-- 在 AgentDojo 上针对三类 IPI 家族与多个黑盒模型报告 **ASR = 0%**，同时保持高效用，并在表格中报告 **FPR = 0%**。
-- 消融显示：净化后的反事实 + masking 探针至关重要（移除后 ASR 升至约 21–23%）。
-- **保留意见**：推理开销增加；基准可能低估长时程渐进式/延迟接管。
+1) [AgentSentry: Mitigating Indirect Prompt Injection in LLM Agents via Temporal Causal Diagnostics and Context Purification（通过时间因果诊断与上下文净化缓解 LLM Agent 的间接提示注入）](https://arxiv.org/abs/2602.22724v1)
+- 引入以边界为锚的反事实重执行（orig/mask/mask_sanitized/orig_sanitized）来估计因果接管（ACE/IE/DE）。
+- 在 AgentDojo 上针对三类 IPI 家族与多个黑盒模型报告 **ASR = 0%**，表格中报告 FPR = 0%。
+- “为何是现在”：工具增强 Agent 正在上线；这是一个具体的推理时层，目标是*继续安全运行*而非终止。
+- **质疑点**：开销随每个边界的重执行次数扩展；评测指出基准可能低估长时程、延迟接管。
 
-2) LLM Novice Uplift on Dual-Use, In Silico Biology Tasks（LLM 对双用途 in silico 生物任务中新手的能力提升） — https://arxiv.org/abs/2602.23329v1
-- 人体实验证据：LLM 访问使新手比仅用互联网 **准确 4.16×**（校正后准确率约 5% → >17%）。
-- 处理组在 **7/8** 个基准上优于对照组；有时超过专家基线（如 HPCT、VCT）。
-- 报告多数参与者（89.6%）表示**绕过安全措施没有困难**，对政策与部署相关。
-- **保留意见**：仅限 in silico 任务；非双盲；研究中途模型可用性发生变化。
+2) [AuditBench: Evaluating Alignment Auditing Techniques on Models with Hidden Behaviors（在具有隐藏行为的模型上评估对齐审计技术：AuditBench）](https://arxiv.org/abs/2602.22755v1)
+- 提供 **56 个目标模型 / 14 种隐藏行为**并进行反坦白训练，使系统化审计评估成为可能。
+- 发现带脚手架的黑盒工具整体优于许多白盒工具；记录了**工具到 Agent 的差距**。
+- “为何是现在”：审计正成为部署门槛；该工作提供可重复目标与端到端 Agent 评估。
+- **质疑点**：目标是基于单一底座模型（Llama 3.3 70B）的微调；可能比自然涌现的行为更易审计。
 
-3) SideQuest: Model-Driven KV Cache Management for Long-Horizon Agentic Reasoning（面向长时程 agent 推理的模型驱动 KV cache 管理） — https://arxiv.org/abs/2602.22603v1
-- 将 KV 驱逐转化为在**并行线程**中的学习型辅助任务，避免“管理 token”污染。
-- 显著效率收益：峰值 token 利用降低 **56–65%**；服务评测显示在 H100 上 FRAMES **吞吐 +83.9%**。
-- 相比启发式驱逐基线提升可靠性（更少不可解析/未完成失败）。
-- **保留意见**：微调数据有限（215 条轨迹），且仅对工具输出做驱逐；存在一定 OOD 准确率损失。
+3) [LLM Novice Uplift on Dual-Use, In Silico Biology Tasks（LLM 对双重用途、计算生物任务中新手能力提升的影响）](https://arxiv.org/abs/2602.23329v1)
+- 人类受试证据：与仅互联网相比，LLM 访问带来**4.16× 更高的新手准确率**（odds ratio）；Treatment 在 7/8 个基准上提升。
+- Treatment 有时超过专家基线（如 HPCT、VCT），且参与者常报告防护摩擦很小（89.6%）。
+- “为何是现在”：政策讨论需要真实的 uplift 数据（多模型、长时程使用），而不只是模型内基准。
+- **质疑点**：限于 in-silico 任务；研究中途模型可用性变化；非双盲。
 
-4) CourtGuard: A Model-Agnostic Framework for Zero-Shot Policy Adaptation in LLM Safety（LLM 安全的零样本策略自适应、模型无关框架） — https://arxiv.org/abs/2602.22557v1
-- 实用的“策略切换”安全：基于 RAG 的攻防辩论 + 裁判输出 SAFE/BORDERLINE/UNSAFE 与威胁分数。
-- 报告强劲基准表现（宏平均 Acc 0.87 / F1 0.86），并通过策略语料切换在 OOD 维基百科破坏任务上达到 **90%** 准确率。
-- 明确将**动态策略适配性**作为期望属性。
-- **保留意见**：时延更高；依赖骨干模型的格式遵循（解析错误风险）。
+4) [SideQuest: Model-Driven KV Cache Management for Long-Horizon Agentic Reasoning（面向长时程 agentic 推理的模型驱动 KV cache 管理）](https://arxiv.org/abs/2602.22603v1)
+- 使用**并行辅线程**判断哪些工具输出已过期，并删除其 KV 条目，且不污染主上下文。
+- 报告显著效率收益（峰值 token 利用率 −56–65%，KV 读取 −53–71%），以及在 H100 上 FRAMES 的服务吞吐 +83.9%。
+- “为何是现在”：深度研究/网页 Agent 受 KV 限制；这是实用的服务侧杠杆。
+- **质疑点**：驱逐仅限工具输出（不含“思考”）；存在一定 OOD 准确率退化（BrowseComp）。
 
-5) Systems-Level Attack Surface of Edge Agent Deployments on IoT（IoT 上边缘 Agent 部署的系统级攻击面） — https://arxiv.org/abs/2602.22525v1
-- 用可度量指标将边缘 agent 安全具体化（审计延迟、溯源完整性、主权外流、故障切换窗口）。
-- 实证显示 MQTT broker 接受欺骗/重放/畸形溯源；强制回退触发静默 DNS 到外部 API；故障切换窗口 **35.7s**。
-- 强调“主权”可能在回退下不可见地失效——对物理执行场景至关重要。
-- **保留意见**：单一小型测试床；无缓解原型；云外流对比未做工作负载匹配。
+5) [Multilingual Safety Alignment Via Sparse Weight Editing（通过稀疏权重编辑实现多语种安全对齐）](https://arxiv.org/abs/2602.22554v1)
+- 免训练的稀疏神经元编辑，用闭式低秩更新将英文安全行为迁移到其他语言。
+- 引入 MULTI-STRONGREJECT（8 种语言，每种 313 条有害提示），并展示跨模型不安全计数下降；可与 MPO 组合。
+- “为何是现在”：多语种越狱差距是现实部署漏洞；权重编辑迭代与部署速度快。
+- **质疑点**：评估依赖自动 guard 模型；数据集为机器翻译（可能遗漏自然的低资源语言越狱）。
 
 ### 5) 实用下一步
-- 对工具使用型 agent，增加**工具返回边界的仪表化**：记录中介内容、拟执行动作，并（如可行）对高影响动作运行轻量反事实检查（AgentSentry 风格）。
-- 若部署边缘/IoT agent，将 MQTT（或等价物）视为**安全关键 C2**：测量溯源完整性、执行到审计延迟与故障切换黑窗；显式测试对欺骗/重放的接受情况。
-- 对长时程 agent，优先做**上下文成本控制**：原型化工具输出驱逐（类似 SideQuest）和/或与解码 matmul 对齐的 KV-cache 量化（类似 InnerQ），并测量端到端吞吐与失败率。
-- 用 RL 训练 agentic RAG 时，超越二元结果奖励：实现**路径/过程奖励**与部分得分（Search-P1），并跟踪收敛速度而非仅最终准确率。
-- 对推理效率 RL，监控**熵塌缩与长度异质性**；根据失效模式考虑难度感知熵正则（CEEH）或长度感知梯度调节（LAGR）。
-- 在评测流水线中，不要把原始 Likert 均值当作真值：可行时拟合**评分者效应模型**（MFRM），并报告分歧上限/方差分解（HealthBench 风格）。
-- 对深度研究 agent，测量**运行间方差**（答案/发现/引用），并测试结构化输出与早期查询集成等缓解；不要依赖 temperature=0 来获得确定性。
-- 对生物安全治理，将**人类能力提升**研究（而非仅模型基准）纳入风险评估，并明确测试安全措施在多小时工作流中是否能显著减缓信息获取。
+- **为 Agent 增加边界级监测**：记录工具返回边界的溯源元数据，并对高风险工具/动作周期性运行“影子”反事实检查（AgentSentry 风格）。
+- **将消息中间件纳入边缘/IoT 的安全边界**：强化 MQTT 认证/ACL 与重放防护；将执行到审计延迟与故障切换黑窗作为一等安全 SLO 进行度量。
+- **若做 agentic RAG 的 RL**：尝试路径中心奖励（自一致性 + 参考步骤覆盖）与软结果评分；通过替换裁判模型显式测试评估器敏感性。
+- **降低长时程成本且不破坏正确性**：实现自适应思考控制 token，并用长度感知梯度调节稳定 RL；另行测试难度感知熵正则以防止熵坍塌。
+- **让研究 Agent 的可靠性可测量**：计算答案/发现/引用的跨运行方差；再用结构化输出 + 早期查询交集集成降低随机性，同时跟踪准确率。
+- **面向多语种部署**：运行多语种有害提示扫描，并考虑稀疏权重编辑作为快速补丁——同时用多个危害分类器验证（不只一个 guard）。
+- **升级人工评测流水线**：建模评分者严苛度/中心性（MFRM）并跟踪分歧分解；在分歧高处优先收集“可减少不确定性”标签或缺失上下文标注。
+- **面向审计项目**：用调查者 Agent 端到端评估工具（AuditBench 风格），而非只看工具信号；显式测试最难目标配置（如 TD+KTO），避免对易审计目标过拟合。
 
 ---
 *由逐篇分析生成；无外部浏览。*
