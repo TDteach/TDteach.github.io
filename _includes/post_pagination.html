@@ -9,6 +9,7 @@ navigation:
 - On EN pages: Previous/Next navigate EN-only.
 - On ZH pages: 上一篇/下一篇 navigate ZH-only.
 
+Important: avoid Liquid `continue` for GitHub Pages compatibility.
 Supports both legacy ZH URLs (/zh/) and new ZH URLs (-zh/).
 {%- endcomment -%}
 
@@ -25,27 +26,33 @@ Supports both legacy ZH URLs (/zh/) and new ZH URLs (-zh/).
 
   {%- assign docs = site.paper_news | sort: 'date' | reverse -%}
   {% for d in docs %}
-    {%- comment -%}Skip docs of the other language{%- endcomment -%}
+
+    {%- comment -%}Language filter (no continue){%- endcomment -%}
+    {% assign accept = true %}
+
     {% if is_zh %}
       {% unless d.url contains '-zh/' or d.url contains '/zh/' %}
-        {%- continue -%}
+        {% assign accept = false %}
       {% endunless %}
     {% else %}
       {% if d.url contains '-zh/' or d.url contains '/zh/' %}
-        {%- continue -%}
+        {% assign accept = false %}
       {% endif %}
     {% endif %}
 
-    {% if found and next_doc == nil %}
-      {% assign next_doc = d %}
+    {% if accept %}
+      {% if found and next_doc == nil %}
+        {% assign next_doc = d %}
+      {% endif %}
+
+      {% if d.url == page.url %}
+        {% assign prev_doc = last_doc %}
+        {% assign found = true %}
+      {% endif %}
+
+      {% assign last_doc = d %}
     {% endif %}
 
-    {% if d.url == page.url %}
-      {% assign prev_doc = last_doc %}
-      {% assign found = true %}
-    {% endif %}
-
-    {% assign last_doc = d %}
   {% endfor %}
 
   {% assign label_prev = site.data.ui-text[site.locale].pagination_previous | default: 'Previous' %}
@@ -70,6 +77,7 @@ Supports both legacy ZH URLs (/zh/) and new ZH URLs (-zh/).
       {% endif %}
     </nav>
   {% endif %}
+
 {% else %}
   {% if page.previous or page.next %}
     <nav class="pagination">
