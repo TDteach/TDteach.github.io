@@ -34,4 +34,5 @@ Drop me an [Email](mailto:tangd9@mail.sysu.edu.cn) if you are interested!
 
 News
 ------
+* 03/2026: I am publishing a daily AI paper digest here: [Paper News](/paper-news/) (latest: [2026-03-02](/paper-news/2026-03-02/)).
 * 01/2025: I have joined Sun Yat-Sen University as an Assistant Professor.
