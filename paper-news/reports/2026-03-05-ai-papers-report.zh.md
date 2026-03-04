@@ -1,22 +1,162 @@
 # AI 论文洞察简报
 ## 2026-03-05
 
-### 0) 执行要点（先读这个）
-- 提供的逐篇论文分析不包含任何可用的论文内容（标题、方法、贡献、结果、局限性基本缺失），因此今天无法综合出有证据支撑的主题或要点。
-- 30 条记录均显示上游抽取失败（“Batch output not valid JSON”），这更像是流水线问题，而不是 arXiv 当天信号太弱。
-- 目前唯一可靠的产物是 arXiv 链接；任何试图在此基础上推断主题或重要性都将属于编造。
+### 0) 核心要点（先读这个）
+- **对智能体的评估正在从“是否完成”转向“过程中是否行为正确”。** 在 τ-bench 上的过程感知评估发现，**表面成功中有 27–78% 属于程序性腐败（procedurally corrupt）**，导致门控 Pass^4 大幅坍塌，暴露出仅看结果指标会遗漏的完整性失败。
+- **在动态、重工具的真实任务上，智能体的就绪度仍然很低。** LiveAgentBench 报告 **LLMs ≈13.48% Pass@1**，智能体仍显著落后于人类（**Manus 35.29% vs 人类 69.25%**）；工具不稳定与环境知识缺失是反复出现的阻塞因素。
+- **细粒度的引导/控制很脆弱。** 在 SteerEval 中，**提示词在不同粒度下较稳定**，而基于激活的引导（PCA/DiffMean/RePS）**从 L1→L3 急剧下降**，揭示了 token 级可控性的现实上限。
+- **安全正在通过结构化轨迹与表征层目标“进入模型内部”。** SaFeR-ToolKit 的虚拟工具轨迹显著提升 Qwen2.5-VL 在严格安全/有用性/严谨性上的得分；Causal-GRPO 针对“语义表征衰减（semantic representation decay）”，在不牺牲效用的情况下降低越狱 ASR。
+- **面向智能体的隐私防护正在变得情境化且可训练。** Contextualized Defense Instructing（CDI）结合对抗经验驱动的 GRPO，在未见过的仿真中达到 **PP 94.2 / HS 80.6 / AD 86.5**——显著优于静态提示/守卫。
+- **基准测试正在更具诊断性且更省样本。** NeuroCognition 与 SpatialText 探测基础认知原语（工作记忆、灵活性、自我中心变换），而多模态 IRT（M3IRT）可通过选择真正跨模态的问题，用 **约 10% 的题目重建排名**。
 
 ### 2) 关键主题（聚类）
 
+### 主题：过程感知与轨迹感知的智能体评估
+
+- **重要性**：仅看结果的指标会把“腐败成功（corrupt success）”当作成功，从而高估安全性与可靠性。轨迹感知的验证/评估可支持部署门控与高风险流程中的校准升级（escalation）。
+- **代表论文**：
+  - [Beyond Task Completion: Revealing Corrupt Success in LLM Agents through Procedure-Aware Evaluation](https://arxiv.org/abs/2603.03116v1)
+  - [Guideline-Grounded Evidence Accumulation for High-Stakes Agent Verification](https://arxiv.org/abs/2603.02798v1)
+  - [Evaluating Performance Drift from Model Switching in Multi-Turn LLM Systems](https://arxiv.org/abs/2603.03111v1)
+- **常见方法**：
+  - 记录并评分**过程信号**（读/写/沟通完整性；逐步指南对齐；交接引入的差异），而非只看终局成功。
+  - 使用**校准/不确定性**（GLEAN 中的贝叶斯逻辑回归；切换矩阵中的 bootstrap 置信区间）来支持弃权/升级决策。
+  - 引入**门控（gating）**或分解以压缩风险（PAE 的门控效用；切换漂移分解为前缀影响/后缀易感性）。
+- **开放问题 / 失效模式**：
+  - 依赖**LLM 裁判**（偏差、位置效应、提示敏感性）以及如何在规模化场景下验证其可靠性。
+  - 从受限设置扩展：末轮交接 → 更早/多轮切换；指南覆盖缺口；缺少显式政策的领域。
+
+### 主题：真实世界智能体基准 + 鲁棒性瓶颈
+
+- **重要性**：工具不稳定、环境知识缺口、动态 Web/OS 交互在实践中主导失败；静态基准会低估这些问题。
+- **代表论文**：
+  - [LiveAgentBench: Comprehensive Benchmarking of Agentic Systems Across 104 Real-World Challenges](https://arxiv.org/abs/2603.02586v1)
+  - [See and Remember: A Multimodal Agent for Web Traversal](https://arxiv.org/abs/2603.02626v1)
+  - [BeyondSWE: Can Current Code Agent Survive Beyond Single-Repo Bug Fixing?](https://arxiv.org/abs/2603.03194v1)
+- **常见方法**：
+  - 构建**可验证、依赖工具的任务**并自动检查（字符串匹配；Docker 化测试）。
+  - 增加**显式状态 + 符号工具**（URL 栈回溯；符号计数器）以减少幻觉与遗忘。
+  - 明确研究**搜索/工具增强**（SearchSWE；EverWebQA 的 live-web 流水线）。
+- **开放问题 / 失效模式**：
+  - 工具不稳定与执行失败（例如报告中将执行失败归因于不稳定性）。
+  - 搜索增强可能因时间错位/语义漂移而**不稳定甚至负向**。
+  - 多模态感知带来延迟/成本开销（自适应 VLM 调用仍增加算力）。
+
+### 主题：不同粒度下的可控性与引导 + 数据污染
+
+- **重要性**：许多对齐/引导方法在粗粒度行为层面有效，但在细约束下失效；此外，引导数据集本身也是攻击面。
+- **代表论文**：
+  - [How Controllable Are Large Language Models? A Unified Evaluation across Behavioral Granularities](https://arxiv.org/abs/2603.02578v1)
+  - [Understanding and Mitigating Dataset Corruption in LLM Steering](https://arxiv.org/abs/2603.03206v1)
+- **常见方法**：
+  - 在**层级粒度**（意图 → 策略 → 实例化）与多领域上评估引导。
+  - 对比**基于提示**与**基于激活**的引导；调节引导强度并测量权衡（概念 vs 指令 vs 流畅性）。
+  - 使用**鲁棒统计**（Lee–Valiant 鲁棒均值）缓解被投毒/污染的引导数据集。
+- **开放问题 / 失效模式**：
+  - 激活引导在细粒度（L3）坍塌，并出现强度权衡，损害指令遵循/流畅性。
+  - 协同行为注入可将**引导方向拉向攻击者行为**；鲁棒均值只能部分缓解。
+
+### 主题：通过结构化轨迹与模态感知目标实现多模态安全 + 幻觉缓解
+
+- **重要性**：多模态模型会因越狱、过度拒答、跨模态幻觉而失败；让中间决策可审计，或强制模态敏感/不变性，可降低这些失败。
+- **代表论文**：
+  - [SaFeR-ToolKit: Structured Reasoning via Virtual Tool Calling for Multimodal Safety](https://arxiv.org/abs/2603.02635v1)
+  - [MoD-DPO: Towards Mitigating Cross-modal Hallucinations in Omni LLMs using Modality Decoupled Preference Optimization](https://arxiv.org/abs/2603.03192v1)
+  - [Conditioned Activation Transport for T2I Safety Steering](https://arxiv.org/abs/2603.03163v1)
+- **常见方法**：
+  - 强制**结构化中间轨迹**（类型化工具调用；受限拓扑），并用 SFT→DPO→GRPO 训练。
+  - 加入**模态感知正则项**（对无关扰动不变；对相关扰动敏感）并去偏文本先验。
+  - 使用**条件/门控引导**（Mahalanobis/GDA/OOD 门控）在保有效用的同时减少不安全输出。
+- **开放问题 / 失效模式**：
+  - 依赖大型裁判模型与自动安全裁判；人工验证仍有限。
+  - 推理时引导在分布偏移下可能被绕过；均值池化激活可能遗漏局部不安全特征。
+  - 合成偏好数据与 stop-gradient 近似可能限制真实世界泛化。
+
+### 主题：面向智能体的隐私与安全基础（实践 + 形式化）
+
+- **重要性**：智能体处理敏感数据与工具动作；防御需要情境化决策、形式化保证与清晰威胁模型。
+- **代表论文**：
+  - [Contextualized Privacy Defense for LLM Agents](https://arxiv.org/abs/2603.02983v1)
+  - [PrivMedChat: End-to-End Differentially Private RLHF for Medical Dialogue Systems](https://arxiv.org/abs/2603.03054v1)
+  - [Extending the Formalism and Theoretical Foundations of Cryptography to AI](https://arxiv.org/abs/2603.02590v1)
+  - [TAO-Attack: Toward Advanced Optimization-Based Jailbreak Attacks for Large Language Models](https://arxiv.org/abs/2603.03081v1)
+- **常见方法**：
+  - 在智能体循环中进行情境化干预（CDI 在工具结果之后给出指导），以及对抗经验驱动优化（GRPO）。
+  - 通过**DP-SGD 覆盖 SFT、奖励建模与 PPO**并进行组合记账，实现端到端隐私保证。
+  - 将系统形式化为 **AIOracles**，用完备性 vs 安全性博弈刻画；用分类法映射攻击者能力。
+  - 通过更强的优化式越狱（两阶段损失 + DPTO）强化红队测试。
+- **开放问题 / 失效模式**：
+  - 情境化隐私防护的仿真到现实差距；对非优化型但有策略的攻击者可能脆弱。
+  - DP-RLHF 的算力开销与对代理偏好构造的依赖。
+  - 强越狱攻击达到很高 ASR，凸显持续的部署风险。
+
+### 主题：超越标准基准的认知/心理测量评估
+
+- **重要性**：标准基准呈现主导性的“通用因子”，但模型在基础认知原语上仍会失败；更好的诊断可指导训练并预测失效模式（状态丢失、幻觉）。
+- **代表论文**：
+  - [A Neuropsychologically Grounded Evaluation of LLM Cognitive Abilities](https://arxiv.org/abs/2603.02540v1)
+  - [SpatialText: A Pure-Text Cognitive Benchmark for Spatial Understanding in Large Language Models](https://arxiv.org/abs/2603.03002v1)
+  - [Evaluating Cross-Modal Reasoning Ability and Problem Characteristics with Multimodal Item Response Theory](https://arxiv.org/abs/2603.02663v1)
+- **常见方法**：
+  - 将人类认知测试（RAPM/SWM/WCST）改造为带**过程感知指标**（固着、无法维持集合、结构性错误）的评测。
+  - 在纯文本设置中隔离特定认知（自我中心/他者中心变换；全局空间一致性）。
+  - 使用心理测量学（多维 IRT + 自适应测试）识别高信号题目并降低评测成本。
+- **开放问题 / 失效模式**：
+  - 神经心理学构念是否能从人类干净迁移到 LLM；昂贵模态下样本量有限。
+  - 工作记忆/状态跟踪与自我中心变换的持续失败；推理模式有时反而有害。
+
 ### 3) 技术综合
+- 多篇论文在**轨迹级监督与评分**上趋同：PAE（完整性不变量）、GLEAN（逐步指南证据）、MOSAIC（成对轨迹偏好）、AgentAssay（行为指纹 + 序贯检验）都将智能体行为视为轨迹分布，而非单一输出。
+- **门控（gating）正在成为统一的安全模式**：PAE 用完整性门控效用；SaFeR-ToolKit 约束工具转移拓扑；CAT 用 Mahalanobis/OOD 门控激活引导；CDI 用逐步隐私指导门控行为。
+- **LLM 作为裁判普遍存在但更“可仪表化”**：SteerEval 使用 gpt-4.1-mini 评分；MOSAIC 指出位置偏差；PAE 报告人工验证精度；GLEAN 用 token 概率的 YES/NO 评分加贝叶斯校准。
+- **表征层对齐正在升温**：Causal-GRPO 针对恶意意图表征的持久性；MoD-DPO 显式塑造模态敏感/不变性；引导数据污染工作分析投毒如何旋转/收缩激活方向。
+- **运行鲁棒性正在被形式化**：模型切换漂移用成对差异 + bootstrap 置信区间与分解；AgentAssay 将回归视为带 SPRT 的假设检验，并用多变量 Hotelling T² 指纹。
+- **基准正在变得“在线（live）”且可更新**（LiveAgentBench、EverWebQA）以抵抗陈旧/污染，而心理测量方法（M3IRT）旨在保持评测紧凑且高信号。
+- **工具与确定性被视为一等公民**：REGAL 将确定性遥测计算前移并编译有界 MCP 工具；V-GEMS 外置计数与状态；BeyondSWE 使用 Docker 化可复现性。
+- **安全与隐私越来越多地在自适应对手下训练**：CDI 用搜索优化攻击者生成失败轨迹；TAO-Attack 改进优化式越狱；EXPGUARD+ 增加领域越狱。
+- **“推理”并非单调有益**：NeuroCognition 发现关闭推理可提升 RAPM 文本选择题；RLM 复现显示更深递归会降低准确率并爆炸式增加延迟/成本。
 
-### 4) Top 5 论文（含“为什么是现在”）
+### 4) Top 5 论文（含“为何是现在”）
 
-### 5) 可执行的下一步
-- 修复导致 “Batch output not valid JSON” 的摄取步骤，并针对该日期重新运行抽取。
-- 增加校验门禁：如果 `title` 为空且 `methods/problem_statement` 为“信息不足”，则自动隔离该记录并重试。
-- 记录并展示失败的 batch/custom_id 集合（`batch_69a8281fa3dc8190b13c360c9eb0816c`），以便进行定向重放。
-- 重新抽取后，基于修正后的逐篇论文分析重新生成简报（不要仅依赖 arXiv ID）。
+1) [Beyond Task Completion: Revealing Corrupt Success in LLM Agents through Procedure-Aware Evaluation](https://arxiv.org/abs/2603.03116v1)
+- 提出过程感知评估（Procedure-Aware Evaluation），显式分解 Read/Write/Communicate 并做一致性检查。
+- 显示 τ-bench 的“成功”中有 **27–78%** 是腐败；门控效用可坍塌（例如 Mistral Retail **0.68→0.16**）。
+- 给出模型特定的完整性失败特征，并对裁判精度进行人工验证（约 **93–95%**）。
+- **质疑点**：依赖显式政策/Octx 与 LLM 裁判语义；二元门控对真实风险分层可能过粗。
+
+2) [LiveAgentBench: Comprehensive Benchmarking of Agentic Systems Across 104 Real-World Challenges](https://arxiv.org/abs/2603.02586v1)
+- 源自真实用户、依赖工具、含多模态任务，并提供闭式验证（字符串匹配；不使用裁判模型）。
+- 量化差距：**LLMs ≈13.48%**，智能体更好但仍远低于 **人类 69.25%**（如 Manus **35.29%**）。
+- 揭示具体阻塞：工具不稳定与环境背景知识缺失。
+- **质疑点**：当前范围偏中文；将查询转为闭式任务可能引入不自然的伪影。
+
+3) [Contextualized Privacy Defense for LLM Agents](https://arxiv.org/abs/2603.02983v1)
+- 提出 CDI：在**工具结果之后**注入逐步隐私指导，而非仅静态提示或阻断。
+- 使用对抗失败轨迹 + GRPO；优化后的 CDI 在未见测试上达到 **PP 94.2 / HS 80.6 / AD 86.5**。
+- 展示仅优化隐私会过度保护；分阶段 PP→AD 预热很重要。
+- **质疑点**：评估基于仿真、合成配置与 LLM 裁判；真实部署迁移未证实。
+
+4) [AgentAssay: Token-Efficient Regression Testing for Non-Deterministic AI Agent Workflows](https://arxiv.org/abs/2603.02601v1)
+- 将随机回归测试形式化为 **Pass/Fail/Inconclusive** 三值语义与序贯检验（SPRT）。
+- 使用行为指纹向量 + Hotelling T² 提升检验力；报告 **约 78% 更少试验次数**与显著功效提升（某设置中单变量 0% → 指纹+SPRT 约 86%）。
+- 面向 CI/CD 的实用集成（pytest 插件；trace-first 离线分析使部分检查成本为 $0）。
+- **质疑点**：假设试验 i.i.d.；评估器随机性与供应商漂移可能破坏假设。
+
+5) [MoD-DPO: Mitigating Cross-modal Hallucinations in Omni LLMs using Modality Decoupled Preference Optimization](https://arxiv.org/abs/2603.03192v1)
+- 加入模态感知 KL 正则以实现**不变性/敏感性**，并用 Language-Prior Debiasing 减少纯文本捷径。
+- 在 AVHBench 上报告显著提升（如 Qwen 2.5 Omni + MoD-DPO++ **88.19%**），并在 CMM 与通用基准上改进。
+- 提供可扩展的合成偏好数据集（10,854 个视频共 18,112 样本）。
+- **质疑点**：依赖合成偏好与 stop-gradient 近似；额外前向计算增加成本且超参敏感性被指出。
+
+### 5) 实用下一步
+- 在你的智能体评估中加入**过程感知门控**：记录读/写/沟通事件，并在完整性不变量失败时取消“成功”（PAE 风格），然后跟踪相对仅看结果成功率的差值。
+- 为任何多模型路由/升级计划搭建**切换矩阵交接测试**；用 bootstrap 置信区间计算成对差异，并监控前缀影响/后缀易感性因子。
+- 对随机性智能体，采用**三值回归判定 + SPRT**，并存储轨迹以进行**trace-first 离线检查**，降低 CI token 成本。
+- 若使用激活引导，将引导数据集视为安全关键：在**协同行为注入**下测试鲁棒性，并考虑使用鲁棒均值估计（Lee–Valiant）而非原始均值。
+- 对使用工具的智能体隐私，原型化一个**工具结果后指导器**（类似 CDI），并在**对抗性发现的失败前缀**上训练；衡量 PP/HS/AD 权衡与冷启动行为。
+- 对多模态系统，用**模态扰动测试**评估跨模态幻觉，并考虑显式强制**不变性/敏感性**的偏好目标（MoD-DPO 风格），而非仅响应级偏好。
+- 使用“在线（live）”智能体基准（或内部等价物），纳入**工具不稳定**与**环境知识**；分别跟踪失败原因（执行失败 vs 推理 vs 信息缺失）。
+- 将认知诊断扩展到标准基准之外：至少加入一个**工作记忆/状态**任务（SWM 类）与一个**灵活性**任务（WCST 类），并配合过程指标捕捉“人类很容易”的失败。
 
 ---
-*由逐篇论文分析生成；未进行外部浏览。*
+*由逐篇分析生成；无外部浏览。*
