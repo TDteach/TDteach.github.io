@@ -1,0 +1,152 @@
+# AI 论文洞察简报
+## 2026-03-16
+
+### 0) 执行要点（先读这个）
+- **针对智能体的“自我报告/回忆”式评估在结构上可能具有误导性**：身份要素可能在一个窗口内出现，但从未在某个决策步*共同实例化*，因此即使测试通过，“稳定身份”也可能无法约束行动（[Time, Identity and Consciousness in Language Model Agents](https://arxiv.org/abs/2603.09043v1)）。
+- **结构化、可执行的中间表示正在跨领域胜出**：用于奖励估计的对象–属性世界状态、多文档 QA 的关系模式 + SQL、处理杂乱表格的元图 + 算子执行、以及用于空间推理的 AST 异中心地图，相比纯文本/RAG 基线都有显著提升。
+- **LLM-as-judge 正日益成为瓶颈**：多模态智能体基准显示评审不一致与安全标签噪声；基于量规（rubric）的 RL 与策略/标签流水线高度依赖评审校准，且可能被“刷分”或发生漂移（[MM-tau-p²](https://arxiv.org/abs/2603.09643v1), [RubiCap](https://arxiv.org/abs/2603.09160v1)）。
+- **智能体式“计划–执行–验证–修复”闭环正从演示走向可量化的工程收益**：移动端 kernel 生成在多智能体迭代与硬件在环评测下，从低编译/正确率跃升到高 CSR/FCR（[MobileKernelBench](https://arxiv.org/abs/2603.11935v1)）；类似闭环也出现在表格研究与 RL 环境翻译中。
+- **持续学习正在分化为两条实用配方**：(a) 通过分布匹配缓冲区的世界模型回放，降低持续 RL 的遗忘（[ARROW](https://arxiv.org/abs/2603.11395v1)）；(b) 对大型预训练 VLA，*简单*的顺序 LoRA + on-policy RL 可在多基准上实现接近零遗忘（[Simple Recipe Works](https://arxiv.org/abs/2603.11653v1)）。
+- **安全/合规工作正变得可流水线验证且可审计**：大规模 PP↔DS 差异检测并结合 APK 证据进行三角验证（[PrivPRISM](https://arxiv.org/abs/2603.09214v1)），以及面向 ML 原子间势的可证伪“携证证明（proof-carrying）”证书：对抗搜索 + Lean 证明（[Proof-Carrying Materials](https://arxiv.org/abs/2603.12183v1)）。
+
+### 2) 关键主题（聚类）
+
+### 主题：时间锚定与“身份是否真的约束行动”
+
+- **重要性**：只检查特质/记忆是否在上下文*某处*出现的智能体评估，可能高估稳定性与安全性；关键在于决策时刻是否存在完整的、落地的合取（grounded conjunction）。
+- **代表论文**：
+  - [Time, Identity and Consciousness in Language Model Agents](https://arxiv.org/abs/2603.09043v1)
+  - [AI Knows What's Wrong But Cannot Fix It: Helicoid Dynamics in Frontier LLMs Under High-Stakes Decisions](https://arxiv.org/abs/2603.11559v1)
+- **常见方法**：
+  - 形式化智能体脚手架/交互步骤，并在轨迹上定义可操作的度量。
+  - 强调“元识别或回忆存在，但行为并不可靠改变”的情形。
+- **开放问题 / 失效模式**：
+  - 如何为真实智能体技术栈做仪表化，以在行动时测量共同实例化（而非要素出现）。
+  - 在不可验证/高风险场景中，提升“识别”（反思、自我批评）的干预是否能可靠改善行为。
+
+### 主题：结构化状态与奖励作为规划骨干
+
+- **重要性**：零样本/可泛化规划需要密集的进度信号；纯文本相似度或基于评审的奖励常与逐步任务进展不对齐。
+- **代表论文**：
+  - [Reward Prediction with Factorized World States](https://arxiv.org/abs/2603.09400v1)
+  - [ARROW: Augmented Replay for RObust World models](https://arxiv.org/abs/2603.11395v1)
+- **常见方法**：
+  - 构建因子化的潜在/状态表示（对象–属性信念；RSSM 世界模型）。
+  - 使用回放/想象 rollout 训练策略，同时控制遗忘。
+- **开放问题 / 失效模式**：
+  - 对状态抽取与相似度几何的 embedding/LLM 选择敏感（StateFactory）。
+  - 持续设置中的任务顺序与奖励尺度敏感；固定缓冲区划分与缩放问题（ARROW）。
+
+### 主题：RAG 正在变成“结构优先”（模式、分块、算子）
+
+- **重要性**：检索质量越来越受上游结构化（分块、模式发现、表格元结构）限制，而不只是 embedding 模型。
+- **代表论文**：
+  - [DocSage: An Information Structuring Agent for Multi-Doc Multi-Entity Question Answering](https://arxiv.org/abs/2603.11798v1)
+  - [QChunker: Learning Question-Aware Text Chunking for Domain RAG via Multi-Agent Debate](https://arxiv.org/abs/2603.11650v1)
+  - [Deep Tabular Research via Continual Experience-Driven Execution](https://arxiv.org/abs/2603.09151v1)
+- **常见方法**：
+  - 将非结构化语料转为面向查询的结构化产物（关系表 + SQL；问题感知分块；操作图）。
+  - 使用执行反馈（SQL 执行、算子执行）与迭代纠错/记忆。
+- **开放问题 / 失效模式**：
+  - 多阶段流水线的成本/时延，以及在噪声/矛盾文档下的鲁棒性。
+  - 分块“补全”是否会引入细微泄漏或对文档措辞过拟合（需要谨慎约束；QChunker 声称补全仅使用显式文档信息）。
+
+### 主题：多模态评估的现实性（语音、图表、长论文）
+
+- **重要性**：纯文本评估会高估能力；真实部署涉及语音、图表与长多模态文档，其中注意力稀释与流水线噪声占主导。
+- **代表论文**：
+  - [MM-tau-p$^2$: Persona-Adaptive Prompting for Robust Multi-Modal Agent Evaluation in Dual-Control Settings](https://arxiv.org/abs/2603.09643v1)
+  - [Do What I Say: A Spoken Prompt Dataset for Instruction-Following](https://arxiv.org/abs/2603.09881v1)
+  - [SciMDR: Benchmarking and Advancing Scientific Multimodal Document Reasoning](https://arxiv.org/abs/2603.12249v1)
+  - [MaterialFigBENCH](https://arxiv.org/abs/2603.11414v1)
+- **常见方法**：
+  - 构建迫使模型锚定到模态特定证据的基准（口语提示；图表；整篇论文上下文）。
+  - 增加显式定位/基于量规的评审，并分析模态差距。
+- **开放问题 / 失效模式**：
+  - 评审不一致与相关性标签噪声（MM-tau-p²）。
+  - 记忆捷径：模型不看图也能答（MaterialFigBENCH）。
+  - 从 oracle→全上下文的大幅下滑，表明长上下文多模态检索仍未解决（SciMDR）。
+
+### 主题：带硬验证器的智能体工程闭环（编译/运行/测量）
+
+- **重要性**：当存在验证器（编译器、单元测试、端上基准）时，多智能体迭代修复可将 LLM 变成实用自动化工具。
+- **代表论文**：
+  - [MobileKernelBench: Can LLMs Write Efficient Kernels for Mobile Devices?](https://arxiv.org/abs/2603.11935v1)
+  - [Automatic Generation of High-Performance RL Environments](https://arxiv.org/abs/2603.12145v1)
+  - [GenePlan: Evolving Better Generalized PDDL Plans using Large Language Models](https://arxiv.org/abs/2603.09481v1)
+- **常见方法**：
+  - 迭代的生成→验证→修复闭环，并逐步增强验证强度（编译 + 功能测试 + 性能；L1–L4 验证；计划验证器）。
+  - 对程序进行搜索/优化（进化选择；多智能体分工）。
+- **开放问题 / 失效模式**：
+  - 跨框架/设备/后端的泛化（MobileKernelBench 目前为单 SoC 上的 MNN CPU）。
+  - 经验验证覆盖率 vs 罕见路径 bug（RL 环境翻译使用有限 rollout 测试）。
+  - 缺乏紧凑通用策略的领域仍然困难（GenePlan 在 Sokoban 上）。
+
+### 主题：可审计的安全/合规流水线（隐私 + 概念擦除 + 形式化证书）
+
+- **重要性**：部署需要*可检查*的产物（矩阵、证明、结构化差异），而不是不透明的“模型说安全”。
+- **代表论文**：
+  - [PrivPRISM](https://arxiv.org/abs/2603.09214v1)
+  - [OrthoEraser: Coupled-Neuron Orthogonal Projection for Concept Erasure](https://arxiv.org/abs/2603.11493v1)
+  - [Proof-Carrying Materials](https://arxiv.org/abs/2603.12183v1)
+- **常见方法**：
+  - 将 LLM 抽取与验证器模型/约束结合（自监督验证器；逻辑包络；几何零空间投影）。
+  - 跨来源三角验证（政策文本 vs DS 标签 vs APK 证据；对抗搜索 + DFT 复算；安全 vs 保真度指标）。
+- **开放问题 / 失效模式**：
+  - 静态分析会漏掉运行时行为（PrivPRISM）。
+  - SAE 质量与用于大规模擦除的零空间有限（OrthoEraser）。
+  - 证明在公理下认证推理，而非物理；组合探针可能与真实结构不同（PCM）。
+
+### 3) 技术综合
+- 多篇论文在 **“中间表示作为契约（contracts）”** 上趋同：AST（异中心空间树）、对象–属性状态、关系模式/SQL 表、表格元图、以及用于 caption 的量规，都充当感知/检索与生成之间*可检查*的接口。
+- **闭环执行反馈** 是主导性的鲁棒性杠杆：算子执行轨迹（DTR）、编译/测试/性能剖析（MobileKernelBench）、分层验证（RL 环境翻译）、SQL 执行 + 约束检查（DocSage）、以及 VQA 布尔成功检查 + reset FSM（RADAR）。
+- **评估正从单一标量分数转向多指标仪表盘**（MM-tau-p² 的 12 个指标；身份弱/强持久性；合规矩阵；奖励预测的 EPIC 距离），反映“通过/失败”会掩盖失效模式。
+- **对评审的依赖是反复出现的脆弱点**：量规 RL 依赖 LLM 评审；MM-tau-p² 显示评审不一致；SciMDR 用 LLM 做综合与评估；这些流水线需要类似软件测试的校准/鲁棒性检查。
+- **持续学习结果表明在某些设定下架构比“CL 小技巧”更重要**：世界模型回放缓冲区（ARROW） vs 大预训练 + LoRA + on-policy RL（VLA 持续 RL）展示了不同的稳定路径。
+- **RAG 特定洞见**：上游分块/模式/结构可能主导下游 QA 质量；QChunker 的 ChunkScore 与 ROUGE-L 强相关（λ≈0.3），DocSage 的结构化抽取是最关键的消融组件。
+- **安全/鲁棒性正变得几何与逻辑感知**：OrthoEraser 用零空间投影避免附带损伤；DocSage 用跨记录约束；PCM 用 bootstrap 包络 + Lean 证明。
+- **模态现实性暴露隐藏缺口**：口语提示会拉低文本输出任务（DOWIS），人格条件化可能降低安全回忆（MM-tau-p²），整篇论文上下文相对 oracle 上下文会显著降分（SciMDR）。
+
+### 4) Top 5 论文（含“为何现在”）
+
+1) [Time, Identity and Consciousness in Language Model Agents](https://arxiv.org/abs/2603.09043v1)
+- 形式化了一个具体评估失效：窗口内“出现”不意味着决策时共同实例化（定理 3.10），因此回忆/自我报告可能带来虚假安心。
+- 提供可仪表化指标（弱/强持久性）与从轨迹计算它们的算法——对智能体技术栈日志可直接落地。
+- 架构含义：RAG 可提高弱持久性，但不提升（甚至降低）强持久性；并发容量限制共同实例化。
+- **保留意见**：偏理论/方法学；未报告实证测量。
+
+2) [DocSage: An Information Structuring Agent for Multi-Doc Multi-Entity Question Answering](https://arxiv.org/abs/2603.11798v1)
+- 在 MDMEQA 上有大幅实证提升：MEBench 上 0.892 vs GPT-4o+RAG 的 0.620（+27.2pp）。
+- 展示实用配方：交互式模式发现 + 约束检查抽取 + 带溯源的 SQL 推理。
+- 消融指出关键因素（结构化抽取）。
+- **保留意见**：多阶段流水线成本高且依赖基础模型质量；在噪声/矛盾语料上可能退化。
+
+3) [MobileKernelBench: Can LLMs Write Efficient Kernels for Mobile Devices?](https://arxiv.org/abs/2603.11935v1)
+- 表明“LLM 写 kernel”主要被编译/API 幻觉阻塞——直到加入仓库感知的多智能体迭代 + 端上在环验证。
+- MoKA 达到 CSR 93.7% 与 FCR 75.3%，其中 27.4% 的 kernel 比原生 MNN 快 >1.5×；包含一个 6.82× 的 LayerNorm2D 案例研究。
+- 提供基准与自动化流水线（注册→编译→验证→端上性能）。
+- **保留意见**：仅在一个引擎（MNN CPU）与一个设备/SoC 上评测；更广泛后端通用性未验证。
+
+4) [PrivPRISM](https://arxiv.org/abs/2603.09214v1)
+- 大规模测量：7,770 个热门游戏中约 53% 存在 PP–DS 差异；1,711 个非游戏应用中约 61%。
+- 编码器–解码器 + 自监督验证器是降低 LLM 幻觉同时保持可解释性的务实模式。
+- 结合 APK 静态分析与人工审计进行三角验证（例如政策 URL 重定向问题）。
+- **保留意见**：静态分析可能漏掉运行时行为；部分差异可能具有解释空间/歧义。
+
+5) [Proof-Carrying Materials: Falsifiable Safety Certificates for Machine-Learned Interatomic Potentials](https://arxiv.org/abs/2603.12183v1)
+- 量化严重部署失败：在 2.5 万材料上，MLIP 筛选召回率 0.07（漏掉 93% 的 DFT 稳定材料）。
+- PCM 流水线结合对抗搜索、bootstrap 安全包络与 Lean 4 机器检验证明；并用独立 DFT 复算验证失败（20/20，中位力比约 ~12×）。
+- 增加前瞻风险模型（AUC-ROC 0.938 ± 0.004）与案例研究：在 20% DFT 预算下提升热电产出（+62 个稳定材料）。
+- **保留意见**：证明依赖公理；DFT 是“真值”（非实验）；组合探针引入近似差距。
+
+### 5) 实用下一步
+- **智能体评估**：增加轨迹级日志记录“身份要素激活”，并计算 **Pweak 与 Pstrong**；除非能证明行动时共同实例化，否则将回忆/自我报告视为弱证据。
+- **RAG 系统**：试点 **结构优先流水线**——(a) 问题感知分块 + 补全（QChunker 风格），或 (b) 查询特定模式 + 约束检查抽取 + SQL（DocSage 风格）——并与仅 embedding 的 RAG 对比测量增益。
+- **评审可靠性**：对任何 LLM-as-judge 指标，运行 **多评审/多随机种子一致性检查**，并显式跟踪分歧率（MM-tau-p² 显示在升级（escalation）案例上存在相关性标签噪声）。
+- **闭环智能体**：在存在验证器（编译/测试/执行）的地方，投入 **迭代修复闭环**，并进行角色分离（编码/调试/优化）与硬件在环测量（MobileKernelBench 模式）。
+- **持续学习**：若在做持续 RL，对比 (i) **带分布匹配缓冲区的世界模型回放**（ARROW）与 (ii) **SeqFT + LoRA + on-policy RL**（面向大型预训练 VLA），并在相同任务顺序扰动下评测。
+- **多模态现实性**：加入口语提示评测（DOWIS 风格）与带显式定位的全文档多模态 QA（SciMDR 风格），避免从纯文本测试高估能力。
+- **安全/合规审计**：采用“可审计产物”（合规矩阵、差异报告、安全包络），并跨来源三角验证（政策文本 + 声明 + 代码证据；对抗发现 + 独立复算）。
+
+---
+*由逐篇分析生成；未进行外部浏览。*
