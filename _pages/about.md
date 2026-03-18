@@ -10,7 +10,7 @@ redirect_from:
 
 Biography
 -----
-I am currently an Assistant Professor at Sun Yat-Sen University. Before that, I was a Postdoctoral Fellow, working with Prof. [XiaoFeng Wang](https://wangxiaofeng7.github.io) and Prof. [Haixu Tang](https://luddy.indiana.edu/contact/profile/?Haixu_Tang). I received my Ph.D. degree with honors in Information Engineering from the Chinese University of Hong Kong, advised by Prof. [Kehuan Zhang](https://staff.ie.cuhk.edu.hk/~khzhang/) and Prof. [Dahua Lin](http://dahua.site/). 
+I am currently an Associate Professor at Sun Yat-Sen University. Before that, I was a Postdoctoral Fellow, working with Prof. [XiaoFeng Wang](https://wangxiaofeng7.github.io) and Prof. [Haixu Tang](https://luddy.indiana.edu/contact/profile/?Haixu_Tang). I received my Ph.D. degree with honors in Information Engineering from the Chinese University of Hong Kong, advised by Prof. [Kehuan Zhang](https://staff.ie.cuhk.edu.hk/~khzhang/) and Prof. [Dahua Lin](http://dahua.site/). 
 
 
 
@@ -35,4 +35,4 @@ Drop me an [Email](mailto:tangd9@mail.sysu.edu.cn) if you are interested!
 News
 ------
 * 03/2026: I am publishing a daily AI paper digest here: [Paper News](/paper-news/) (latest: [2026-03-02](/paper-news/2026-03-02/)).
-* 01/2025: I have joined Sun Yat-Sen University as an Assistant Professor.
+* 01/2025: I have joined Sun Yat-Sen University as an Associate Professor.
