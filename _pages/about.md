@@ -24,7 +24,7 @@ In addition to the general trustworthiness of AI, I also enhanced the reliabilit
 
 
 
-For Potential Students and Collaborators
+To Potential Students and Collaborators
 -----
 I am always seeking highly **motivated students** who are passionate about advancing research in AI Security. I firmly believe that groundbreaking ideas are born through collaboration, and I am thrilled to partner with researchers who are driven to push the boundaries of knowledge and create meaningful, real-world impact. If you are enthusiastic, intellectually curious, and committed to achieving excellence, I would love to explore opportunities to work together and deliver impactful, cutting-edge results. **Let’s join forces to tackle the most pressing challenges in AI Security and shape the future of trustworthy and responsible AI!**<br>
 Drop me an [Email](mailto:tangd9@mail.sysu.edu.cn) if you are interested!
@@ -34,5 +34,5 @@ Drop me an [Email](mailto:tangd9@mail.sysu.edu.cn) if you are interested!
 
 News
 ------
-* 03/2026: I am publishing a daily AI paper digest here: [Paper News](/paper-news/) (latest: [2026-03-02](/paper-news/2026-03-02/)).
+* 03/2026: I am publishing a daily AI paper digest here: [Paper News](/paper-news/).
 * 01/2025: I have joined Sun Yat-Sen University as an Associate Professor.
