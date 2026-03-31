@@ -1,0 +1,180 @@
+# AI 论文洞察简报
+## 2026-03-31
+
+### 0) 核心要点（先读这个）
+- **智能体安全评估正在从“是否失败？”转向“失败在何处？”** 分阶段提示注入跟踪（EXPOSED→PERSISTED→RELAYED→EXECUTED）显示：暴露可能是普遍的，但后续执行会因模型与流水线阶段而显著不同——这会改变“鲁棒”架构应当长什么样。
+- **真实工具的权限滥用目前是常态，而非边缘案例。** 在包含真实 MCP 服务器/工具的沙盒中，提示注入的权限劫持达到很高的 ASR（平均 **90.55% ReAct**、**79.05% Plan-and-Execute**），表明工具授权与隔离是当下的直接瓶颈。
+- **多模态可靠性失败越来越像“先验覆盖证据”，而不只是编造。** CDH-Bench 发现，当图像包含非典型证据时，VLM 往往回退到常识先验（平均 CFAD **16.39% QA**、**25.20% MC**），其中计数异常尤其困难。
+- **测试时计算正在变得可控且可审计。** CoT2-Meta 表明无需训练的元控制（扩展/剪枝/修复/弃答）可在固定预算下提升准确率，并显著改善校准（报告 **ECE 0.035**）。
+- **多模态推理的 RL 正在走向更好的信用分配。** PRCO 的 Observer/Solver 协同进化将平均准确率提升约 **+7 个点**，并减少感知错误（如 **WeMath 感知错误 −39.2%**），直接把“感知”作为瓶颈来优化。
+- **安全门控理论正在硬化：分类器式门控可能在长期自我改进下结构性不足。** 一项信息论结果显示：在常见调度下，分类器式门控通常无法在允许无界有益更新的同时保持累计风险有限；验证式门控可以逃逸（在 GPT-2 LoRA 上展示了 δ=0 且 TPR>0）。
+
+### 2) 关键主题（聚类）
+
+### 主题：智能体流水线中的提示注入与权限滥用
+
+- **重要性**：使用工具的智能体会以多步方式失败；仅看最终 ASR 会掩盖防御究竟是在净化记忆/转发，还是仅在执行时拒绝。真实世界的权限滥用表明当前“智能体安全”尚未达到可部署水平。
+- **代表论文**：
+  - [Kill-Chain Canaries: Stage-Level Tracking of Prompt Injection Across Attack Surfaces and Model Safety Tiers](https://arxiv.org/abs/2603.28013v1)
+  - [Evaluating Privilege Usage of Agents on Real-World Tools](https://arxiv.org/abs/2603.28166v1)
+  - [Crossing the NL/PL Divide: Information Flow Analysis Across the NL/PL Boundary in LLM-Integrated Code](https://arxiv.org/abs/2603.28345v1)
+  - [Adversarial Attacks on Multimodal Large Language Models: A Comprehensive Survey](https://arxiv.org/abs/2603.27918v1)
+- **常见方法**：
+  - 对流水线做插桩以**定位传播路径**（分阶段金丝雀；类似污点的占位符流动分类法）。
+  - 跨**多个攻击面**评估（记忆/工具/传播/权限提升），而非单一基准面。
+  - 将“净化转发（sanitizing relays）”与“执行拒绝（execution refusals）”视为不同防御位置，且其可组合性不同。
+- **开放问题 / 失效模式**：
+  - 攻击面不匹配：防御在一个面上看似有效，却在另一个面上灾难性失败（包括在某些“防御”设置下报告 **100% ASR** 的单元格）。
+  - 如何在闭源系统中标准化日志/过程访问（过程追踪不可用或不完整）。
+  - 分阶段去污染（如记忆写入过滤）是否能抵抗比显式金丝雀更隐蔽的载荷。
+
+### 主题：多模态幻觉作为“先验驱动的归一化”
+
+- **重要性**：在高风险感知场景（医疗/质检/取证）中，危险失败是自信地报告*典型*情况，而不是观察到的异常。
+- **代表论文**：
+  - [CDH-Bench: A Commonsense-Driven Hallucination Benchmark for Evaluating Visual Fidelity in Vision-Language Models](https://arxiv.org/abs/2603.27982v1)
+  - [Adversarial Attacks on Multimodal Large Language Models: A Comprehensive Survey](https://arxiv.org/abs/2603.27918v1)
+  - [Seeing with You: Perception-Reasoning Coevolution for Multimodal Reasoning](https://arxiv.org/abs/2603.28618v1)
+- **常见方法**：
+  - 构造证据与先验之间的**可控冲突**（反事实图像 vs 常识图像成对）。
+  - 使用能隔离“先验塌缩”的指标（CFAD、CCR、RPD），而非泛化准确率。
+  - 通过**显式奖励更好证据提取**的训练信号提升落地性（Observer/Solver 分离）。
+- **开放问题 / 失效模式**：
+  - 合成图像基准可能无法充分代表真实异常分布。
+  - 选择题格式可能放大先验塌缩（报告 CFAD 上升、CF-Acc 下降）。
+  - 基于描述（caption）的中间证据（PRCO）对细粒度空间结构可能有损。
+
+### 主题：评估可靠性——裁判、温度与分解迷思
+
+- **重要性**：若评估不稳定，进展声明（与安全声明）将不可复现；成本与提示长度可能伪装成“更好的裁判”。
+- **代表论文**：
+  - [Rethinking Atomic Decomposition for LLM Judges: A Prompt-Controlled Study of Reference-Grounded QA Evaluation](https://arxiv.org/abs/2603.28005v1)
+  - [The Necessity of Setting Temperature in LLM-as-a-Judge](https://arxiv.org/abs/2603.28304v1)
+  - [MiroEval: Benchmarking Multimodal Deep Research Agents in Process and Outcome](https://arxiv.org/abs/2603.28407v1)
+- **常见方法**：
+  - 控制提示的丰富度/结构，并在多种提示变体上聚合，以避免“提示伪影”导致的结论。
+  - 除一致性外，还测量**稳定性**（一致性、解析错误）。
+  - 为长时程智能体加入**过程中心评估**（不仅看最终报告）。
+- **开放问题 / 失效模式**：
+  - 高温度会显著降低裁判一致性与解析稳定性（依模型而异），尤其在 CoT 提示下。
+  - 原子分解的收益可能依赖分解来源（自分解 vs 外部分解 vs 多阶段），尚未广泛测试。
+  - 当系统不暴露追踪信息时，过程评估可能受阻。
+
+### 主题：测试时推理控制与 token 级信用分配
+
+- **重要性**：前沿增益越来越来自计算如何分配（搜索/控制/熵保持），而不只是更多 token——影响成本、校准与鲁棒性。
+- **代表论文**：
+  - [CoT2-Meta: Budgeted Metacognitive Control for Test-Time Reasoning](https://arxiv.org/abs/2603.28135v1)
+  - [ERPO: Token-Level Entropy-Regulated Policy Optimization for Large Reasoning Models](https://arxiv.org/abs/2603.28204v1)
+  - [Beyond the Answer: Decoding the Behavior of LLMs as Scientific Reasoners](https://arxiv.org/abs/2603.28038v1)
+- **常见方法**：
+  - 使用**过程信号**（步骤健康度、熵、验证器置信度）来指导扩展/剪枝/修复，或为 RL 更新加权。
+  - 通过强调高不确定性的“决策枢纽”来防止熵塌缩。
+  - 分析迁移：提示优化的启发式可能**模型特定**，跨架构脆弱。
+- **开放问题 / 失效模式**：
+  - 控制器/预言机误排序会导致过早剪枝或浪费计算。
+  - token 级 RL 改进主要在数学上展示；超出可验证领域的泛化仍未解决。
+  - 提示演化可能过拟合模型的“局部逻辑”，限制互操作性。
+
+### 主题：通过自适应分配实现长时程多模态效率（视频）
+
+- **重要性**：视频推理受视觉 token 预算限制；输入侧与 token 侧自适应可在不改骨干的情况下，用空间保真换取时间覆盖。
+- **代表论文**：
+  - [ResAdapt: Adaptive Resolution for Efficient Multimodal Reasoning](https://arxiv.org/abs/2603.28610v1)
+  - [AdaptToken: Entropy-based Adaptive Token Selection for MLLM Long Video Understanding](https://arxiv.org/abs/2603.28696v1)
+  - [AMIGO: Agentic Multi-Image Grounding Oracle Benchmark](https://arxiv.org/abs/2603.28662v1)
+- **常见方法**：
+  - 使用轻量前端或免训练信号（熵、注意力）在帧/组之间分配计算。
+  - 在确定性高时早停以降低运行时。
+  - 在长视频基准上评估，并压力测试极长输入（AdaptToken 最多 **10K 帧**）。
+- **开放问题 / 失效模式**：
+  - 开环分配（ResAdapt）可能错过短暂但决定性的线索，且无法在骨干推理后修正。
+  - 分组推理仍是运行时瓶颈；早停关键但依赖可靠熵。
+  - 交互式多图设置暴露协议遵循失败（Skip 违规、过早猜测）。
+
+### 主题：隐私、取证与数据集完整性攻击/防御
+
+- **重要性**：随着数据集与凝练产物被共享，隐私泄露与隐蔽投毒/后门成为高杠杆；审计必须控制混杂因素。
+- **代表论文**：
+  - [InkDrop: Invisible Backdoor Attacks Against Dataset Condensation](https://arxiv.org/abs/2603.28092v1)
+  - [Membership Inference Attacks against Large Audio Language Models](https://arxiv.org/abs/2603.28378v1)
+  - [Who Wrote the Book? Detecting and Attributing LLM Ghostwriters](https://arxiv.org/abs/2603.28054v1)
+  - [Unsafe2Safe: Controllable Image Anonymization for Downstream Utility](https://arxiv.org/abs/2603.28605v1)
+- **常见方法**：
+  - 强调攻击的**隐蔽性**（如 LPIPS 等感知约束）与可迁移性（InkDrop）。
+  - 使用**盲基线**检测会混淆隐私审计的数据集伪影（音频 MIA）。
+  - 为长文本归因构建可解释指纹（token 转移排名/熵）（TRACE）。
+  - 通过 VLM 检查 + LLM 指令 + 扩散编辑自动匿名化；评估隐私–效用权衡。
+- **开放问题 / 失效模式**：
+  - 音频 MIA 可能被数据集偏移主导；“高 AUC”未必意味着记忆。
+  - 凝练数据集体量小且可检查——隐蔽攻击提高了防御门槛。
+  - 匿名化提供经验性隐私指标但无形式化保证；政策选择仍在系统之外。
+
+### 主题：对齐理论与安全验证极限
+
+- **重要性**：某些失效模式（奖励黑客、长期安全门控）可能是结构性的，而非靠更好提示或更多评测即可修补。
+- **代表论文**：
+  - [Reward Hacking as Equilibrium under Finite Evaluation](https://arxiv.org/abs/2603.28063v1)
+  - [Information-Theoretic Limits of Safety Verification for Self-Improving Systems](https://arxiv.org/abs/2603.28650v1)
+- **常见方法**：
+  - 将评估形式化为把高维质量投影到有限信号；证明在优化下失真不可避免。
+  - 提供可计算诊断（通过奖励模型梯度的失真指数）与尺度论证（若评估不按二次增长，工具组合性会使覆盖率消失）。
+  - 在可求和约束下证明分类器门控的不可能性结果；构造基于验证的逃逸方案。
+- **开放问题 / 失效模式**：
+  - 奖励黑客均衡模型的实证验证基本仍待开展。
+  - 验证方法依赖可处理的证书（如 Lipschitz 界），在大规模下可能难以紧致计算。
+
+### 3) 技术综合
+- 分阶段安全插桩（kill-chain canaries）与 NL/PL 信息流分类法都在操作化同一思想：**不要把 LLM 输出当作单体污点；要建模中间传播与变换**。
+- 提示注入鲁棒性是**攻击面依赖**的：同一模型可能对记忆投毒安全，却在工具投毒/传播上完全失败，意味着基准必须覆盖多攻击面。
+- 多项工作在**不确定性/熵作为控制信号**上趋同：ERPO 在关键 token 保持熵；AdaptToken 用响应熵做全局 token 分配与早停；CoT2-Meta 融合过程与结果置信度做控制。
+- 多模态 RLVR 正分化为**更好的信用分配**（PRCO 的 Observer/Solver）与**更好的推理时控制**（CoT2-Meta）；两者都旨在减少“流畅但错误”，但作用于不同生命周期阶段。
+- 评估可靠性如今被视为一等系统变量：温度强烈影响裁判一致性/错误率；提示丰富度会混淆“原子分解”的收益。
+- 基准正从最终正确性扩展到**过程与效率指标**：MiroEval（过程↔报告对齐）、CirrusBench（NEI/LJ/延迟）、AMIGO（协议遵循 + 可验证准确率）。
+- 音频隐私审计给安全评估一个通用教训：**盲基线可解释表观脆弱性**；不控制数据集伪影，结论可能错误。
+- 理论对齐论文暗示一个迫近的不匹配：随着智能体获得工具，**评估覆盖率缩小**（奖励黑客放大），而分类器式安全门控可能面临**长期不可能性**，推动转向验证/认证。
+
+### 4) Top 5 论文（含“为何现在”）
+
+1) [Kill-Chain Canaries: Stage-Level Tracking of Prompt Injection Across Attack Surfaces and Model Safety Tiers](https://arxiv.org/abs/2603.28013v1)
+- 引入分阶段跟踪（EXPOSED/PERSISTED/RELAYED/EXECUTED），解释防御*在哪里*起效，而不仅是最终动作是否发生。
+- 显示暴露可达 **100%**，而执行差异很大（如在报告的无防御运行中：GPT-4o-mini **53% ASR**、GPT-5-mini **3%**、Claude 变体 **0%**）。
+- 揭示极端的攻击面分裂（如报告单元格中 DeepSeek 在 memory_poison 为 **0%**，但在 tool_poison/propagation 为 **100%**）。
+- **保留意见**：单元格样本量偏小且载荷为合成的显式 payload；“总结阶段剥离”的机制未被隔离。
+
+2) [Evaluating Privilege Usage of Agents on Real-World Tools](https://arxiv.org/abs/2603.28166v1)
+- 提供真实工具沙盒（10 个 MCP 服务器、122 个权限敏感工具）与自动生成的良性/恶意请求。
+- 报告四个 LLM 上权限劫持 ASR 平均值极高（**90.55% ReAct**、**79.05% Plan-and-Execute**）——强证据表明问题迫在眉睫。
+- 强调规划有帮助但无法解决权限滥用。
+- **保留意见**：仅覆盖 10 个服务器与 4 个模型；尚未评估防御。
+
+3) [MiroEval: Benchmarking Multimodal Deep Research Agents in Process and Outcome](https://arxiv.org/abs/2603.28407v1)
+- 可刷新、用户落地的基准，包含**过程中心**评估与多模态任务。
+- 发现过程质量强预测结果（报告 **r = 0.88**），使“追踪质量”成为可测目标。
+- 显示多模态任务带来稳定下降（3–10 分），且在综合/事实性/过程维度的排名会变化。
+- **保留意见**：过程评估需要访问追踪；绝对分数依赖 LLM 裁判，即便排名较稳健。
+
+4) [CoT2-Meta: Budgeted Metacognitive Control for Test-Time Reasoning](https://arxiv.org/abs/2603.28135v1)
+- 免训练控制器，在扩展/剪枝/修复/停止/弃答之间分配推理预算，使用融合的过程+结果信号。
+- 报告在 15 个基准、匹配预算下持续增益，并改善校准（报告 **ECE 0.035**）。
+- 提供可解释的控制器追踪与消融，将增益归因到组件。
+- **保留意见**：依赖预言机/过程评估器质量；误排序会导致过早剪枝。
+
+5) [Seeing with You: Perception-Reasoning Coevolution for Multimodal Reasoning](https://arxiv.org/abs/2603.28618v1)
+- 通过交替 Observer（证据描述）与 Solver（作答），并配合角色特定奖励与泄漏抑制，解决 RLVR 信用分配模糊问题。
+- 报告平均准确率约 **+7 点**，并显著降低感知错误（如 WeMath 感知错误 **−39.2%**）。
+- 在包括 Qwen3-VL-8B-Instruct 在内的多个骨干上展示增益。
+- **保留意见**：中间描述可能有损；评估集中在简洁可验证答案基准，而非开放式生成。
+
+### 5) 实用下一步
+- 对智能体安全评估，**用分阶段指标替代单一 ASR**（exposed/persisted/relayed/executed），并跨**多个注入面**运行（记忆、工具输出、传播、权限提升）。
+- 在工具使用系统中，实现**最小权限 + 按工具白名单**，并用类似 GrantBox 的框架测量滥用；对比 ReAct 与 Plan-and-Execute 作为基线缓解。
+- 为 LLM 集成代码在 CI 中加入 **NL/PL 边界流标注**（占位符保留/模态分类法），用其优先级排序需要严格净化或结构化输出约束的调用点。
+- 对多模态模型，加入 CDH 风格的成对评估（证据 vs 先验冲突），并跟踪 **CFAD/CCR** 以检测标准 VQA 漏掉的“归一化”失败。
+- 使用 LLM-as-a-judge 时，**有意设置温度**（极低 T 以保证一致性/解析稳定），并将裁判温度 + 重复种子方差作为基准方法学的一部分报告。
+- 对测试时推理，原型化**预算化元控制**（剪枝/修复/弃答），并在固定计算下不仅测准确率，也测 **ECE/选择性预测**。
+- 对多模态 RLVR，尝试**角色分离的信用分配**（Observer/Solver），并显式测量感知 vs 推理错误类别，确保感知确实改善。
+- 对隐私审计（尤其音频），在声称记忆前先做**盲基线可分性检查**；之后再在分布匹配子集上运行 MIA。
+
+---
+*由逐篇论文分析生成；无外部浏览。*
