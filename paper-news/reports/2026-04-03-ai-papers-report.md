@@ -1,0 +1,142 @@
+# AI Paper Insight Brief
+## 2026-04-03
+
+### 0) Executive takeaways (read this first)
+- **Agent evaluation is shifting from “one score” to “systems observability”**: multiple papers propose *cheap triage*, *psychometric difficulty modeling*, and *panel-sizing laws* to make agent monitoring and improvement budget-feasible without judging every trajectory.
+- **Interface fidelity is now a first-order benchmark variable**: reproducing published agentic coding scores required recovering *in-distribution tools* and running the model in its *native message format*; format/tool mismatch can create huge, misleading gaps.
+- **Security threats are expanding from prompts to pipelines and weights**: new attacks/defenses target (i) **RAG supply chains** (provenance + taint), (ii) **model merging** (latent trojans that activate only post-merge), (iii) **continuous-latent reasoning** (embedding-row backdoors), and (iv) **system prompt leakage via encoding formats**.
+- **Long-horizon “realism” benchmarks are getting sharper**: proactive assistants with active users, interruptible web agents, and year-long planning sims all show frontier models still plateau at modest success rates and incur large *token-dominated* recovery costs.
+- **Interpretability results increasingly imply control/attack surfaces**: evidence that tool-use decisions are encoded *before* chain-of-thought begins, and that some symbolic failures come from *late-layer suppression*, both suggest interventions must target internal decision circuits—not just prompting.
+
+### 2) Key themes (clusters)
+
+### Theme: Scalable agent evaluation & data selection
+
+- **Why it matters**: Agentic systems generate massive interaction traces; without scalable selection and measurement, teams either overspend on review/judging or miss rare but critical failures.
+- **Representative papers**:
+  - [Signals: Trajectory Sampling and Triage for Agentic Interactions](https://arxiv.org/abs/2604.00356v1)
+  - [Logarithmic Scores, Power-Law Discoveries: Disentangling Measurement from Coverage in Agent-Based Evaluation](https://arxiv.org/abs/2604.00477v1)
+  - [Agent psychometrics: Task-level performance prediction in agentic coding benchmarks](https://arxiv.org/abs/2604.00594v1)
+  - [EvolveTool-Bench: Evaluating the Quality of LLM-Generated Tool Libraries as Software Artifacts](https://arxiv.org/abs/2604.00392v1)
+- **Common approach**:
+  - Replace “evaluate everything” with **selection/estimation layers** (rule signals, IRT-style predictors, panel scaling laws).
+  - Use **structured artifacts** (tool calls, repo state/tests/solutions, persona diaries) to improve interpretability and efficiency.
+  - Report metrics beyond task success (informativeness yield, ICC reliability, issue discovery scaling, library health).
+- **Open questions / failure modes**:
+  - How well do these methods transfer from benchmarks/simulated users to **production traffic**?
+  - Risk of **blind spots**: coarse signals miss “behaviorally normal but semantically wrong” trajectories; predictors may encode dataset artifacts.
+  - How to close the loop end-to-end (triage → preference data → training → measurable improvement)?
+
+### Theme: Harness fidelity & reproducibility in agentic coding
+
+- **Why it matters**: Published scores can be non-reproducible if the evaluation harness, message format, and toolset differ from training-time distribution—misleading model selection and deployment planning.
+- **Representative papers**:
+  - [In harmony with gpt-oss](https://arxiv.org/abs/2604.00362v1)
+  - [EvolveTool-Bench: Evaluating the Quality of LLM-Generated Tool Libraries as Software Artifacts](https://arxiv.org/abs/2604.00392v1)
+- **Common approach**:
+  - Recover or define **in-distribution tools** and schemas; run agents in **native formats** to avoid conversion loss.
+  - Measure not just pass@1 but also **context overflow**, tool schema robustness, and regression/composability of generated code.
+- **Open questions / failure modes**:
+  - Tool discovery may be incomplete if logs are partial; harness choices can still hide **contamination** or other confounds.
+  - How to standardize “agent harness specs” so leaderboards remain comparable across implementations?
+
+### Theme: Supply-chain security for LLM systems (data, prompts, weights)
+
+- **Why it matters**: As LLM systems become compositional (RAG corpora, merged checkpoints, system prompts, generated artifacts), attackers can target the *pipeline* rather than the model’s surface behavior.
+- **Representative papers**:
+  - [RAGShield: Provenance-Verified Defense-in-Depth Against Knowledge Base Poisoning in Government Retrieval-Augmented Generation Systems](https://arxiv.org/abs/2604.00387v1)
+  - [When Safe Models Merge into Danger: Exploiting Latent Vulnerabilities in LLM Fusion](https://arxiv.org/abs/2604.00627v1)
+  - [Thinking Wrong in Silence: Backdoor Attacks on Continuous Latent Reasoning](https://arxiv.org/abs/2604.00770v1)
+  - [Automated Framework to Evaluate and Harden LLM System Instructions against Encoding Attacks](https://arxiv.org/abs/2604.01039v1)
+- **Common approach**:
+  - Treat knowledge/model artifacts like **software supply chains** (attestations, provenance, integrity bounds).
+  - Demonstrate **stealthy attacks** that pass standard checks (safe sources that become unsafe post-merge; latent triggers in embeddings).
+  - Add **defense-in-depth** layers (provenance + trust-weighted retrieval + taint tracking; design-time prompt reshaping).
+- **Open questions / failure modes**:
+  - Provenance defenses have **insider replacement** blind spots (in-place edits) unless hash-pinning/re-attestation is enforced.
+  - Merging-time defenses can fail under adaptive threats; detection without privileged access (hidden states) remains hard.
+  - Encoding-based prompt leakage suggests “refusal on direct ask” is not a confidentiality guarantee.
+
+### Theme: Realistic long-horizon & mixed-initiative agent benchmarks
+
+- **Why it matters**: Deployment failures often come from statefulness, interruptions, user acceptance, and delayed consequences—properties underrepresented in short-horizon benchmarks.
+- **Representative papers**:
+  - [Proactive Agent Research Environment: Simulating Active Users to Evaluate Proactive Assistants](https://arxiv.org/abs/2604.00842v1)
+  - [When Users Change Their Mind: Evaluating Interruptible Agents in Long-Horizon Web Navigation](https://arxiv.org/abs/2604.00892v1)
+  - [YC-Bench: Benchmarking AI Agents for Long-Term Planning and Consistent Execution](https://arxiv.org/abs/2604.01212v1)
+- **Common approach**:
+  - Build **stateful environments** (FSM apps, web UI state, POMDP business sim) and evaluate success under constraints.
+  - Add metrics for **acceptance**, **post-update success curves**, and **cost/efficiency** (tokens/actions, API cost).
+- **Open questions / failure modes**:
+  - Simulators may not capture real user variability; synthesized interruptions/scenarios can bias results.
+  - Token overhead dominates recovery in interruption settings—how to reduce “thinking cost” without harming adaptation?
+
+### Theme: Making control and internal decisions explicit (interpretability → engineering)
+
+- **Why it matters**: If decisions are made implicitly inside generation, failures are hard to attribute; if decisions are encoded pre-CoT, explanations may be post-hoc.
+- **Representative papers**:
+  - [Decision-Centric Design for LLM Systems](https://arxiv.org/abs/2604.00414v1)
+  - [Therefore I am. I Think](https://arxiv.org/abs/2604.01202v1)
+  - [From Early Encoding to Late Suppression: Interpreting LLMs on Character Counting Tasks](https://arxiv.org/abs/2604.00778v1)
+- **Common approach**:
+  - Separate **signals/estimators** from **policies/controllers** (explicit decision layer).
+  - Use probing/steering/patching to localize where decisions or failures arise (pre-gen action encoding; late-layer suppression circuits).
+- **Open questions / failure modes**:
+  - How to prevent premature commitment (pre-gen decision) while preserving performance?
+  - Whether these mechanistic findings generalize to larger models and real tool-use stacks.
+
+### 3) Technical synthesis
+- Multiple works converge on **“separate measurement from action”**: Signals (triage), Decision-Centric (explicit δ), and agent-judge scaling (ICC vs discovery) all argue for modularizing what you *observe* vs what you *do* with it.
+- **Budget-aware evaluation** is becoming formal: Signals reports informativeness yield per label; agent-judge panels show **logarithmic reliability** but **power-law discovery**; psychometrics predicts per-task success to avoid reruns.
+- **Artifact-level evaluation** is expanding beyond outputs: EvolveTool-Bench evaluates evolving tool libraries (reuse/regression), while gpt-oss reproduction shows harness/tool/message-format are part of the “artifact.”
+- Security papers increasingly adopt **supply-chain framings**: RAGShield uses attestations + taint; TrojanMerge targets parameter fusion; THOUGHTSTEER targets embedding rows in latent-reasoning models; encoding attacks target system instruction confidentiality.
+- Several results imply **privileged-access asymmetry**: strong detection bounds/probes exist with hidden-state access (continuous-latent backdoor probes; collusion probes), but black-box detection is much weaker.
+- Long-horizon benchmarks (Pare, InterruptBench, YC-Bench) consistently show **frontier models plateau** and that **efficiency costs** (tokens, retries, API cost) are decisive, not just success rate.
+- Interpretability findings (pre-gen tool decision; late suppression circuits) suggest that **post-hoc CoT** can be unreliable as an explanation channel—supporting Decision-Centric’s push for explicit decision interfaces.
+- Reproducibility work (Harmony/tools) highlights that **context window overflow** and message formatting can dominate outcomes—interacting with long-horizon settings where context pressure is constant.
+- Across evaluation papers, there’s a recurring pattern: **coarse metrics hide failure modes** (task completion hides library debt; average scores hide tail drift; aggregate pass@1 hides harness mismatch).
+
+### 4) Top 5 papers (with “why now”)
+
+1) [Thinking Wrong in Silence: Backdoor Attacks on Continuous Latent Reasoning](https://arxiv.org/abs/2604.00770v1)
+- Shows a training-time backdoor (THOUGHTSTEER) that achieves ~100% attack success with minimal clean-accuracy loss on continuous-latent reasoning models.
+- Connects robustness to **Neural Collapse** and reports linear probes with AUC≈1.0 given hidden-state access.
+- Evaluates multiple defenses and finds they fail to reduce ASR while preserving clean accuracy.
+- **Skepticism**: strongest detection relies on hidden-state access; mechanistic depth is most complete on smaller models (COCONUT 124M).
+
+2) [When Safe Models Merge into Danger: Exploiting Latent Vulnerabilities in LLM Fusion](https://arxiv.org/abs/2604.00627v1)
+- Introduces TrojanMerge: source models remain individually safe, but merged models reach harmful scores up to 85.4%.
+- Works across multiple merging algorithms (Task Arithmetic/DARE/TIES/KnOTS) with high average harmfulness post-merge.
+- Highlights that “passes safety checks alone” is not sufficient for models intended for merging.
+- **Skepticism**: evaluated primarily on dual-model merges; attack assumes ability to construct a safety-critical transformation (gradient/data access).
+
+3) [In harmony with gpt-oss](https://arxiv.org/abs/2604.00362v1)
+- Independently reproduces OpenAI gpt-oss-20b scores by recovering in-distribution tools and implementing a native Harmony harness.
+- Quantifies how Chat Completions conversion inflates context overflow (e.g., Harmony 0.2% vs Chat 11.0% in one setting).
+- Provides a concrete tool-discovery methodology and harness design that practitioners can reuse.
+- **Skepticism**: tool discovery is bounded by available logs; contamination concerns in SWE Verified are explicitly not investigated.
+
+4) [Signals: Trajectory Sampling and Triage for Agentic Interactions](https://arxiv.org/abs/2604.00356v1)
+- Deterministic, model-free signals raise “developer-informative” yield to 82% vs 54% random on τ-bench, improving label efficiency (reported 1.52×).
+- Separates interaction vs execution failures—important for tool-using agents where fluent dialogue can mask execution issues.
+- Designed to run always-on without extra model calls.
+- **Skepticism**: coarse taxonomy misses semantically wrong but behaviorally normal traces; evaluation uses simulated users (τ-bench).
+
+5) [Do Phone-Use Agents Respect Your Privacy?](https://arxiv.org/abs/2604.00986v1)
+- Makes privacy in GUI agents *auditable* via iMy (LOW/HIGH data + permission tools) and instrumented apps that log field-level edits.
+- Shows success and privacy diverge sharply (e.g., Claude Opus 4.6: 82.8% success but 47.2% PQSR at τ=0.7).
+- Identifies **form minimization** (overfilling optional personal fields) as the most persistent failure mode.
+- **Skepticism**: mock apps + permissive user simulator (always grants HIGH) limit realism; doesn’t cover network exfiltration or cross-app leakage.
+
+### 5) Practical next steps
+- **Add a cheap triage layer** to your agent logs (interaction + execution signals) to prioritize human review; track “informativeness per label” as a first-class metric.
+- **Version and validate your harness**: lock message format, tool schemas, and context accounting; measure context overflow and tool-call schema adherence as part of CI for evaluations.
+- **Treat RAG corpora like supply chains**: implement document attestations + hash-pinning/re-attestation workflows; add trust-weighted retrieval and taint propagation for high-integrity domains.
+- **Harden against prompt/system leakage via format attacks**: explicitly test “print system prompt in YAML/TOML/cron/gitignore” style probes; consider design-time instruction reshaping and re-test ASR.
+- **If you merge models, add merge-time safety checks**: evaluate harmfulness post-merge (not just per-source), and consider integrity verification of contributors before fusion.
+- **Benchmark long-horizon behaviors with cost curves**: for interruptions, track SR(k) and token deltas; for proactive assistants, track proposal vs acceptance vs success; for planning sims, track memory usage (scratchpad writes) as a predictor.
+- **Make control explicit**: separate signal estimation (sufficiency/correctness/uncertainty) from deterministic policies; log decision contexts so failures are attributable.
+- **Privacy for GUI agents**: instrument form drafts and enforce minimization policies (required vs optional fields); measure PQSR-like joint metrics rather than task success alone.
+
+---
+*Generated from per-paper analyses; no external browsing.*
