@@ -1,0 +1,148 @@
+# AI Paper Insight Brief
+## 2026-04-04
+
+### 0) Executive takeaways (read this first)
+- **Agent reliability is shifting from “capability” to “operational correctness under constraints”**: deterministic fault injection + budgeted scoring for tool misuse (ToolMisuseBench) and explicit context-window budgeting as an RL decision problem (ContextBudget) make failures attributable and optimizable.
+- **Execution-heavy SWE agent training can be made scalable via a “semantic distill → small execution refine” recipe**: SWE-ZERO (300k execution-free trajectories) + SWE-HERO (13k execution-backed) materially improves SWE-bench Verified (e.g., 32B: 62.2%) while reducing infra dependence.
+- **Safety evaluation is becoming trajectory-native and system-supply-chain-aware**: ATBench exposes long-horizon, delayed-trigger tool risks where even strong models struggle at fine-grained diagnosis; MCP server security work shows multi-component exploit chains and provides a behavior-deviation detector (Connor) with high F1 (94.6%) plus real marketplace finds.
+- **“Reasoning” is not monotonicly beneficial—budgeting and credit assignment matter**: long CoT can *harm* function-calling accuracy (peaks at very brief 8–32 tokens); multimodal RL improves when advantages are routed to visually-dependent tokens (PGPO); RL post-training stabilizes when routing samples between GRPO and self-distillation (SRPO).
+- **Factuality/abstention is moving toward localized, model-native signals and targeted interventions**: diffusion LMs can localize uncertain commitments via cross-chain entropy and correct spans (OSCAR); abstention improves by detecting “query misalignment” via reasoning-trace inversion.
+
+### 2) Key themes (clusters)
+
+### Theme: Budgeted, deterministic evaluation for tool-using agents
+
+- **Why it matters**: Tool failures (schema drift, auth, timeouts) and resource limits (steps/calls/context) dominate real deployments; deterministic, budget-aware benchmarks make reliability improvements measurable and reproducible.
+- **Representative papers**:
+  - [ToolMisuseBench: An Offline Deterministic Benchmark for Tool Misuse and Recovery in Agentic Systems](https://arxiv.org/abs/2604.01508v1)
+  - [ContextBudget: Budget-Aware Context Management for Long-Horizon Search Agents](https://arxiv.org/abs/2604.01664v1)
+  - [Brief Is Better: Non-Monotonic Chain-of-Thought Budget Effects in Function-Calling Language Agents](https://arxiv.org/abs/2604.02155v1)
+- **Common approach**:
+  - Deterministic fault injection / replayable simulators with structured metrics (success, invalid calls, recovery time, budget-exceeded).
+  - Treat “budget” as a first-class variable (AUC over caps; explicit remaining-context state; token-budget sweeps).
+  - Diagnose failures into actionable buckets (wrong valid function vs hallucinated function; policy violations; recovery success).
+- **Open questions / failure modes**:
+  - How to handle “hard” faults (authorization/rate-limit) where simple repair layers show **zero success** in ToolMisuseBench’s released setting.
+  - Whether learned policies generalize across tool ecosystems and shifting schemas without overfitting to benchmark fault mixes.
+  - How to gate reasoning/CoT adaptively (brief helps routing; long induces misrouting/hallucination) without brittle heuristics.
+
+### Theme: Scalable training + verification loops for code and long-horizon autonomy
+
+- **Why it matters**: Execution environments and long-running search loops are the bottleneck for open-source agents; scalable data + persistent memory can unlock capability without prohibitive infra.
+- **Representative papers**:
+  - [From SWE-ZERO to SWE-HERO: Execution-free to Execution-based Fine-tuning for Software Engineering Agents](https://arxiv.org/abs/2604.01496v1)
+  - [CORAL: Towards Autonomous Multi-Agent Evolution for Open-Ended Discovery](https://arxiv.org/abs/2604.01658v1)
+  - [GPA: Learning GUI Process Automation from Demonstrations](https://arxiv.org/abs/2604.01676v1)
+- **Common approach**:
+  - Split “cheap semantic learning” from “expensive verification” (execution-free distillation then execution-backed refinement).
+  - Externalize state/knowledge into persistent artifacts (notes/skills/attempts) to enable reuse and cross-agent diffusion.
+  - Prefer deterministic replay/grounding mechanisms (SMC-based GUI element localization + readiness gating; bounded retries).
+- **Open questions / failure modes**:
+  - Teacher inheritance and verifier precision limits in SWE distillation; brittleness from environment variance.
+  - How CORAL-style autonomy behaves with weaker models or ambiguous evaluators (paper notes evaluator assumptions).
+  - Record-and-replay systems (GPA) can’t handle tasks requiring new planning beyond the demonstration.
+
+### Theme: Trajectory-level safety + supply-chain/tooling security
+
+- **Why it matters**: Real harms emerge across multi-step tool trajectories and via compromised tool servers; single-turn safety checks miss delayed triggers and multi-component exploit chains.
+- **Representative papers**:
+  - [ATBench: A Diverse and Realistic Trajectory Benchmark for Long-Horizon Agent Safety](https://arxiv.org/abs/2604.02022v1)
+  - [From Component Manipulation to System Compromise: Understanding and Detecting Malicious MCP Servers](https://arxiv.org/abs/2604.01905v1)
+  - [Tex3D: Objects as Attack Surfaces via Adversarial 3D Textures for Vision-Language-Action Models](https://arxiv.org/abs/2604.01618v1)
+- **Common approach**:
+  - Explicit taxonomies + controlled generation (ATBench’s risk-source/failure-mode/harm axes; delayed-trigger two-episode protocol).
+  - Behavior-based detection beyond signatures (Connor’s intent extraction + execution tracing + code slicing + step-wise allow/warn/block).
+  - Physically grounded threat models for embodied agents (object-bound adversarial 3D textures; sim-to-real via EoT).
+- **Open questions / failure modes**:
+  - Fine-grained diagnosis remains weak even when binary unsafe detection is decent (ATBench: GPT-5.4 76.7% F1 binary vs 13.5% failure-mode accuracy).
+  - Connor can miss payloads not exercised during simulation; false positives when benign behavior deviates from declared intent.
+  - Defenses for VLA texture attacks (training-time robustness, action constraints) are not established here—only the vulnerability and attack pipeline.
+
+### Theme: Credit assignment and routing in post-training (RLVR / preference learning)
+
+- **Why it matters**: Many alignment failures are optimization artifacts: wrong tokens get updated, wrong samples get distilled, or global distribution shifts are poorly captured—leading to instability or weak robustness gains.
+- **Representative papers**:
+  - [Unifying Group-Relative and Self-Distillation Policy Optimization via Sample Routing](https://arxiv.org/abs/2604.02288v1)
+  - [Not All Tokens See Equally: Perception-Grounded Policy Optimization for Large Vision-Language Models](https://arxiv.org/abs/2604.01840v1)
+  - [PLOT: Enhancing Preference Learning via Optimal Transport](https://arxiv.org/abs/2604.01837v1)
+- **Common approach**:
+  - Route supervision based on sample status (SRPO sends incorrect rollouts to SDPO, others to GRPO; entropy-weight SDPO tokens).
+  - Reweight token-level learning signals using causal dependency measures (PGPO uses KL between vision-conditioned vs text-only token distributions).
+  - Replace local token tweaks with distribution-level objectives (PLOT uses an OT/Wasserstein-style token loss with embedding-based costs).
+- **Open questions / failure modes**:
+  - Generalization beyond tested scales/domains (PGPO up to 7B; SRPO on Qwen3 4B/8B and five benchmarks; PLOT on small preference datasets).
+  - Hyperparameter sensitivity (PGPO τ/β; PLOT α; SRPO depends on having correct sibling rollouts for teacher info).
+  - Whether these methods preserve behavior under adversarial prompting beyond reported ASR reductions (PLOT) and benchmark gains.
+
+### Theme: Factuality, abstention, and uncertainty localization (including diffusion LMs)
+
+- **Why it matters**: “Confident but wrong” outputs persist; better signals for *where* uncertainty is and *when to abstain* enable targeted correction rather than blanket refusal.
+- **Representative papers**:
+  - [OSCAR: Orchestrated Self-verification and Cross-path Refinement](https://arxiv.org/abs/2604.01624v1)
+  - [PRISM: Probability Reallocation with In-Span Masking for Knowledge-Sensitive Alignment](https://arxiv.org/abs/2604.01682v1)
+  - [Answering the Wrong Question: Reasoning Trace Inversion for Abstention in LLMs](https://arxiv.org/abs/2604.02230v1)
+  - [ThinknCheck: Grounded Claim Verification with Compact, Reasoning-Driven, and Interpretable Models](https://arxiv.org/abs/2604.01652v1)
+- **Common approach**:
+  - Localize uncertainty to spans/tokens (cross-chain entropy for DLM commitments; fact-aligned masks + risk propagation).
+  - Apply targeted interventions (remask/re-denoise uncertain spans; probability reallocation only on risky fact spans).
+  - Use compact verifiers with supervised rationales for grounded decisions (1B verifier with structured reasoning).
+- **Open questions / failure modes**:
+  - OSCAR’s VRAM overhead (parallel chains) and limits when the model lacks knowledge (consistent hallucinations across chains).
+  - PRISM depends on fact extraction/verification quality and requires tuning λ to avoid capability degradation.
+  - Trace inversion adds multiple LLM calls (cost) and is tailored to reasoning-trace models.
+
+### 3) Technical synthesis
+- **Budget-awareness is becoming a unifying design principle** across agent reliability: ToolMisuseBench budgets (steps/calls/retries), ContextBudget’s explicit remaining-context state, and CoT token-budget sweeps all show that “more compute” can *hurt* without correct allocation.
+- **Routing/weighting is the common fix for coarse credit assignment**: SRPO routes samples between GRPO and SDPO; PGPO routes advantage mass to visually-dependent tokens; both aim to reduce gradient variance and prevent late-stage collapse.
+- **Verification is shifting earlier and more locally**: SWE-HERO uses execution-backed refinement after large execution-free distillation; OSCAR corrects uncertain spans before they “crystallize” in diffusion decoding; SAFE (multi-hop) verifies each atomic step (KG triple) with a trained feedback model.
+- **Determinism + replayability is the new benchmark gold standard** for tool reliability and safety: ToolMisuseBench’s seeded fault engine and ATBench’s planner-based synthesis + human audit enable controlled ablations and longitudinal comparisons.
+- **Trajectory-level safety diagnosis is still the bottleneck**: ATBench shows binary unsafe detection can be decent while fine-grained attribution is very low; Connor addresses this by intent extraction + step-wise behavior deviation judgments.
+- **Mechanistic interpretability is being used adversarially and diagnostically**: CRaFT uses circuit influence (via cross-layer transcoders) to find causally effective refusal features, producing much higher jailbreak ASR than activation-based selection.
+- **RAG alignment is moving from IR labels to reader-utility signals**: RRPO trains rerankers with RL using LLM-evaluated generation rewards; Neuro-RIT adapts the generator at neuron granularity to ignore irrelevant retrieval.
+- **Small, structured reasoning supervision can beat larger baselines in verification**: ThinknCheck’s 1B model with supervised rationales surpasses a 7B verifier on LLMAggreFact balanced accuracy and generalizes better to SciFact.
+- **Embodied robustness is expanding beyond 2D patches**: Tex3D’s differentiable 3D texture optimization (dual renderer + temporal weighting) shows large failure-rate increases and sim-to-real transfer, implying object appearance is a first-class attack surface.
+
+### 4) Top 5 papers (with “why now”)
+
+1) [From SWE-ZERO to SWE-HERO: Execution-free to Execution-based Fine-tuning for Software Engineering Agents](https://arxiv.org/abs/2604.01496v1)
+- Two-stage SFT: **300k execution-free** distilled trajectories then **13.2k execution-backed** refinement.
+- Strong open-source SWE-bench Verified results (e.g., **62.2%** for 32B) and clear ablation showing the execution-free stage matters (55.7% → 62.2%).
+- Practical recipe details (128k context via YaRN; multi-turn masking; test-time scaling with verifiers).
+- **Skepticism**: inherits teacher biases (Qwen3-Coder-480B) and depends on verifier quality; environment variance affects reproducibility.
+
+2) [ATBench: A Diverse and Realistic Trajectory Benchmark for Long-Horizon Agent Safety](https://arxiv.org/abs/2604.02022v1)
+- 1,000 human-audited tool-grounded trajectories with delayed triggers; large tool pool (2,084 tools; 1,954 calls).
+- Shows a key gap: strong models can do binary safety moderately well (GPT-5.4 **76.7% F1**) but fail at diagnosis (e.g., **13.5%** failure-mode accuracy).
+- Provides a controllable taxonomy (risk source / failure mode / harm) for targeted evaluation slices.
+- **Skepticism**: single-label per axis can miss multi-causal interpretations; English-only; text+tool only (no multimodal/embodied).
+
+3) [From Component Manipulation to System Compromise: Understanding and Detecting Malicious MCP Servers](https://arxiv.org/abs/2604.01905v1)
+- Component-centric PoC dataset: **114** malicious servers (19 influence paths × 6 goals); shows multi-component compositions can raise ASR; direct code/config injection hits **100% ASR**.
+- Connor detector: **94.6% F1**, strong ablation evidence (semantic generator critical), and marketplace sweep (1,672 servers → 2 confirmed malicious).
+- Concrete blueprint for tool marketplace security: intent extraction + execution tracing + code slicing + step-wise judgments.
+- **Skepticism**: relies on simulation/execution—payloads not triggered during simulation can evade; results depend on host/LLM versions.
+
+4) [OSCAR: Orchestrated Self-verification and Cross-path Refinement](https://arxiv.org/abs/2604.01624v1)
+- Training-free hallucination detection/correction for diffusion LMs via cross-chain entropy localization + targeted remasking.
+- Beats a trained detector on AUROC (avg **86.5%** on LLaDA-8B; **85.7%** on Dream-7B) and improves QA F1 (+6.1 pp on LLaDA-8B; +10.7 on TriviaQA).
+- Span-level reductions on RAGTruth (overall **41.1%** hallucinated span mass reduction).
+- **Skepticism**: increased peak VRAM (~1.67× for N=8) and limited to two DLMs; can’t fix “unknown unknowns” without retrieval.
+
+5) [Brief Is Better: Non-Monotonic Chain-of-Thought Budget Effects in Function-Calling Language Agents](https://arxiv.org/abs/2604.02155v1)
+- Clear deployment guidance: brief CoT helps routing; long CoT collapses accuracy (Qwen2.5-1.5B: **44% → 64%** at 32 tokens, then **25%** at 256).
+- Mechanistic error breakdown: brief CoT slashes wrong-valid-function selection (30.5% → 1.5%); long CoT increases wrong-valid and hallucinated functions.
+- FR-CoT prompt eliminates function hallucination (0.0%) while matching brief-CoT accuracy.
+- **Skepticism**: limited to BFCL v3 Multiple-function and three models; multi-step tool chains not evaluated.
+
+### 5) Practical next steps
+- **Adopt budgeted evaluation**: add ToolMisuseBench-style deterministic fault injection + AUC-over-budget caps to your internal tool-agent CI; track invalid-call rate, recovery time, and catastrophic failures separately.
+- **Implement “brief routing CoT” for function calling**: try 8–32 token reasoning caps and/or FR-CoT-style forced function commitment; measure wrong-valid vs hallucinated-function rates.
+- **Treat context as a constrained control problem**: prototype a remaining-context-aware compression policy (NULL/PARTIAL/FULL over segments) and evaluate robustness under shrinking budgets (e.g., 16k→4k).
+- **Harden tool supply chains**: add pre-execution config scanning for risky startup commands and intent extraction from tool schemas; consider trajectory-level behavior deviation checks for high-risk tools.
+- **Move from binary safety to diagnosis**: if using trajectory safety benchmarks (e.g., ATBench-like), train/measure fine-grained attribution (risk source/failure mode/harm), not just safe/unsafe.
+- **For RAG systems, optimize retrieval for reader utility**: experiment with RL-trained rerankers using LLM-based generation rewards (RRPO-style) and compare against IR-label-trained rerankers on downstream F1/EM.
+- **For factuality, localize then correct**: where model-native uncertainty signals exist (diffusion chains), do span-level correction; for AR models, consider training-time span masking/reallocation (PRISM-like) if you have fact-risk annotations.
+- **For embodied systems, add appearance-robustness tests**: include object-bound texture/appearance perturbations (multi-view, EoT-style) in sim evaluation; track transfer to physical setups if applicable.
+
+---
+*Generated from per-paper analyses; no external browsing.*
