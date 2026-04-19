@@ -12,7 +12,7 @@ Please refer to the [Google Scholar](https://scholar.google.com/citations?user=3
 ## Selected Conference Papers
 
 
-* Beyond Nodes vs. Edges: A Multi-View Fusion Framework for Provenance-Based Intrusion Detection<br>
+* [Beyond Nodes vs. Edges: A Multi-View Fusion Framework for Provenance-Based Intrusion Detection](https://arxiv.org/pdf/2604.14685)<br>
 Fan Yang, Binyan Xu, **Di Tang** (corresponding author), Kehuan Zhang  
 **IEEE S&P**, 2026.
 
