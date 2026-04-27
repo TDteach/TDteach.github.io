@@ -1,0 +1,143 @@
+# AI 论文洞察简报
+## 2026-04-28
+
+### 0) 核心要点（先读这个）
+- **“系统级”鲁棒性正在成为新基线**：在监控与自动驾驶等场景中，多篇论文指出逐帧/逐传感器指标会漏掉真实威胁；跨时间的持续性、跨模态一致性以及面向整条流水线的目标，才决定实际运行风险。
+- **记忆正在从“检索更多”转向“控制 + 治理”**：无训练的适用性控制（TAG）与写入时语义对齐（WorldDB）都表明：记忆*何时/如何*被使用（以及如何演化）可能比纯检索质量更关键。
+- **基准正在变得更可执行、并由工件支撑**：ReCoQA（SQL+API 轨迹）、Chat2Workflow（导入+执行）、以及会议摘要评测流水线（持久化 GT/主张/判决 + 显著性检验）都在推动评估走向*可验证的中间步骤*与*端到端执行*。
+- **模块化正在成为实用的后训练策略**：BAR（MoE 模块化后训练）在接近“全量重训”性能的同时，支持独立的领域升级——适合需要频繁刷新能力且避免灾难性遗忘的组织。
+- **安全研究越来越偏机制化**：SAGE 诊断出内部表征失败（“信号淹没”）并用逐层稀疏特征放大修复；排序操纵研究展示了相变现象：很小的扰动预算也能引发结果的大幅变化。
+
+### 2) 关键主题（聚类）
+
+### 主题：系统级物理安全（时间 + 模态 + 流水线）
+
+- **重要性**：真实部署并非在单帧上失败——而是在规避能持续穿过跟踪、能绕过传感器冗余、或诱发下游不安全动作时失败。忽略这些因素的评估会显著低估风险。
+- **代表论文**：
+  - [Physical Adversarial Attacks on AI Surveillance Systems:Detection, Tracking, and Visible--Infrared Evasion](https://arxiv.org/abs/2604.06865v1)
+  - [Cross-Modal Phantom: Coordinated Camera–LiDAR Spoofing Against Multi-Sensor Fusion in Autonomous Vehicles](https://arxiv.org/abs/2604.21841v1)
+- **共同方法**：
+  - 围绕**运行目标**（ID 污染、虚假轨迹、紧急制动）重塑威胁模型，而不是只看检测器 mAP。
+  - 强调**时间持续性**（跟踪）与**跨模态迁移/一致性**（可见光–红外；相机–激光雷达）。
+  - 提出**分阶段评估协议**以提升真实度（从数字攻击到考虑激活、跨模态、时间持续的测试）。
+- **开放问题 / 失效模式**：
+  - 数字/仿真攻击向**物理**条件（距离、光照、时序、标定漂移）的迁移效果如何？
+  - 面对**协同一致性攻击**（传感器对同一虚假目标达成一致）有哪些防御有效？
+  - 如何在不同流水线间一致地基准化**身份级**伤害（ID 切换、长时域跟踪污染）？
+
+### 主题：智能体记忆——控制、层级与写入时语义
+
+- **重要性**：长时间运行的智能体会在记忆被用于错误状态、矛盾不断累积、或检索膨胀上下文时失败。新工作表明记忆需要*策略*与*语义*，而不仅是向量嵌入。
+- **代表论文**：
+  - [A Control Architecture for Training-Free Memory Use](https://arxiv.org/abs/2604.18206v1)
+  - [WorldDB: A Vector Graph-of-Worlds Memory Engine with Ontology-Aware Write-Time Reconciliation](https://arxiv.org/abs/2604.18478v1)
+  - [HiGMem: A Hierarchical and LLM-Guided Memory System for Long-Term Conversational Agents](https://arxiv.org/abs/2604.18349v1)
+- **共同方法**：
+  - 增加**适用性控制**：不确定性门控路由 + 选择性接纳/回滚 + 有害条目退役（TAG）。
+  - 使用**层级结构**（事件摘要 → 轮次选择）在保持召回的同时提升精度（HiGMem）。
+  - 强化**写入时对齐语义**（supersedes/contradicts/same_as 处理器）与可审计的不可变性（WorldDB）。
+- **开放问题 / 失效模式**：
+  - 控制策略依赖**置信度可分性**与记忆库质量；置信度何时会失效为门控信号？
+  - 写入时语义会增加摄取复杂度/成本；如何可靠扩展抽取/消解？
+  - 超出已评测设置的泛化（例如 HiGMem 在 DialSim 上更弱；WorldDB 主要在 LongMemEval-s 上评测）。
+
+### 主题：面向工具/智能体工作流的可执行、可追踪评估
+
+- **重要性**：“看起来对”不够——智能体必须产出*可执行*工件与*可验证*中间步骤。本主题推动评估走向可复现、可诊断与回归门禁。
+- **代表论文**：
+  - [ReCoQA: A Benchmark for Tool-Augmented and Multi-Step Reasoning in Real Estate Question and Answering](https://arxiv.org/abs/2604.17944v1)
+  - [Chat2Workflow: A Benchmark for Generating Executable Visual Workflows with Natural Language](https://arxiv.org/abs/2604.19667v1)
+  - [Evaluating AI Meeting Summaries with a Reusable Cross-Domain Pipeline](https://arxiv.org/abs/2604.21345v1)
+- **共同方法**：
+  - 提供**机器可验证轨迹**（ReCoQA 中的 SQL + 缓存 API 调用）。
+  - 区分**格式有效性 vs 执行正确性**（Chat2Workflow 的 Pass Rate vs Resolve Rate）。
+  - 持久化**工件支撑的评估**（结构化 GT、抽取主张、评审输出）并进行**显著性检验**以支持发布决策。
+- **开放问题 / 失效模式**：
+  - 即便中间标签完美仍有残余错误（ReCoQA 报告即使给定 GT SLU/SQL/API 也 <1 准确率），暗示存在困难的**全局综合/规划**瓶颈。
+  - 基准规模/本体可能受限（Chat2Workflow：27 个任务、20 种节点类型），并有对平台约定过拟合风险。
+  - 评审方差与 GT 遗漏会干扰摘要流水线中的“unsupported”标注。
+
+### 主题：模块化后训练与企业级模型构建
+
+- **重要性**：组织需要频繁升级能力（数学/代码/工具/安全、领域语言），但又不希望全量重训或发生灾难性遗忘。出现两条互补路线：端到端企业流水线与模块化 MoE 组合。
+- **代表论文**：
+  - [Mi:dm K 2.5 Pro](https://arxiv.org/abs/2603.18788v1)
+  - [Train Separately, Merge Together: Modular Post-Training with Mixture-of-Experts](https://arxiv.org/abs/2604.18473v1)
+- **共同方法**：
+  - 强调**数据策展**与定向合成（基于 AST 的代码过滤；数学缺口补全）。
+  - 多阶段后训练（Reasoning SFT、RL 变体、合并/融合）以平衡推理、流畅性、工具使用与鲁棒性。
+  - **模块化专家**独立训练（mid-training→SFT→RLVR），再通过轻量路由器训练进行组合（BAR）。
+- **开放问题 / 失效模式**：
+  - 推理成本随专家数增长；BAR 指出激活更少专家时性能下降。
+  - 可复现性缺口：专有数据/基准与有限的算力披露（Mi:dm K 2.5 Pro）。
+  - 如何在不重训所有专家的情况下升级锚点/基座模型（BAR 的限制）。
+
+### 主题：通过内部/机制与社会技术视角实现安全与可靠性
+
+- **重要性**：鲁棒性失败既来自*模型内部*（表征瓶颈），也来自*流程失败*（数据泄漏、治理）。该聚类提供了具体诊断与攻击面。
+- **代表论文**：
+  - [SAGE: Signal-Amplified Guided Embeddings for LLM-based Vulnerability Detection](https://arxiv.org/abs/2604.19031v1)
+  - [Data Leakage in Automotive Perception: Practitioners' Insights](https://arxiv.org/abs/2604.06899v1)
+  - [Ranking Abuse via Strategic Pairwise Data Perturbations](https://arxiv.org/abs/2604.17805v1)
+- **共同方法**：
+  - 识别特定失效机制（如跨层“信号淹没”；角色割裂的泄漏认知；MLE 排序相变）。
+  - 给出可操作干预或攻击（逐层 SAE；不可变评测集等流程控制；ASSA 操纵算法）。
+  - 使用超越总体准确率的诊断（不平衡下的 MCC；基于角色的定性主题；到目标排序的 Kendall Tau 距离）。
+- **开放问题 / 失效模式**：
+  - SAGE 只能放大骨干中已存在的信号；对真正新颖的漏洞类别可能无效。
+  - 泄漏预防仍主要依赖流程；工具标准化与跨角色对齐尚未解决。
+  - 排序攻击假设白盒访问与启发式优化；未提供防御。
+
+### 3) 技术综合
+- **“适用性（Applicability）”是反复出现的控制变量**：TAG 对记忆的路由/接纳/退役决策，映射到更广泛的智能体/工具流水线：*何时调用组件*与组件本身同等重要（ReCoQA 的层级智能体分解也呼应这一点）。
+- **评估正从单一标量分数走向分阶段流水线**：Chat2Workflow 的 Pass vs Resolve、会议摘要的主张抽取 + 覆盖/完整性、以及监控的阶段阶梯，都在区分*语法有效性*与*运行成功*。
+- **LLM-as-judge 出现在多种角色中**：奖励塑形（Mi:dm K 2.5 Pro RL；谋杀之谜 ScoreAgent）、基准构建/验证（TeleEmbedBench 验证器）、以及评估（会议摘要；CulturALL 正确性评审）。
+- **长上下文与长记忆正在分化**：Mi:dm K 2.5 Pro 推到 128K 上下文，而 WorldDB/HiGMem 认为持久化需要带对齐/层级的结构化记忆——仅靠上下文长度无法解决漂移/矛盾。
+- **模块化同时出现在模型与系统中**：BAR 组合领域专家；ClawNet 组合身份范围的智能体；二者都试图通过隔离 + 受控接口减少干扰（能力或隐私）。
+- **安全攻击越来越多地瞄准“胶水层”**：跨模态融合（相机–激光雷达）、跟踪流水线（监控）、与排序聚合（Bradley–Terry MLE）在系统/聚合层被攻击，而不仅是基础预测器。
+- **机制化表征干预正在升温**：SAGE 的中间层稀疏投影是“修复表征瓶颈”的具体例子，而非仅靠提示或全量微调。
+- **成本/吞吐约束正在被形式化**：EDGE-EVAL 引入生命周期指标（盈亏平衡请求数、冷启动税），而 TeleEmbedBench 与漏洞检测架构也明确衡量延迟/成本权衡。
+
+### 4) Top 5 论文（含“为什么是现在”）
+
+1) [WorldDB: A Vector Graph-of-Worlds Memory Engine with Ontology-Aware Write-Time Reconciliation](https://arxiv.org/abs/2604.18478v1)
+- 引入**写入时可编程边**（supersedes/contradicts/same_as 处理器）与**内容寻址的不可变性**，用于可审计记忆。
+- 在 LongMemEval-s 上结果很强（总体 **96.40%**，任务均值 **97.11%**），消融将增益归因于引擎层。
+- “为什么是现在”：长时运行智能体正遭遇**上下文腐化（context rot）**与矛盾/身份漂移；这是一个带消融与工程基准的具体底层方案。
+- **质疑 / 限制**：写入时开销更高；组合嵌入为无参数，论文指出学习型聚合器是未来工作；评测范围以 LongMemEval-s 为中心。
+
+2) [Train Separately, Merge Together: Modular Post-Training with Mixture-of-Experts](https://arxiv.org/abs/2604.18473v1)
+- BAR 将后训练的稠密模型转为 MoE：包含冻结的**锚点专家**与可独立训练的**领域专家**（mid-training→SFT→RLVR）。
+- 在 7B 规模，BAR 总分（**49.1**）超过若干重训基线，并支持专家的**增量添加/升级**。
+- “为什么是现在”：频繁模型更新在运营上不可避免；模块化提供降低**灾难性遗忘**与重训成本的路径。
+- **质疑 / 限制**：推理成本与参数量随专家数增长；稀疏激活更少专家时性能下降；升级锚点需要重训专家。
+
+3) [A Control Architecture for Training-Free Memory Use](https://arxiv.org/abs/2604.18206v1)
+- TAG 提供**无训练**控制栈：不确定性门控检索、选择性接纳/回滚、基于证据的退役。
+- 在算力匹配对照下，算术任务提升显著（如 **SVAMP +7.0**、**ASDiv +7.67**），而仅“重试”基本不变。
+- “为什么是现在”：许多部署无法重训模型但仍希望使用记忆；该工作分离出**控制策略**相对“更多检索”的价值。
+- **质疑 / 限制**：最强收益集中在算术；效果依赖置信度可分性与记忆库质量。
+
+4) [SAGE: Signal-Amplified Guided Embeddings for LLM-based Vulnerability Detection](https://arxiv.org/abs/2604.19031v1)
+- 诊断“**信号淹没（Signal Submersion）**”，并用**全层提取 + JumpReLU 稀疏自编码器**与任务条件对齐来放大漏洞线索。
+- 报告强 MCC（例如某设置下 BigVul MCC **0.7874**）与机制证据（SNR 放大最高 **12.7×**；稀疏神经元更集中）。
+- “为什么是现在”：漏洞检测高影响且面临不平衡 + 分布漂移；这是冻结骨干、机制驱动的修复方案。
+- **质疑 / 限制**：无法创造预训练中不存在的知识；低资源语言子集较小；SAE 训练成本随探测层数增长。
+
+5) [ReCoQA: A Benchmark for Tool-Augmented and Multi-Step Reasoning in Real Estate Question and Answering](https://arxiv.org/abs/2604.17944v1)
+- 提供 **29,270** 条 QA，并给出**可验证的中间轨迹**（SLU 标签、SQL、缓存 API 调用），支持确定性评估。
+- 分层 HIRE-Agent 相比单智能体基线，平均准确率与 F1 提升约 **+0.20**；即便探测 GT 信号仍有差距（平均准确率 **0.8864**）。
+- “为什么是现在”：工具增强智能体需要中间步骤可执行、可审计的基准，而不仅是最终答案。
+- **质疑 / 限制**：中文场景且绑定中国地图服务；仅单轮；模板生成工件仍可能带来偏差。
+
+### 5) 实用下一步
+- 对智能体记忆系统，**将记忆内容与记忆使用策略分离**：实现类似 TAG 的路由 + 接纳/回滚，并在算力匹配下对比“总是检索”的收益。
+- 若构建长期记忆，加入**写入时语义**（覆盖/矛盾）与可审计性；在长记忆任务上评估，并用消融隔离“引擎”与“回答器”的贡献。
+- 对工具型智能体，采用**轨迹优先评估**：要求缓存/确定性的工具输出（如 ReCoQA），并同时评分中间正确性与最终综合。
+- 在工作流生成产品中，跟踪 **Pass vs Resolve**（格式/导入 vs 执行正确性），构建错误驱动的修复回路；将 pass–resolve 差距作为核心 KPI。
+- 对感知安全鲁棒性，将测试扩展到**时间 + 多模态**设置（跟踪、可见光–红外、相机–激光雷达融合），并报告身份级或动作级结果，而非仅检测器失败。
+- 对漏洞检测，尝试 **中间层特征提取 + 稀疏放大**（SAGE 风格）作为全量微调的低成本替代；在去重与分布漂移划分下评估。
+- 对模型维护，原型化 **模块化专家升级**（BAR 风格），并量化：(i) 领域增益，(ii) 通用能力保持，(iii) 推理成本 vs 专家稀疏度。
+
+---
+*由逐篇论文分析生成；未进行外部浏览。*
