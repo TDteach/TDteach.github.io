@@ -16,6 +16,10 @@ Please refer to the [Google Scholar](https://scholar.google.com/citations?user=3
 Fan Yang, Binyan Xu, **Di Tang** (corresponding author), Kehuan Zhang  
 **IEEE S&P**, 2026.
 
+* [From Internal Diagnosis to External Auditing: A VLM-Driven Paradigm for Data-Free Online Backdoor Defense](https://openreview.net/pdf?id=l3yzuHKpNe)<br>
+Binyan Xu, Fan Yang, Xilin Dai, **Di Tang** (corresponding author), Kehuan Zhang  
+**ICML**, 2026.
+
 * [Breaking the Stealth-Potency Trade-off in Clean-Image Backdoors with Generative Trigger Optimization](https://arxiv.org/pdf/2511.07210)<br>
 Binyan Xu, Fan Yang, **Di Tang** (corresponding author), Xilin Dai, Kehuan Zhang  
 **AAAI (Oral)**, 2026.
