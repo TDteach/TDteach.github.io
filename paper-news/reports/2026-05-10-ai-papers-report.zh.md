@@ -1,0 +1,164 @@
+# AI 论文洞察简报
+## 2026-05-10
+
+### 0) 执行要点（先读这个）
+- 鲁棒性评估正从通用准确率转向**贴近部署场景的失效模式**：受天气干扰的 VLM 推理、由释义改写引发的格式崩溃、控制污染的预测任务，以及生产级 OCR 都表明，当前模型会以标准基准无法捕捉的方式失效。
+- 一个反复出现的有效模式是**先结构化落地，再进行生成**：加入 AST、依赖图、因果图、策略检索、知识图谱或形式化验证器的论文，持续报告出比纯自由式提示更好的可靠性。
+- **Agent 系统正从“能不能行动”走向“能不能协同、验证并保持可问责性”**。多智能体工程、广告治理、文档修复、渗透测试以及面向多智能体系统的强化学习论文，都强调编排、批评器、验证器和治理层。
+- 安全研究越来越多地展示**端到端的可利用性或泄露**，而不只是抽象漏洞：DeFi 漏洞利用合成、Java 漏洞可证性测试、DP 解释泄露、恶意软件摄取投毒，以及安全推理中的模型提取，都表明实际攻击面依然很大。
+- 多篇论文表明，**小模型或高效模型在合适脚手架下也能变得有用**：基于 PEFT 的对抗训练、蒸馏式去标识化 SLM、通过测试时扩展实现的越南语 1.7B 推理，以及紧凑型本地渗透测试模型，都在用结构和定向监督来替代纯粹的规模。
+- 对前沿 LLM/Agent 安全而言，实际含义已经很明确：与其投入在通用基准分数提升上，不如更多投入到**格式遵循、检索卫生、验证器支持的执行、选择性弃答以及策略感知编排**。
+
+### 2) 关键主题（聚类）
+
+### 主题：基于结构落地的生成优于自由式提示
+
+- **为什么重要**：在法律推理、代码维护、形式化验证和安全利用等任务中，最强的系统并不是让 LLM “直接解题”。它们会用显式结构——图、AST、依赖元数据、检索到的策略或可执行检查——来约束生成，从而减少幻觉并提升可修复性。
+- **代表论文**：
+  - [LLM-Assisted Causal Structure Disambiguation and Factor Extraction for Legal Judgment Prediction](https://arxiv.org/abs/2603.11446v1)
+  - [DocSync: Agentic Documentation Maintenance via Critic-Guided Reflexion](https://arxiv.org/abs/2605.02163v1)
+  - [KVerus: Scalable and Resilient Formal Verification Proof Generation for Rust Code](https://arxiv.org/abs/2605.03822v1)
+  - [EvoPoC: Automated Exploit Synthesis for DeFi Smart Contracts via Hierarchical Knowledge Graphs](https://arxiv.org/abs/2605.02868v1)
+- **共同方法**：
+  - 先构建中间结构化表示：因果图、AST 摘要、依赖图、引理知识库或分层知识图谱。
+  - 在生成前使用检索注入领域特定约束或先验知识。
+  - 加入第二阶段的验证器/批评器/精炼循环，而不是信任首轮输出。
+  - 用外部标准对候选结果打分或剪枝，例如 BIC、SMT 可达性、执行日志或验证器诊断。
+- **开放问题 / 失效模式**：
+  - 这些流水线对检索遗漏或过时知识库有多脆弱？
+  - 许多系统在关键推理步骤上仍依赖前沿 LLM，限制了可复现性和成本控制。
+  - 结构化先验可能编码错误假设，并成为难以察觉的失效来源。
+  - 大多数结果仍是领域特定的；向更广泛真实场景迁移仍缺乏充分测试。
+
+### 主题：鲁棒性基准正变得更真实——也更严苛
+
+- **为什么重要**：多篇论文表明，当前瓶颈已经转向基准设计。当评估纳入天气、释义改写、真实企业文档或时间泄露控制时，模型性能会显著下降，失效模式也更具可操作性。
+- **代表论文**：
+  - [WeatherReasonSeg: A Benchmark for Weather-Aware Reasoning Segmentation in Visual Language Models](https://arxiv.org/abs/2603.17680v1)
+  - [CC-OCR V2: Benchmarking Large Multimodal Models for Literacy in Real-world Document Processing](https://arxiv.org/abs/2605.03903v1)
+  - [DiffCap-Bench: A Comprehensive, Challenging, Robust Benchmark for Image Difference Captioning](https://arxiv.org/abs/2605.04503v1)
+  - [OracleProto: A Reproducible Framework for Benchmarking LLM Native Forecasting via Knowledge Cutoff and Temporal Masking](https://arxiv.org/abs/2605.03762v1)
+- **共同方法**：
+  - 用接近生产环境的扰动、长尾案例或可重放的时间受限任务，替代干净或纯合成设置。
+  - 使用更丰富的指标，将覆盖率与幻觉、格式与正确性区分开来。
+  - 纳入人工验证或与人类对齐的评判，以测试基准分数是否真正对应实际效用。
+  - 比较感知上界与推理系统，以定位退化究竟发生在哪一层。
+- **开放问题 / 失效模式**：
+  - 一些基准依赖 LLM 评审或构造数据集，可能引入伪影。
+  - 真实性往往会降低规模或可复现性；部分数据集规模仍然较小。
+  - 即便基准表现很强，如果类别伪影可被利用，也未必意味着可部署。
+  - 在一种分布偏移下的鲁棒性，未必能迁移到其他偏移类型。
+
+### 主题：Agent 系统正走向协同、治理与问责
+
+- **为什么重要**：这个领域已不再只是构建带工具的单智能体。更有意思的工作在于：智能体如何协同、何时应当让渡、如何路由工作，以及如何在接近生产的环境中执行治理约束。
+- **代表论文**：
+  - [EngiAgent: Fully Connected Coordination of LLM Agents for Solving Open-ended Engineering Problems with Feasible Solutions](https://arxiv.org/abs/2605.02289v1)
+  - [ARGUS: Policy-Adaptive Ad Governance via Evolving Reinforcement with Adversarial Umpiring](https://arxiv.org/abs/2605.02200v1)
+  - [Reinforcement Learning for LLM-based Multi-Agent Systems through Orchestration Traces](https://arxiv.org/abs/2605.02801v1)
+  - [HAAS: A Policy-Aware Framework for Adaptive Task Allocation Between Humans and Artificial Intelligence Systems](https://arxiv.org/abs/2605.02832v1)
+- **共同方法**：
+  - 将工作拆解为专门角色或子决策，而不是单体式智能体循环。
+  - 加入显式协同对象：协调器、裁判、策略引擎、编排轨迹或 bandit 分配器。
+  - 优化目标不只是任务成功，还包括可行性、策略合规、成本或人类状态结果。
+  - 仅在先用规则或治理过滤器约束动作空间之后，再进行分阶段适应或强化学习。
+- **开放问题 / 失效模式**：
+  - 跨越长链路、分支轨迹的信用分配问题仍远未解决。
+  - 多智能体辩论可能提升推理，但对高吞吐场景来说成本过高。
+  - 治理层通常依赖模拟环境或特定领域，泛化能力存疑。
+  - 在大多数已部署的编码/Agent 产品中，问责性仍缺乏可操作化定义。
+
+### 主题：安全研究正在从检测闭环到利用与泄露
+
+- **为什么重要**：多篇论文已经不再停留在“存在漏洞”，而是进一步展示“这是利用方式、恢复出的图、被投毒的流水线，或被提取出的模型”。这同时提高了红队测试和防御设计的门槛。
+- **代表论文**：
+  - [EvoPoC: Automated Exploit Synthesis for DeFi Smart Contracts via Hierarchical Knowledge Graphs](https://arxiv.org/abs/2605.02868v1)
+  - [Generating Proof-of-Vulnerability Tests to Help Enhance the Security of Complex Software](https://arxiv.org/abs/2605.03956v1)
+  - [Graph Reconstruction from Differentially Private GNN Explanations](https://arxiv.org/abs/2605.03388v1)
+  - [On the (In-)Security of the Shuffling Defense in the Transformer Secure Inference](https://arxiv.org/abs/2605.04901v1)
+- **共同方法**：
+  - 将 LLM 推理与形式化或可执行验证结合，而不是只依赖文本式攻击生成。
+  - 在现实操作假设下评估攻击：灰盒访问、DP 噪声、安全截断伪影或真实构建系统。
+  - 衡量端到端结果，如利用成功率、恢复收益、邻接 AP/AUC 或代理模型效用。
+  - 揭示“实用防御”为何会失效：因为它们泄露了足够多的结构，足以被重建或提取。
+- **开放问题 / 失效模式**：
+  - 双重用途风险很高；多种方法都可能直接增强进攻能力。
+  - 一些攻击只在较小模型、缩减数据集或本地分叉版本上得到验证。
+  - 防御评估往往落后于攻击复杂度的发展。
+  - 对扩散式重建和形式化利用验证而言，可扩展性仍是约束。
+
+### 主题：高效专用化是暴力扩规模的可信替代方案
+
+- **为什么重要**：一个值得注意的论文子集表明，紧凑模型或参数高效系统在结合蒸馏、PEFT、测试时扩展或领域特定监督后，可以具备竞争力。
+- **代表论文**：
+  - [Efficient Adversarial Training via Criticality-Aware Fine-Tuning](https://arxiv.org/abs/2604.12780v1)
+  - [Bridging the Reasoning Gap in Vietnamese with Small Language Models via Test-Time Scaling](https://arxiv.org/abs/2604.17794v1)
+  - [SHIELD: A Diverse Clinical Note Dataset and Distilled Small Language Models for Enterprise-Scale De-identification](https://arxiv.org/abs/2605.03301v1)
+  - [Pen-Strategist: A Reasoning Framework for Penetration Testing Strategy Formation and Analysis](https://arxiv.org/abs/2605.04499v1)
+- **共同方法**：
+  - 识别最关键的那一小部分参数、样本或推理轨迹。
+  - 将更强教师模型蒸馏到本地或更便宜的模型中，以支持企业部署。
+  - 仅在推理收益大于复杂度增加时，选择性使用测试时扩展。
+  - 相比开放式生成，更偏好受约束输出和领域特定标签。
+- **开放问题 / 失效模式**：
+  - 这些收益可能较窄、受领域限制，而不是通用能力提升。
+  - 小模型在边缘案例、格式要求或复杂逻辑上仍会失败。
+  - 蒸馏可能在罕见或机构特定案例中丢失上下文推理能力。
+  - 高效方法通常依赖高质量教师模型或手工设计的监督。
+
+### 3) 技术综合
+- 检索越来越不是作为通用增强，而是作为**约束注入**来使用：法律条文、策略条款、引理摘要、AST 上下文和利用原语，都在生成前用于缩小假设空间。
+- 多篇论文收敛到**生成 → 批评 → 精炼**循环，但最强版本还会加入外部验证器：编译器、验证器、SMT 求解器、执行 harness 或策略裁判。
+- 评估正从单一标量准确率转向**分解式指标**：覆盖率 vs 幻觉、可行性 vs 数值正确性、召回率 vs 策略适应，或有效性 vs 单次正确成本。
+- 一个常见的鲁棒性模式是**语义不变但表面形式不稳定**：释义改写会破坏输出模式，天气会破坏推理分割，过时文档或演化中的工具链会破坏面向代码的智能体。
+- 许多系统现在把**LLM 用作结构化抽取器，而不是最终裁判**：DESG 抽取临床状态，Ran Score 抽取发现，法律 LJP 抽取因素，SHIELD 则用 LLM 为更小、可部署的模型生成银标。
+- 在安全领域，前沿方向是**神经-符号混合式攻防**：LLM 提出候选，但是否保留下来由形式化方法或执行结果决定。
+- 多智能体研究越来越把编排视为一类一等学习问题，其中**信用分配和停止决策**正成为尚未解决的瓶颈。
+- 多篇论文揭示了**感知鲁棒性与推理鲁棒性之间的差距**：在恶劣天气下，感知上界仍然较高，但以推理为条件的分割却会崩溃。
+- 参数高效方法不仅被用于适配，也被用于**鲁棒性本身**：CAAT 表明，对抗训练可以聚焦于对鲁棒性最关键的参数，而不必微调整个模型。
+- 跨领域来看，最可信的论文往往同时具备**真实部署约束**和可衡量结果：在线 A/B 测试、被上游接受的证明、漏洞赏金确认，或企业成本分析。
+
+### 4) Top 5 论文（附“为什么是现在”）
+
+- [EvoPoC: Automated Exploit Synthesis for DeFi Smart Contracts via Hierarchical Knowledge Graphs](https://arxiv.org/abs/2605.02868v1)
+  - 将漏洞利用生成从漏洞标记推进到经过逻辑与经济性双重检查的已验证 PoC 合成。
+  - 具有很强的现实信号：复现了 88 个历史漏洞中的 85 个，并发现 21 个 0-day，其中 16 个已被确认/修复。
+  - HKG + SMT + 利润模拟这一栈，为高风险 Agent 化安全系统提供了具体模板。
+  - **审慎看法**：乐观的资产模拟以及对 HKG 质量的依赖，可能会在某些边缘情况下高估可行性。
+
+- [KVerus: Scalable and Resilient Formal Verification Proof Generation for Rust Code](https://arxiv.org/abs/2605.03822v1)
+  - 这是 LLM 通过加入依赖分析、引理检索和工具链感知精炼，从而真正进入高难度工程工作流的最清晰案例之一。
+  - 同时带来了基准提升和真实世界影响：在 Asterinas/CortenMM 中有被上游接受的证明。
+  - 在代码智能体进入安全关键系统的当下尤其及时，因为脆弱的证明生成是不可接受的。
+  - **审慎看法**：高度依赖先进的闭源 LLM，并且仍然依赖正确的规格说明。
+
+- [ARGUS: Policy-Adaptive Ad Governance via Evolving Reinforcement with Adversarial Umpiring](https://arxiv.org/abs/2605.02200v1)
+  - 处理的是一个真实生产问题——策略漂移——而不是静态审核。
+  - 结合了 RAG 落地的裁决、多智能体辩论和分阶段强化学习，在适应新规则的同时保持历史表现。
+  - 在线 A/B 结果使它比许多纯离线审核论文更具决策参考价值。
+  - **审慎看法**：目前仅覆盖图文范围；在更大规模下，辩论和检索质量可能成为瓶颈。
+
+- [WeatherReasonSeg: A Benchmark for Weather-Aware Reasoning Segmentation in Visual Language Models](https://arxiv.org/abs/2603.17680v1)
+  - 明确区分了一个重要问题：在恶劣天气下，以推理为条件的分割退化远比纯感知上界更严重。
+  - 之所以当下重要，是因为许多 VLM 部署正进入户外和安全关键场景，而干净图像基准会产生误导。
+  - 合成 + 真实世界的划分，使其既适合受控消融，也适合现实评估。
+  - **审慎看法**：合成天气和当前任务范围，可能仍无法覆盖真实传感器退化的全部复杂性。
+
+- [Graph Reconstruction from Differentially Private GNN Explanations](https://arxiv.org/abs/2605.03388v1)
+  - 强烈警示：即使是受 DP 保护的解释，在实际相关的隐私预算下仍可能泄露图结构。
+  - 基于扩散的建模方式在技术上较新颖，并同时给出了理论分析以及跨多个数据集和解释器的攻击表现。
+  - 对任何在隐私约束下发布解释的组织都高度相关。
+  - **审慎看法**：稠密重建成本较高，当前结果也仅限于所研究的 DP 机制和图规模。
+
+### 5) 实际下一步
+- 在评估套件中加入**格式遵循和模式保持测试**，尤其是那些用于流水线或安全关键接口的封闭式输出。
+- 对 Agent 系统，记录并埋点**编排轨迹**：spawn、delegate、message、tool、aggregate、stop。没有这些，信用分配和失效分析都只能靠猜。
+- 在高风险领域优先采用**验证器支持的生成**：代码用编译/运行循环，安全任务用 SMT 或执行检查，治理任务用策略检索加裁决。
+- 在**真实扰动和操作性分布偏移**下评测模型，而不只是干净静态数据集：天气、释义改写、过时文档、演化中的工具链以及时间泄露边界。
+- 如果本地部署很重要，在扩大模型规模之前，先尝试**教师-学生蒸馏或 PEFT**；多篇论文表明，在合适监督下，紧凑系统也能取得很强的领域表现。
+- 在人机工作流中构建**弃答与升级路径**，尤其是在教育、心理健康、治理和工程可行性任务中。
+- 对任何隐私保护发布机制——DP 解释、安全推理打乱、摄取流水线——都要用**端到端攻击模拟**进行审计，而不只是依赖形式化或局部保证。
+- 如果你在训练长时程 SWE 或 Agent 系统，应优先收集**结构化、多方、纵向轨迹**，而不是更多短时程、仅含工件的数据。
+
+---
+*根据逐篇论文分析生成；未进行外部浏览。*
