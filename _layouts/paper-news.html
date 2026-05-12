@@ -1,0 +1,114 @@
+---
+layout: default
+---
+
+{% include base_path %}
+
+<div id="main" role="main" class="paper-news-main">
+  {% include sidebar.html %}
+
+  <article class="page paper-news-issue" itemscope itemtype="http://schema.org/CreativeWork">
+    {% if page.title %}<meta itemprop="headline" content="{{ page.title | markdownify | strip_html | strip_newlines | escape_once }}">{% endif %}
+    {% if page.excerpt %}<meta itemprop="description" content="{{ page.excerpt | markdownify | strip_html | strip_newlines | escape_once }}">{% endif %}
+    {% if page.date %}<meta itemprop="datePublished" content="{{ page.date | date: "%B %d, %Y" }}">{% endif %}
+
+    <div class="page__inner-wrap">
+      <section class="paper-news-brief" aria-labelledby="paper-news-title">
+        <div class="paper-news-brief__header">
+          <p class="paper-news-kicker">{{ page.date | date: "%B %-d, %Y" }} Research Brief</p>
+          <h1 id="paper-news-title">{{ page.brief_title | default: page.title }}</h1>
+          {% if page.brief_dek %}
+            <p class="paper-news-dek">{{ page.brief_dek }}</p>
+          {% endif %}
+        </div>
+
+        {% if page.lead_paper %}
+          <article class="paper-news-lead-card">
+            <div class="paper-news-rank">#1</div>
+            <div>
+              <h2>Start with: {{ page.lead_paper.title }}</h2>
+              {% if page.lead_paper.why %}
+                <p><strong>Why it catches my eye:</strong> {{ page.lead_paper.why }}</p>
+              {% endif %}
+              {% if page.lead_paper.skepticism %}
+                <p><strong>Read skeptically for:</strong> {{ page.lead_paper.skepticism }}</p>
+              {% endif %}
+              {% if page.lead_paper.tags %}
+                <div class="paper-news-tags">
+                  {% for tag in page.lead_paper.tags %}
+                    <span>{{ tag }}</span>
+                  {% endfor %}
+                </div>
+              {% endif %}
+              <div class="paper-news-card-links">
+                {% if page.lead_paper.url %}<a href="{{ page.lead_paper.url }}">arXiv</a>{% endif %}
+                {% if page.lead_paper.pdf %}<a href="{{ page.lead_paper.pdf }}">PDF</a>{% endif %}
+              </div>
+            </div>
+          </article>
+        {% endif %}
+
+        {% if page.signals %}
+          <div class="paper-news-signals" aria-label="Research signals">
+            {% for signal in page.signals limit:3 %}
+              <article class="paper-news-signal">
+                <b>{{ signal.label }}</b>
+                <strong>{{ signal.title }}</strong>
+                <span>{{ signal.text }}</span>
+              </article>
+            {% endfor %}
+          </div>
+        {% endif %}
+      </section>
+
+      {% if page.top_papers %}
+        <section class="paper-news-section" aria-labelledby="top-papers">
+          <div class="paper-news-section__head">
+            <div>
+              <h2 id="top-papers">Papers Worth Your Reading Time</h2>
+              <p>Ranked for research usefulness: novelty, method pattern, evidence quality, and skepticism value.</p>
+            </div>
+          </div>
+
+          <div class="paper-news-paper-grid">
+            {% for paper in page.top_papers limit:3 %}
+              <article class="paper-news-paper-card">
+                <div class="paper-news-paper-card__top">
+                  <h3>{{ paper.title }}</h3>
+                  <span class="paper-news-paper-rank">#{{ forloop.index }}</span>
+                </div>
+                {% if paper.why %}
+                  <p>{{ paper.why }}</p>
+                {% endif %}
+                {% if paper.why_now or paper.skepticism %}
+                  <dl>
+                    {% if paper.why_now %}
+                      <div><dt>Why now</dt><dd>{{ paper.why_now }}</dd></div>
+                    {% endif %}
+                    {% if paper.skepticism %}
+                      <div><dt>Skepticism</dt><dd>{{ paper.skepticism }}</dd></div>
+                    {% endif %}
+                  </dl>
+                {% endif %}
+                <div class="paper-news-card-links">
+                  {% if paper.url %}<a href="{{ paper.url }}">arXiv</a>{% endif %}
+                  {% if paper.pdf %}<a href="{{ paper.pdf }}">PDF</a>{% endif %}
+                </div>
+              </article>
+            {% endfor %}
+          </div>
+        </section>
+      {% endif %}
+
+      <section class="page__content paper-news-report-body" itemprop="text">
+        {{ content }}
+      </section>
+
+      <footer class="page__meta">
+        {% include page__taxonomy.html %}
+      </footer>
+
+      {% include post_pagination.html %}
+    </div>
+  </article>
+</div>
