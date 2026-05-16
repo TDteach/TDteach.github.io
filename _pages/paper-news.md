@@ -29,19 +29,22 @@ author_profile: false
         <p class="paper-news-dek">{{ latest.brief_dek }}</p>
       {% endif %}
 
-      {% if latest.lead_paper %}
-        <article class="paper-news-lead-card paper-news-lead-card--compact">
-          <div class="paper-news-rank">#1</div>
-          <div>
-            <h2>Start with: {{ latest.lead_paper.title }}</h2>
-            {% if latest.lead_paper.why %}
-              <p><strong>Why it catches my eye:</strong> {{ latest.lead_paper.why }}</p>
-            {% endif %}
-            {% if latest.lead_paper.skepticism %}
-              <p><strong>Read skeptically for:</strong> {{ latest.lead_paper.skepticism }}</p>
-            {% endif %}
-          </div>
-        </article>
+      {% if latest.themes %}
+        <div class="paper-news-index-focus-grid" aria-label="Latest brief focus areas">
+          {% for theme in latest.themes limit:3 %}
+            <article>
+              {% if forloop.index == 1 %}
+                <span>Why it matters</span>
+              {% elsif forloop.index == 2 %}
+                <span>What changed</span>
+              {% else %}
+                <span>What to watch</span>
+              {% endif %}
+              <strong>{{ theme.title }}</strong>
+              <p>{{ theme.text }}</p>
+            </article>
+          {% endfor %}
+        </div>
       {% endif %}
 
       <div class="paper-news-actions">
@@ -54,18 +57,40 @@ author_profile: false
       </div>
     </div>
 
-    {% if latest.signals %}
-      <aside class="paper-news-index-hero__side" aria-label="Today's research signals">
-        <h2>Today's signals</h2>
-        {% for signal in latest.signals limit:3 %}
-          <article class="paper-news-mini-signal">
-            <b>{{ signal.label }}</b>
-            <strong>{{ signal.title }}</strong>
-            <span>{{ signal.text }}</span>
-          </article>
-        {% endfor %}
-      </aside>
-    {% endif %}
+    <aside class="paper-news-index-hero__side paper-news-reading-path" aria-label="Latest brief reading suggestions">
+      <h2>Start here</h2>
+      {% if latest.lead_paper %}
+        <article>
+          <span>Best first paper</span>
+          <strong>{{ latest.lead_paper.title }}</strong>
+          {% if latest.lead_paper.tags %}
+            <div class="paper-news-tags">
+              {% for tag in latest.lead_paper.tags limit:2 %}
+                <em>{{ tag }}</em>
+              {% endfor %}
+            </div>
+          {% endif %}
+        </article>
+      {% endif %}
+      {% if latest.top_papers and latest.top_papers.size > 1 %}
+        {% assign compare_paper = latest.top_papers[1] %}
+        <article>
+          <span>Also worth opening</span>
+          <strong>{{ compare_paper.title }}</strong>
+          {% if compare_paper.why_now %}
+            <p>{{ compare_paper.why_now }}</p>
+          {% endif %}
+        </article>
+      {% endif %}
+      {% if latest.signals %}
+        {% assign signal = latest.signals | first %}
+        <article>
+          <span>Biggest shift</span>
+          <strong>{{ signal.title }}</strong>
+          <p>{{ signal.text }}</p>
+        </article>
+      {% endif %}
+    </aside>
   </section>
 {% endif %}
 

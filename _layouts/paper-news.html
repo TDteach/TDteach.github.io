@@ -22,30 +22,59 @@ layout: default
           {% endif %}
         </div>
 
-        {% if page.lead_paper %}
-          <article class="paper-news-lead-card">
-            <div class="paper-news-rank">#1</div>
-            <div>
-              <h2>Start with: {{ page.lead_paper.title }}</h2>
-              {% if page.lead_paper.why %}
-                <p><strong>Why it catches my eye:</strong> {{ page.lead_paper.why }}</p>
-              {% endif %}
-              {% if page.lead_paper.skepticism %}
-                <p><strong>Read skeptically for:</strong> {{ page.lead_paper.skepticism }}</p>
-              {% endif %}
-              {% if page.lead_paper.tags %}
-                <div class="paper-news-tags">
-                  {% for tag in page.lead_paper.tags %}
-                    <span>{{ tag }}</span>
+        {% if page.takeaways or page.lead_paper %}
+          <div class="paper-news-overview">
+            {% if page.takeaways %}
+              <section class="paper-news-takeaways" aria-labelledby="paper-news-takeaways-title">
+                <h2 id="paper-news-takeaways-title">Takeaways</h2>
+                <ol>
+                  {% for takeaway in page.takeaways limit:3 %}
+                    <li>{{ takeaway }}</li>
                   {% endfor %}
+                </ol>
+              </section>
+            {% endif %}
+
+            {% if page.lead_paper %}
+              <article class="paper-news-lead-card">
+                <div class="paper-news-rank">#1</div>
+                <div>
+                  <h2>Start with: {{ page.lead_paper.title }}</h2>
+                  {% if page.lead_paper.why %}
+                    <p><strong>Why it catches my eye:</strong> {{ page.lead_paper.why }}</p>
+                  {% endif %}
+                  {% if page.lead_paper.skepticism %}
+                    <p><strong>Read skeptically for:</strong> {{ page.lead_paper.skepticism }}</p>
+                  {% endif %}
+                  {% if page.lead_paper.tags %}
+                    <div class="paper-news-tags">
+                      {% for tag in page.lead_paper.tags %}
+                        <span>{{ tag }}</span>
+                      {% endfor %}
+                    </div>
+                  {% endif %}
+                  <div class="paper-news-card-links">
+                    {% if page.lead_paper.url %}<a href="{{ page.lead_paper.url }}">arXiv</a>{% endif %}
+                    {% if page.lead_paper.pdf %}<a href="{{ page.lead_paper.pdf }}">PDF</a>{% endif %}
+                  </div>
                 </div>
-              {% endif %}
-              <div class="paper-news-card-links">
-                {% if page.lead_paper.url %}<a href="{{ page.lead_paper.url }}">arXiv</a>{% endif %}
-                {% if page.lead_paper.pdf %}<a href="{{ page.lead_paper.pdf }}">PDF</a>{% endif %}
-              </div>
+              </article>
+            {% endif %}
+          </div>
+        {% endif %}
+
+        {% if page.themes %}
+          <section class="paper-news-themes" aria-labelledby="paper-news-themes-title">
+            <h2 id="paper-news-themes-title">Themes</h2>
+            <div class="paper-news-theme-grid">
+              {% for theme in page.themes limit:3 %}
+                <article class="paper-news-theme">
+                  <strong>{{ theme.title }}</strong>
+                  <span>{{ theme.text }}</span>
+                </article>
+              {% endfor %}
             </div>
-          </article>
+          </section>
         {% endif %}
 
         {% if page.signals %}
