@@ -4,6 +4,13 @@ layout: default
 
 {% include base_path %}
 
+{% assign is_zh = false %}
+{% if page.lang and page.lang contains 'zh' %}
+  {% assign is_zh = true %}
+{% elsif page.permalink and page.permalink contains '-zh/' %}
+  {% assign is_zh = true %}
+{% endif %}
+
 <div id="main" role="main" class="paper-news-main">
   {% include sidebar.html %}
 
@@ -15,7 +22,7 @@ layout: default
     <div class="page__inner-wrap">
       <section class="paper-news-brief" aria-labelledby="paper-news-title">
         <div class="paper-news-brief__header">
-          <p class="paper-news-kicker">{{ page.date | date: "%B %-d, %Y" }} Research Brief</p>
+          <p class="paper-news-kicker">{% if is_zh %}{{ page.date | date: "%Y年%-m月%-d日" }} AI 研究简报{% else %}{{ page.date | date: "%B %-d, %Y" }} Research Brief{% endif %}</p>
           <h1 id="paper-news-title">{{ page.brief_title | default: page.title }}</h1>
           {% if page.brief_dek %}
             <p class="paper-news-dek">{{ page.brief_dek }}</p>
@@ -26,7 +33,7 @@ layout: default
           <div class="paper-news-overview">
             {% if page.takeaways %}
               <section class="paper-news-takeaways" aria-labelledby="paper-news-takeaways-title">
-                <h2 id="paper-news-takeaways-title">Takeaways</h2>
+                <h2 id="paper-news-takeaways-title">{% if is_zh %}核心要点{% else %}Takeaways{% endif %}</h2>
                 <ol>
                   {% for takeaway in page.takeaways limit:3 %}
                     <li>{{ takeaway }}</li>
@@ -39,12 +46,12 @@ layout: default
               <article class="paper-news-lead-card">
                 <div class="paper-news-rank">#1</div>
                 <div>
-                  <h2>Start with: {{ page.lead_paper.title }}</h2>
+                  <h2>{% if is_zh %}先读这篇：{% else %}Start with: {% endif %}{{ page.lead_paper.title }}</h2>
                   {% if page.lead_paper.why %}
-                    <p><strong>Why it catches my eye:</strong> {{ page.lead_paper.why }}</p>
+                    <p><strong>{% if is_zh %}为什么先读：{% else %}Why it catches my eye:{% endif %}</strong> {{ page.lead_paper.why }}</p>
                   {% endif %}
                   {% if page.lead_paper.skepticism %}
-                    <p><strong>Read skeptically for:</strong> {{ page.lead_paper.skepticism }}</p>
+                    <p><strong>{% if is_zh %}建议重点质疑：{% else %}Read skeptically for:{% endif %}</strong> {{ page.lead_paper.skepticism }}</p>
                   {% endif %}
                   {% if page.lead_paper.tags %}
                     <div class="paper-news-tags">
@@ -65,7 +72,7 @@ layout: default
 
         {% if page.themes %}
           <section class="paper-news-themes" aria-labelledby="paper-news-themes-title">
-            <h2 id="paper-news-themes-title">Themes</h2>
+            <h2 id="paper-news-themes-title">{% if is_zh %}主题{% else %}Themes{% endif %}</h2>
             <div class="paper-news-theme-grid">
               {% for theme in page.themes limit:3 %}
                 <article class="paper-news-theme">
@@ -78,7 +85,7 @@ layout: default
         {% endif %}
 
         {% if page.signals %}
-          <div class="paper-news-signals" aria-label="Research signals">
+          <div class="paper-news-signals" aria-label="{% if is_zh %}研究信号{% else %}Research signals{% endif %}">
             {% for signal in page.signals limit:3 %}
               <article class="paper-news-signal">
                 <b>{{ signal.label }}</b>
@@ -94,8 +101,8 @@ layout: default
         <section class="paper-news-section" aria-labelledby="top-papers">
           <div class="paper-news-section__head">
             <div>
-              <h2 id="top-papers">Papers Worth Your Reading Time</h2>
-              <p>Ranked for research usefulness: novelty, method pattern, evidence quality, and skepticism value.</p>
+              <h2 id="top-papers">{% if is_zh %}值得优先阅读的论文{% else %}Papers Worth Your Reading Time{% endif %}</h2>
+              <p>{% if is_zh %}按研究价值排序：新意、方法可复用性、证据质量，以及是否值得带着怀疑去读。{% else %}Ranked for research usefulness: novelty, method pattern, evidence quality, and skepticism value.{% endif %}</p>
             </div>
           </div>
 
@@ -112,10 +119,10 @@ layout: default
                 {% if paper.why_now or paper.skepticism %}
                   <dl>
                     {% if paper.why_now %}
-                      <div><dt>Why now</dt><dd>{{ paper.why_now }}</dd></div>
+                      <div><dt>{% if is_zh %}为什么现在值得读{% else %}Why now{% endif %}</dt><dd>{{ paper.why_now }}</dd></div>
                     {% endif %}
                     {% if paper.skepticism %}
-                      <div><dt>Skepticism</dt><dd>{{ paper.skepticism }}</dd></div>
+                      <div><dt>{% if is_zh %}怀疑点{% else %}Skepticism{% endif %}</dt><dd>{{ paper.skepticism }}</dd></div>
                     {% endif %}
                   </dl>
                 {% endif %}
