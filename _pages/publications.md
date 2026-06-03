@@ -24,11 +24,11 @@ Binyan Xu, Fan Yang, Xilin Dai, **Di Tang** (corresponding author), Kehuan Zhang
 Binyan Xu, Fan Yang, **Di Tang** (corresponding author), Xilin Dai, Kehuan Zhang  
 **AAAI (Oral)**, 2026.
 
-* [CLIIP-Guided Backdoor Defense through Entropy-Based Poisoned Dataset Separation](https://arxiv.org/abs/2507.05113)<br>
+* [CLIIP-Guided Backdoor Defense through Entropy-Based Poisoned Dataset Separation](https://dl.acm.org/doi/pdf/10.1145/3746027.3754860)<br>
 Binyan Xu, Fan Yang, Xinlin Dai, **Di Tang** (corresponding author), Kehuan Zhang  
 **ACM MM**, 2025.  
 
-* [One Surrogate to Fool Them All: Universal, Transferable, and Targeted Adversarial Attacks with CLIP](https://arxiv.org/pdf/2505.19840)<br>
+* [One Surrogate to Fool Them All: Universal, Transferable, and Targeted Adversarial Attacks with CLIP](https://dl.acm.org/doi/pdf/10.1145/3719027.3744859)<br>
 Binyan Xu, Xinlin Dai, **Di Tang** (corresponding author), Kehuan Zhang  
 **ACM CCS**, 2025.  
 
