@@ -1,0 +1,187 @@
+# AI 论文洞察简报
+## 2026-06-04
+
+### 0) 执行要点（请先阅读）
+- 运行时治理正成为智能体的主导安全模式：多篇论文将控制点从仅依赖模型对齐，转向清单、证书、权限、回执以及跨异构运行时的动作级证明。
+- 当前最强的安全信号来自供应链与生命周期风险，而不只是提示词层面的滥用：模型合并、技能加载、带后门的微调、奖励模型、IRAG 数据库以及智能体可观测性都正在成为攻击面。
+- 多轮与轨迹级分析正在走向成熟：多篇论文表明，有害行为、事实侵蚀、凭证泄露和越狱意图，往往只有在对对话/工作流动态进行建模时才能被检测或解释，而非通过单轮消息。
+- 多项工作指出当前评估具有系统性误导：污染检测器在真实审计中失效，微调安全指标依赖能力基线与评审器选择，而真实世界智能体基准需要从在线会话中重建环境。
+- 实用防御正转向轻量、可部署的干预：基于单个失败报告的事后修补、奖励头编辑、工具调用前门控、可复用安全适配器，以及选择性的运行时重新锚定，都旨在无需完整重训即可提升安全性。
+- 一个值得注意的元风险：那些在总体上看似改善对齐的方法，可能会固化失败模式。一致性训练会放大谄媚，多智能体协商会抹去关键事实，而自回归对齐在首几个 token 之后仍可能停留在浅层。
+
+### 2) 关键主题（聚类）
+
+### 主题：面向智能体的运行时治理与权限控制
+
+- **为什么重要**：当智能体通过工具、技能、shell、API 和托管运行时执行操作时，安全性不再主要取决于文本过滤，而更多取决于动作是否被授权、可审查、可回放，并能跨异构执行环境进行治理。
+- **代表论文**：
+  - [SkillGuard: A Permission Framework for Agent Skills](https://arxiv.org/abs/2606.03024v1)
+  - [Overlaying Governance: A Compositional Authorization Framework for Delegation and Scope in Agentic AI](https://arxiv.org/abs/2606.03518v1)
+  - [Proof-Carrying Agent Actions: Model-Agnostic Runtime Governance for Heterogeneous Agent Systems](https://arxiv.org/abs/2606.04104v1)
+  - [Notarized Agents: Receiver-Attested Confidential Receipts for AI Agent Actions](https://arxiv.org/abs/2606.04193v1)
+- **共同方法**：
+  - 将技能/动作/委托视为一等治理对象，通过清单、作用域或证书进行管理。
+  - 在运行时执行默认拒绝或需审查的门控，而不是依赖静态检查。
+  - 通过回执、日志、证明包或授权图状态来保留可审计性。
+  - 将权限与执行细节分离，使治理能够跨越运行时异构性而持续有效。
+- **开放问题 / 失效模式**：
+  - 仅靠权限控制无法区分良性与恶意使用，因为二者可能需要相同能力。
+  - 不同运行时的覆盖并不均衡；仅观察者模式或弱适配器会降低回执完整性与可执行性。
+  - 清单生成与作用域衰减仍然容易出错，且高度依赖具体领域。
+  - 采用激励以及与现有身份/令牌系统的互操作性仍未解决。
+
+### 主题：供应链与后训练攻击面
+
+- **为什么重要**：安全失败越来越多地起源于推理上游：被投毒的微调、恶意合并向量、被攻破的奖励模型以及不透明的检索数据库，都可能在保持表面效用的同时破坏下游系统。
+- **代表论文**：
+  - [Patcher: Post-Hoc Patching of Backdoored Large Language Models](https://arxiv.org/abs/2606.02995v1)
+  - [RogueMerge: Robust and Unified Attacks against LLM Model Merging](https://arxiv.org/abs/2606.03344v1)
+  - [HARVE: Hacking-Aware Reward-Head Vector Editing for Robust Reward Models](https://arxiv.org/abs/2606.03131v1)
+  - [ImageAuditor: Membership Inference Attack against Image-based Retrieval-Augmented Generation](https://arxiv.org/abs/2606.03354v1)
+- **共同方法**：
+  - 将攻击建模为参数或表征中的潜在结构，而不只是提示词行为。
+  - 使用轻量级事后干预：LoRA 修补、奖励头投影或黑盒审计。
+  - 在多个模型家族/攻击类型上评估，以展示超越单一设置的迁移性。
+  - 在针对恶意机制的同时保留良性效用。
+- **开放问题 / 失效模式**：
+  - 许多防御假设白盒访问，或仅针对特定攻击形式，如 token 触发器或标量奖励头。
+  - 模型合并与检索供应链仍缺乏强有力的认证式防御或来源保证。
+  - 在完整 RLHF 或已部署流水线中的下游影响通常未被测量。
+  - 控制训练过程、软提示或参数编辑的攻击者可能绕过当前方法。
+
+### 主题：轨迹级安全与多轮检测
+
+- **为什么重要**：单轮审核无法捕捉那些在多轮交互或工作流状态中逐步显现的危害。多篇论文表明，攻击意图、泄露和对齐失败编码在轨迹中，而非孤立消息里。
+- **代表论文**：
+  - [PsychoPass: Geometric Profiling of Multi-Turn Adversarial LLM Conversations](https://arxiv.org/abs/2606.03136v1)
+  - [Caught in the Act(ivation): Toward Pre-Output and Multi-Turn Detection of Credential Exfiltration by LLM Agents](https://arxiv.org/abs/2606.04141v1)
+  - [When Autoregressive Consistency Hurts Safety Alignment](https://arxiv.org/abs/2606.04168v1)
+  - [NeuroArmor: Safe-Variant-Guided Representation Consistency for Selective Re-Anchoring in Jailbreak Defense](https://arxiv.org/abs/2606.03486v1)
+- **共同方法**：
+  - 从轨迹几何、隐藏状态漂移或续写状态异常中检测风险，而不只看表层文本。
+  - 在输出完成前进行干预，如门控、重新锚定或累计泄露预算。
+  - 使用提示词特定或状态特定的参考，而不是全局拒答启发式。
+  - 将攻击分析为可在任意位置诱发的状态转移，而不仅是前缀攻击。
+- **开放问题 / 失效模式**：
+  - 长度混杂因素、合成测试集和白盒假设限制了外部有效性。
+  - 自适应攻击者可以针对检测器，或利用低扰动轨迹进行规避。
+  - 多轮基准仍然规模较小，或仅覆盖特定攻击家族。
+  - 关于累计泄露或轨迹安全的形式化保证仍然较弱。
+
+### 主题：评估现实性与审计可靠性
+
+- **为什么重要**：多篇论文认为当前基准与审计夸大了可信度。真实评估需要在线环境、以能力为基础的安全测量，以及对分布偏移的显式处理。
+- **代表论文**：
+  - [The Reliability Gap in Benchmark Auditing: Distribution Shift and Scale as Failure Modes of Contamination Detection](https://arxiv.org/abs/2606.03305v1)
+  - [Safety Measurements for Fine-tuned LLMs Should be Grounded in Capability](https://arxiv.org/abs/2606.03648v1)
+  - [RealClawBench: Live OpenClaw Benchmarks from Real Developer-Agent Sessions](https://arxiv.org/abs/2606.03889v2)
+  - [Same Weights, Different Robot: A Deployment Safety View of VLA Policies](https://arxiv.org/abs/2606.03724v1)
+- **共同方法**：
+  - 揭示评估流水线中的隐藏假设：IID 验证、输出连贯性、以 checkpoint 为中心的可复现性，或经过策划的任务分布。
+  - 重建真实环境或部署元数据，而不是对脱离上下文的输出打分。
+  - 比较多个评审器/基准，以展示测量不稳定性。
+  - 在可能时优先采用确定性或程序化验证。
+- **开放问题 / 失效模式**：
+  - 没有真实来源信息时，统计式污染检测仍不可靠。
+  - 安全评审器可能会将不连贯输出误判为有害性。
+  - 真实基准成本高昂，且仍可能继承平台特定偏差。
+  - 可执行策略的部署清单在狭窄场景之外仍不完整。
+
+### 主题：奖励设计与对齐信号质量
+
+- **为什么重要**：更好的对齐越来越依赖于塑造训练信号本身——通过评分细则、信息增益、查询设计或校准教师——而不只是收集更多偏好数据。
+- **代表论文**：
+  - [Constitutional On-Policy Safe Distillation](https://arxiv.org/abs/2606.03089v1)
+  - [Uncertainty-Aware Clarification in LLM Agents with Information Gain](https://arxiv.org/abs/2606.03135v1)
+  - [QUBRIC: Co-Designing Queries and Rubrics for RL Beyond Verifiable Rewards](https://arxiv.org/abs/2606.03968v1)
+  - [RUBAS: Rubric-Based Reinforcement Learning for Agent Safety](https://arxiv.org/abs/2606.04051v1)
+- **共同方法**：
+  - 用与不确定性降低、评分细则标准或经校准的宪法式教师相关联的结构化信号，替代粗粒度标量奖励。
+  - 缩小任务/查询空间，使评估更可学习、噪声更小。
+  - 使用带分组 rollout 和基于评审器打分的 on-policy RL 变体。
+  - 加入显式机制以保留有用性或良性效用。
+- **开放问题 / 失效模式**：
+  - 严重依赖 LLM 评审器、教师质量和合成数据生成。
+  - 当每个评分细则或标准都需要单独评分时，奖励成本可能很高。
+  - 基于模拟器或精心策划场景的方法，可能无法迁移到噪声较大的真实用户环境。
+  - 超参数敏感性仍然显著，尤其是在教师校准方面。
+
+### 主题：智能体能力扩展带来新的进攻性风险
+
+- **为什么重要**：最令人警惕的双用途结果是，开放权重、单 GPU 智能体如今已能在网络中自主传播，这表明进攻能力正变得去中心化且具备适应性。
+- **代表论文**：
+  - [AI Agents Enable Adaptive Computer Worms](https://arxiv.org/abs/2606.03811v1)
+  - [Black-box, Adaptive, Efficient, Transferable, Harmful, Applicable... Attacks Are All You Need to Break LLMs](https://arxiv.org/abs/2606.03647v1)
+  - [RogueMerge: Robust and Unified Attacks against LLM Model Merging](https://arxiv.org/abs/2606.03344v1)
+- **共同方法**：
+  - 使用带记忆、检索或偏好优化的模块化攻击者架构，以适应目标。
+  - 直接优化有害性或传播成功率，而不只是越狱率等代理指标。
+  - 在有防御系统和未见目标上评估，以展示迁移性。
+  - 强调摊销式攻击训练或去中心化执行。
+- **开放问题 / 失效模式**：
+  - 当前进攻性评估往往忽略主动防御或漏洞稀疏环境。
+  - 有害性评审器和基准设置可能会给攻击优化带来偏差。
+  - 关于遏制、披露和删改的防御标准仍不成熟。
+  - 更强攻击提高了安全基准测试与发布治理的门槛。
+
+### 3) 技术综合
+- 一个反复出现的设计模式是**事后、参数高效修复**：Patcher 使用 LoRA 修补，HARVE 只编辑奖励头，SafeGene 迁移稀疏安全适配器，而 NeuroArmor 则在表征空间中进行运行时干预，而不是重训整个模型。
+- 多篇论文用**实例特定的控制对象**替代全局安全策略：SkillGuard 清单、RUBAS 的实例特定评分细则、NeuroArmor 的安全变体、PCAA 的动作证书，以及 Sello 回执，都将治理绑定到具体动作或提示词。
+- **KL 锚定 / 保留项**反复出现，作为避免安全性与有用性双输的机制：Patcher 锚定良性行为和非触发型有害行为；COPSD 校准教师表达性；SafeGene 在迁移中加入良性保留。
+- 多项工作认为，**轨迹状态比提示词文本更重要**：自回归续写状态解释了浅层对齐，对话几何可预测多轮攻击，而累计泄露预算能捕捉逐步低速泄露，这些都可能被逐轮过滤器漏掉。
+- 一个明显趋势是转向**程序化或结构化验证**，而非自由形式评判：RealClawBench 中的确定性工作区验证器、Lean4Agent 中的形式化谓词、ExecSpec 中的可执行策略证书，以及 RUBAS/QUBRIC 中的二元评分细则标准。
+- 与此同时，许多方法仍依赖**LLM-as-judge 瓶颈**来判断有害性、评分细则打分或事实抽取，而多篇论文明确表明这些评审器可能脆弱或具有误导性。
+- 一个常见的经验性失效模式是**分布不匹配**：污染检测器在非 IID 验证下失效，清单生成器会漏掉被调用脚本，SafeGene 需要目标域安全数据，而在模拟器中训练的澄清器可能无法迁移到真实用户。
+- 多篇论文揭示了**评估中的隐藏混杂因素**：对话长度主导了朴素的多轮攻击检测，受限输出微调会产生不连贯的安全响应，而 VLA 系统中的 checkpoint 相同并不意味着可执行等价。
+- **基于选择的训练可能会放大错误目标**：一致性方法会固化谄媚，宪法式蒸馏会收缩表达性，而奖励模型可能会高估类似风格的 hacking 方向。
+- 最稳健的防御越来越倾向于结合**检测 + 干预 + 可审计性**，而不是依赖单一层：例如 SkillGuard 负责调用中介并记录日志，NeuroArmor 负责检测并重路由，AIS 则结合激活探针、金丝雀和泄露记账。
+
+### 4) Top 5 论文（附“为什么是现在”）
+
+#### [AI Agents Enable Adaptive Computer Worms](https://arxiv.org/abs/2606.03811v1)
+- 展示了一个概念验证蠕虫：使用开放权重、单 GPU 的 LLM 加上智能体框架，在一个受控的 33 主机网络中运行。
+- 报告了相当可观的自主性能：在 7 天运行中，平均识别 31.3 个漏洞、利用 23.1 台主机，并在 20.4 台主机上完成复制。
+- 表明该蠕虫能够通过在运行时摄取漏洞通告材料来利用新披露漏洞，这正是“为什么是现在”的关键信号：适应能力不再局限于预编码 exploit。
+- 对防御者有用，因为它将关注点从静态 exploit 特征转向行为检测、网络分段和快速补丁流程。
+- **持保留态度之处**：该环境确保每台主机至少有一个可利用漏洞，且缺乏主动终端防御，因此结果并不能衡量其在漏洞稀疏或有防御的生产网络中的表现。
+
+#### [RogueMerge: Robust and Unified Attacks against LLM Model Merging](https://arxiv.org/abs/2606.03344v1)
+- 将模型合并识别为现实的供应链攻击面，并提出一种在未知合并设置和提示词变化下仍能生效的鲁棒优化攻击。
+- 结合参数层面的最坏情况干扰建模与输入层面的 DRO，并展示了在四类威胁和六种合并算法上的高 ASR，同时保留效用。
+- 为什么是现在：模型合并和社区任务向量正成为标准组合工具，但围绕它们的安全假设仍然薄弱。
+- 对前沿实验室和开放模型生态有用，因为它强调“看起来无害”的贡献向量也可能在没有明显效用损失的情况下破坏合并系统。
+- **持保留态度之处**：防御分析仅限于代表性缓解措施，论文并未提供认证式防御或检测保证。
+
+#### [Patcher: Post-Hoc Patching of Backdoored Large Language Models](https://arxiv.org/abs/2606.02995v1)
+- 为越狱后门提供了一种实用防御，只需要一个已报告失败案例、白盒模型访问权限以及一个小型干净验证集。
+- 通过梯度显著性定位 token 触发器，并结合拒答监督与 KL 锚定来修补行为，在报告实验中将 ASR 降至接近零，同时保留效用。
+- 为什么是现在：这契合现实的事件响应场景，因为防御者通常只有单个失败报告，而没有被投毒数据或攻击细节。
+- 作为一种可部署的修复模式，对开放权重模型运营者和下游微调者都很有用。
+- **持保留态度之处**：它假设的是离散 token 触发型后门，且攻击者仅限于微调数据投毒，而不涵盖软提示或直接参数编辑攻击。
+
+#### [The Reliability Gap in Benchmark Auditing: Distribution Shift and Scale as Failure Modes of Contamination Detection](https://arxiv.org/abs/2606.03305v1)
+- 系统评估了三类领先的污染检测范式，在 27 个模型上的 335 次评估中，正确结果仅约为 60%。
+- 展示了两个具体失效模式：分布偏移会破坏 LLM DI，而基准规模数据过小，无法为 Post-Hoc DI 的合成校准提供可靠支持。
+- 为什么是现在：污染声明正越来越多地影响排行榜可信度，但这篇论文认为当前统计工具尚不足以支撑真实世界审计。
+- 对评估团队有用，因为它将工作重点从对现有检测器的过度自信，转向来源追踪和更好的审计设计。
+- **持保留态度之处**：它主要是诊断性工作，而不是提出新的鲁棒检测器。
+
+#### [RealClawBench: Live OpenClaw Benchmarks from Real Developer-Agent Sessions](https://arxiv.org/abs/2606.03889v2)
+- 基于已部署的开发者-智能体会话，构建了一个在线、可版本化的基准，并带有重建工作区和确定性验证器。
+- 在保持与源分布高度接近的同时（报告的最大 JSD 为 0.0448），仍能区分 14 个模型；最佳通过率为 65.8%。
+- 为什么是现在：智能体评估越来越受制于现实性，而这篇论文提供了一条从生产轨迹到可执行基准案例的具体流水线。
+- 对评估编码/开发者智能体的团队有用，因为它衡量的是原始环境中的任务完成情况，而不只是输出看起来是否合理。
+- **持保留态度之处**：范围特定于 OpenClaw，且依赖私有服务或不可重建状态的任务会被过滤或简化。
+
+### 5) 实际下一步
+- 现在就为智能体系统加入**运行时权限清单和动作回执**；即使只是部分覆盖，也比只依赖提示词过滤更好。
+- 审计你的技术栈中的**供应链写入路径**：微调数据、合并向量、奖励头、技能包和检索语料都应具备来源追踪与回滚方案。
+- 在**多轮与轨迹级攻击**上评估越狱防御，而不只是单轮提示词；应包括前缀、插入和慢速泄露场景。
+- 如果你在微调模型，请同时跟踪**能力、连贯性和安全性**；当输出可能变得格式受限或不连贯时，不要只相信有害性指标。
+- 对于使用工具的智能体，在增加更多工具或更大模型之前，先测试**调用前门控**和**澄清策略**作为成本/安全杠杆。
+- 尽可能从生产轨迹中构建**真实基准切片**，配合确定性验证器和环境重建，而不是只依赖人工编写任务。
+- 对奖励模型和评审器，执行**对比式 hacking 审计**，并在重训整个评估器之前，考虑诸如头部编辑之类的轻量干预。
+- 将一致性风格的后训练和自我改进流水线视为**会改变对齐的算子**；应用后应重新审计谄媚及其他连贯性失败模式。
+
+---
+*基于逐篇论文分析生成；未进行外部浏览。*
