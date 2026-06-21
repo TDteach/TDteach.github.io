@@ -1,0 +1,186 @@
+# AI 论文洞察简报
+## 2026-06-22
+
+### 0) 执行要点（先读这个）
+- 过程级评估正成为安全关键领域的主流模式：化学、健康智能体、欺诈检测、临床 VQA 和学术搜索都表明，仅看最终答案准确率会掩盖重要失效模式。
+- 多篇论文从不同角度攻击同一个核心瓶颈：面向智能体/LLM 的**信用分配与稠密反馈**。SHARP 用按智能体划分的 Shapley 信用改进多智能体 RL；VIMPO 在不学习 critic 的情况下推导 token 级 advantage；SafeSpec 则在 speculative decoding 内部加入步骤级安全验证。
+- 鲁棒性结果越来越关注**分布偏移或结构性压力测试**，而不是平均准确率：NOTA 扰动会破坏临床不确定性估计，URL 屏蔽暴露欺诈检测对捷径的依赖，匹配的 K 线干预揭示趋势捷径，否定词会翻转遥感 MLLM 的行为。
+- 轻量级架构或系统改动依然重要：VIF 仅以约 1.04× 推理时间和 1.05× 内存开销提升了多模态 grounding，而图支持的 RAG 和技能路由流水线也在无需完整重训练的情况下带来实际收益。
+- 基准测试正转向**具有可验证产物的真实智能体环境**：Godot 游戏生成、临床前药理决策、开放文献上的论文搜索，以及从短信到网页的欺诈链路都表明，当前智能体距离可靠自治仍相当遥远。
+- 隐私/安全工作正在超越经典 DP：遗忘（PURGE）、抗提取水印（T2S）、多语言 PII 检测（REDACT）以及基于可预测性的隐私度量，都更强调与部署相关的威胁模型和诊断方式。
+
+### 2) 关键主题（聚类）
+
+### 主题：过程级评估正在取代仅看结果的评分
+
+- **为什么重要**：多篇论文表明，最终输出正确并不意味着推理有效、证据使用有支撑，或交互动态无害。在可审计性比原始准确率更重要的领域，这一点尤为关键。
+- **代表论文**：
+  - [From Answers to States: Verifiable Process-Level Evaluation of Chemical Reasoning in Large Language Models](https://arxiv.org/abs/2606.03660)
+  - [Towards Understanding and Measuring COGNITIVE ATROPHY in LLM Behaviour](https://arxiv.org/abs/2606.18129v1)
+  - [FraudSMSWalker: Benchmarking Agentic Large Language Models for SMS-to-Webpage Fraud Detection](https://arxiv.org/abs/2606.16659v1)
+  - [RubricsTree: Scalable and Evolving Open-Ended Evaluation of Personal Health Agents across Health Memory and Medical Skills](https://arxiv.org/abs/2606.18203v1)
+- **共同方法**：
+  - 将评估拆解为分层信号：最终正确性、结构遵循性、以及由验证器检查的中间行为
+  - 使用确定性或基于 rubric 的检查，而不是只依赖自由形式的 LLM 评审
+  - 审计模型决策是否由已观察到的证据支持，而不只是看起来是否合理
+  - 将失败定位到具体步骤、片段或行为属性
+- **开放问题 / 失效模式**：
+  - 在临床等强专家依赖场景中，人工/专家标注仍然昂贵
+  - 已验证轨迹仍可能反映的是与基准状态的一致性，而非独特的人类推理
+  - 某些审计中 LLM 评审组件仍在环路内，带来残余主观性
+  - 将这些方法扩展到开放式、长时程或多模态工作流仍然困难
+
+### 主题：为 RL 和多智能体系统提供更好的信用分配
+
+- **为什么重要**：一个反复出现的瓶颈是，稀疏的轨迹级奖励对于长时程推理和多智能体协作来说过于粗糙。新工作试图在不承担完整 critic 训练成本的前提下，恢复稠密、可操作的学习信号。
+- **代表论文**：
+  - [Who Deserves the Reward? SHARP: Shapley Credit-based Optimization for Multi-Agent System](https://arxiv.org/abs/2602.08335)
+  - [VIMPO: Value-Implicit Policy Optimization for LLMs](https://arxiv.org/abs/2606.20008v1)
+  - [MetaResearcher: Scaling Deep Research via Self-Reflective Reinforcement Learning in Adversarial Virtual Environments](https://arxiv.org/abs/2606.19893v1)
+- **共同方法**：
+  - 用更细粒度的按智能体或按 token 信号替代广播式奖励
+  - 利用反事实或策略隐含结构，在没有标准学习 critic 的情况下推断贡献
+  - 为效率、反思或工具质量加入过程奖励，而不只看最终正确性
+  - 在组内归一化奖励，以降低方差并稳定更新
+- **开放问题 / 失效模式**：
+  - 反事实信用估计会带来显著计算开销
+  - 近似信用信号仍可能错误归因于 planner 或 worker
+  - 大多数证据仍集中在数学/工具使用场景，而非广泛的智能体任务
+  - 有些方案仍停留在设计框架阶段，尚未完成充分的实证验证
+
+### 主题：对捷径的依赖是当前鲁棒性研究的主线
+
+- **为什么重要**：许多系统在移除捷径通道或进行反事实扰动之前看起来很强。这里最有力的论文不只是报告准确率下降，还指出模型使用了什么伪线索来替代目标证据。
+- **代表论文**：
+  - [Martingale Doppelgänger-Eval: An Identification Framework for Auditing Candlestick Understanding in Vision-Language Models](https://arxiv.org/abs/2606.17423v1)
+  - [FraudSMSWalker: Benchmarking Agentic Large Language Models for SMS-to-Webpage Fraud Detection](https://arxiv.org/abs/2606.16659v1)
+  - [Uncertainty Is Not a Safety Net for Clinical VQA, but Can It Anticipate Model Failure?](https://arxiv.org/abs/2606.16583v1)
+  - [Evaluating and Enhancing Negation Comprehension in Remote Sensing MLLMs](https://arxiv.org/abs/2606.20177v1)
+- **共同方法**：
+  - 显式移除捷径特征（URL、趋势-标签耦合、正确答案选项）
+  - 使用匹配干预或扰动来隔离模型对目标证据的因果敏感性
+  - 不仅测量准确率，还测量校准、证据支撑或在压力下的修正行为
+  - 构建领域特定的压力测试，而不是依赖通用鲁棒性套件
+- **开放问题 / 失效模式**：
+  - 一些基准是刻意控制的，可能无法完全反映自然流量
+  - 压力测试可以揭示失败，但不会自动提供缓解路径
+  - 鲁棒性常常随模态、任务子类型或模型家族而剧烈变化
+  - 移除捷径可能以不理想的方式改变工作点，例如误报激增
+
+### 主题：轻量级推理时修复方案正在获得关注
+
+- **为什么重要**：多篇论文表明，有意义的鲁棒性或 grounding 提升可以来自小模块或解码时干预，这对无法承担完整重训练成本的生产系统很有吸引力。
+- **代表论文**：
+  - [Vision Inference Former: Sustaining Visual Consistency in Multimodal Large Language Models](https://arxiv.org/abs/2605.18160)
+  - [SafeSpec: Fast and Safe LLM via Dynamic Reflective Sampling](https://arxiv.org/abs/2606.19755v1)
+  - [Evaluating and Enhancing Negation Comprehension in Remote Sensing MLLMs](https://arxiv.org/abs/2606.20177v1)
+- **共同方法**：
+  - 在现有推理流水线中插入轻量模块或 head
+  - 仅在检测到风险信号时触发额外计算
+  - 通过教师正则化、回滚或加性融合来保留基础模型效用
+  - 强调低开销以及与已部署 backbone 的兼容性
+- **开放问题 / 失效模式**：
+  - 在攻击下，安全触发模式可能抹去速度收益
+  - 小模块未必能平滑扩展到视频或更长的多模态上下文
+  - 如果无标签适配集过大，测试时适配可能过拟合
+  - 检测器校准仍是误报和过度拒答的核心来源
+
+### 主题：智能体基准正变得更真实——而当前智能体仍然吃力
+
+- **为什么重要**：基准前沿正从玩具任务转向具有真实产物、工具使用和隐藏失效模式的环境。跨领域来看，当前智能体距离可靠仍有很大差距。
+- **代表论文**：
+  - [GameCraft-Bench: Can Agents Build Playable Games End-to-End in a Real Game Engine?](https://arxiv.org/abs/2606.17861v1)
+  - [TxBench-PP: Analyzing AI Agent Performance on Small-Molecule Preclinical Pharmacology](https://arxiv.org/abs/2606.19245v1)
+  - [ScholarQuest: A Taxonomy-Guided Benchmark for Agentic Academic Paper Search in Open Literature Environments](https://arxiv.org/abs/2606.20235v1)
+  - [Compositional Skill Routing for LLM Agents: Decompose, Retrieve, and Compose](https://arxiv.org/abs/2606.18051v1)
+- **共同方法**：
+  - 评估完整工作流，而不是孤立答案
+  - 使用共享后端、确定性评分器或基于回放的验证来保证可复现性
+  - 在终局指标之外，同时测量效率和过程行为
+  - 诊断瓶颈，如分解粒度、偏离目标的探索或 harness 效应
+- **开放问题 / 失效模式**：
+  - 在真实场景中的绝对性能仍然偏低
+  - harness 和工具链选择会实质性改变结果
+  - 一些基准在部分评分环节仍依赖多模态或 LLM 评审
+  - 合成或策划式查询可能无法完全覆盖真实用户分布
+
+### 主题：隐私与安全评估正变得更贴近部署场景
+
+- **为什么重要**：新工作不再把隐私/安全视为单一标量属性，而是建模具体威胁：提取、遗忘、多语言变体下的 PII 检测，以及部分攻陷攻击者。
+- **代表论文**：
+  - [PURGE: Projected Unlearning via Retain-Guided Erasure](https://arxiv.org/abs/2606.03808)
+  - [T2S: A Rehearsal-Based Approach for Extraction-Resistant Model Watermarking](https://arxiv.org/abs/2606.11698v1)
+  - [REDACT: A Systematically Controlled Multilingual Benchmark for Personal Information Detection](https://arxiv.org/abs/2606.19881v1)
+  - [Predictability as a Fine-Grained Measure for Privacy](https://arxiv.org/abs/2606.20546v1)
+- **共同方法**：
+  - 用与攻击者相关的指标评估隐私，如 MIA AUROC、水印存活率或查询特定泄露
+  - 使用结构化扰动轴来暴露检测器失效位置
+  - 在适当情况下，用更现实的威胁建模替代精确保证
+  - 将理论与实际机制或基准基础设施结合
+- **开放问题 / 失效模式**：
+  - 许多方法仍局限于小模型、单随机种子或渐近分析
+  - 合成基准仍需要更强的现实相关性研究
+  - 一些保证只是一级或局部的，而非端到端形式化隐私保证
+  - rehearsal、仿真或自适应噪声设计的计算开销仍然显著
+
+### 3) 技术综合
+- 一个常见设计模式是**先分解，再评分**：SHARP 按智能体和工具调用分解奖励；RubricsTree 将健康回复分解为布尔叶节点；ChemCoTBench-V2 将推理分解为可由验证器检查的状态；SkillWeaver 将用户请求分解为原子子任务。
+- 多篇论文用**反事实或干预测试**替代不透明的终局指标：SHARP 使用轨迹屏蔽，Doppelgänger-Eval 使用匹配证据编辑，FraudSMSWalker 屏蔽 URL，临床 VQA 使用 NOTA 扰动。
+- **组相对归一化**在 RL 场景中作为方差控制机制出现：SHARP 使用组相对 advantage；VIMPO 使用组估计来锚定策略隐含 value。
+- 评估体系正明显转向**混合式评估栈**：能用确定性评分器时就用，必要时用 LLM 评审，再用人工审计做校准。几乎没有论文只依赖单一评估器。
+- 多项工作表明，**校准恰恰在能力最弱处退化最严重**：临床 UE 在低准确率模态上最无用；欺诈智能体在困难良性样本上 grounding 最差；遥感否定理解失败在状态级推理上最严重。
+- **推理时适配**正变得越来越模块化：VIF 增加一个两层视觉模块，SafeSpec 增加一个安全 head 加回滚，NeFo 在测试时更新 LoRA adapter。
+- 多个基准揭示，**工具或环境设计本身就是模型结果的一部分**：TxBench-PP 展示了 harness 效应；ScholarQuest 表明扩展策略很重要；GameCraft-Bench 要求回放轨迹，而不只是代码产物。
+- 安全论文越来越强调，**单一标量指标具有误导性**：pass@1 不能证明 prompt hardening，有毒性拒答可能掩盖真实性问题，而聚合 PII F1 会掩盖高敏感项漏检。
+- 许多最强的实证论文都使用了**保持表面任务格式不变、但改变潜在语义的压力测试**：移除正确选项、否定查询、在保持趋势的同时改变 K 线证据，或显式显示/隐藏 URL。
+- 跨领域来看，最可操作的收益往往来自**小型结构改动加更好的诊断**，而不一定是更大的模型。
+
+### 4) Top 5 论文（附“为什么是现在”）
+
+#### 1. [Who Deserves the Reward? SHARP: Shapley Credit-based Optimization for Multi-Agent System](https://arxiv.org/abs/2602.08335)
+- 为工具集成的多智能体 LLM 训练引入了一种实用的奖励分解：广播式准确率、Shapley 风格边际信用，以及工具过程奖励。
+- 在 MuSiQue、GAIA-text、WebWalkerQA、FRAMES 和 DocMath-Eval 上显示出显著提升，报告称相较单智能体基线平均提升 23.66%，相较其他多智能体方法提升 14.05%。
+- 现在尤其相关，因为多智能体/工具使用系统的扩展速度快于我们稳定训练它们的能力；这项工作直接瞄准协同瓶颈。
+- 如果你在训练 planner-worker 系统，并且需要按角色划分的学习信号而非单体奖励，这篇论文很有用。
+- **审慎看法**：反事实 Shapley 估计成本高、近似性强，而且仍会让许多有用的子智能体处于少数地位。
+
+#### 2. [SafeSpec: Fast and Safe LLM via Dynamic Reflective Sampling](https://arxiv.org/abs/2606.19755v1)
+- 将轻量级安全 head 集成进 speculative decoding，使安全检查和质量验证在同一次 target-model 前向中完成。
+- 加入回滚与反思恢复机制，而不是只做拒答，从而在降低 jailbreak 成功率的同时保留良性负载下的速度收益。
+- 为什么是现在：speculative decoding 正在成为生产推理的标准配置，而大多数安全方法并不能自然融入这一栈。
+- 在两个模型家族上的报告结果都很强，包括在 Qwen3-32B 上约 2.06× 的良性场景加速，以及平均约 0.07 的 ASR。
+- **审慎看法**：在攻击下，Safety Mode 会频繁触发，吞吐量显著下降；泛化能力也依赖于训练得到的安全 head。
+
+#### 3. [From Answers to States: Verifiable Process-Level Evaluation of Chemical Reasoning in Large Language Models](https://arxiv.org/abs/2606.03660)
+- 构建了一个包含 5,620 个样本、覆盖 18 个任务的基准，并提供确定性的化学状态验证。
+- 它展示了模板遵循与真实化学有效推理之间的显著差距，是“为什么过程评估重要”的一个非常清晰的例子。
+- 为什么是现在：化学和科学 copilot 正进入更高风险的工作流，在这些场景中，“看似合理但实际无效”的推理是不可接受的。
+- 除化学外，它也可作为其他科学领域中结构化中间状态验证的模板。
+- **审慎看法**：验证范围仍限于可规则验证的二维化学任务，以及与基准状态的一致性，而非完整科学推理的广度。
+
+#### 4. [RubricsTree: Scalable and Evolving Open-Ended Evaluation of Personal Health Agents across Health Memory and Medical Skills](https://arxiv.org/abs/2606.18203v1)
+- 提出一种分层 rubric DAG，包含 100+ 个原子布尔检查和自适应路由，目标是让开放式健康智能体评估既可扩展又符合临床要求。
+- 与基于原则的基线相比，它实现了更强的专家一致性（ICC3 0.876 vs 0.291；κ 0.787 vs 0.431），并能可靠检测上下文污染。
+- 为什么是现在：健康智能体是最典型的场景之一，在这里开放式 LLM 评估必须同时具备可扩展性和可审计性。
+- 另一个亮点是，这个评估器还能在下游用作 prompt 指导、反馈和 RL 奖励。
+- **审慎看法**：taxonomy 迁移和路由覆盖仍是开放风险，尤其是在罕见但安全关键的 rubric 上。
+
+#### 5. [TxBench-PP: Analyzing AI Agent Performance on Small-Molecule Preclinical Pharmacology](https://arxiv.org/abs/2606.19245v1)
+- 提供了一个面向临床前药理决策的真实、可确定性评分的基准，包含 16 种模型-harness 配置下的 4,800 条轨迹。
+- 结果发现，没有任何系统接近可靠自治；最佳设置通过率为 59.3%，且方法/校准错误主导了失败。
+- 为什么是现在：生物技术和科学智能体的能力宣称正在加速，但这篇论文表明，当前系统在局部、决策相关的科学判断上仍然会失败。
+- 它尤其有用，因为它将模型质量与 harness 效应区分开来，并给出了具体的失败分类。
+- **审慎看法**：研究范围是有意收窄且局部化的；结果尚不能推广到更广泛的发现流程或临床工作流。
+
+### 5) 实际下一步
+- 尽可能在你的评估栈中加入**过程级指标**：证据支撑、中间状态有效性、修订质量或 rubric 叶节点通过率，而不只是最终准确率。
+- 对于多智能体或工具使用系统，显式测试**信用分解**：比较广播式奖励与按智能体/按工具奖励，并测量有害或冗余子智能体比例。
+- 通过屏蔽可能的泄露通道来对**捷径依赖**做压力测试：URL、答案选项、元数据、趋势线索或检索来源。
+- 如果你部署多模态系统，在完整重训练之前先尝试**轻量级推理模块**：动态视觉重注入、安全 head 或测试时 LoRA 适配，可能带来更优的成本/收益比。
+- 在**反事实失败条件**下评估不确定性方法，而不只是看标准校准曲线；要问的是，当任务变得不可回答或证据被移除时，不确定性是否会上升。
+- 对于 RAG/智能体系统，同时测量**过程效率与 grounding**：工具调用数、扩展深度、候选集大小、证据支撑和召回效率。
+- 在安全关键领域，只要领域允许符号检查，就优先使用**确定性或结构化验证器**，而不是纯粹的 LLM-as-judge。
+- 对于隐私/安全，除了总体效用外，还应报告**威胁特定指标**：MIA AUROC、提取后水印存活率、高敏感 PII 召回率，或部分攻陷假设下的泄露情况。
+
+---
+*基于逐篇论文分析生成；未进行外部浏览。*
