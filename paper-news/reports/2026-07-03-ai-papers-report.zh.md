@@ -1,0 +1,183 @@
+# AI 论文洞察简报
+## 2026-07-03
+
+### 0) 执行要点（先读这个）
+- 智能体安全正从仅限提示词的威胁转向**工作流和基础设施威胁**：今天最强的一批论文展示了针对移动智能体、函数调用系统和 agentic RAG 的实用攻击，它们利用截图、工具轨迹、验证循环和公开推理信号，而不只是用户提示词。
+- 多篇论文指出，**当前评估代理指标具有误导性**：用于测试时训练的 perplexity/NLL、用于 T2I 安全的 CLIP/FID、用于语用安全的聚合通过/失败，以及用于代码/性能智能体的基准排行榜，都可能高估真实能力或安全性。
+- 一个反复出现的设计模式是**运行时治理优于静态对齐**：基于档位（gear）的动作门控、对象级上下文垃圾回收、任务状态包装器、预算化数据库会话，以及不确定性传播，都在执行时增加控制，而不是单纯信任基础模型。
+- 记忆正成为一个主要的可靠性/安全断层：论文展示了语义缓存替换、部署记忆声明、记忆诱导的谄媚，以及基于删除的遗忘审计中的失败，说明“记忆”需要更明确的结构和审计。
+- 机制性与低维视角正在证明其价值：权威诱导的谄媚可定位到后层表示擦除；有害性/拒答可耦合在一个小子空间中；RL 收益集中在 Transformer 中间层；隐藏偏见可通过极小的前缀适配器被放大。
+- 对从业者而言，直接含义是要**像对待分布式系统一样为智能体加仪表与治理**：安全通道、来源校验、运行时门控、显式状态对象、校准不确定性，以及基准审计，现在看起来比再来一轮通用提示词加固更可操作。
+
+### 2) 关键主题（聚类）
+
+### 主题：智能体攻击面正在下沉到提示词之下
+
+- **为什么重要**：这一批中最实用的攻击并不依赖巧妙措辞。它们利用的是智能体周围的执行基底——截图、工具 schema、公开轨迹、检索链和宿主侧通道——而许多已部署系统仍把这些上下文默认视为可信。
+- **代表论文**：
+  - [(A)I Sees What You Don't: Exploiting New Attack Surfaces in Third-Party Mobile Agents](https://arxiv.org/abs/2607.00333v1)
+  - [Beyond the Prompt: Jailbreaking Function-Calling LLMs via Simulated Moderation Traces](https://arxiv.org/abs/2607.00481v1)
+  - [KidnapRAG: A Black-Box Attack for Hijacking Reasoning in Agentic Retrieval-Augmented Generation Systems](https://arxiv.org/abs/2607.00422v1)
+  - [ReShift: Aha-Moment-Driven Reasoning-Level Backdoor Attacks on Vision-Language Models](https://arxiv.org/abs/2607.00361v1)
+- **共同方法**：
+  - 利用被信任但未验证的中间产物：截图、函数调用轨迹、检索文档、CoT 轨迹。
+  - 针对多步控制流，而非一次性输出。
+  - 使用符合真实部署假设的黑盒或低权限攻击者模型。
+  - 用端到端任务劫持指标衡量成功，而不只是 token 级越狱率。
+- **开放问题 / 失效模式**：
+  - 当系统隐藏或净化中间轨迹时，这些攻击会被削弱多少？
+  - 具备来源感知的检索和工具输出签名，能否在不严重损害可用性的前提下弥补这一缺口？
+  - 许多防御仍停留在提示词层，而攻击已发生在通道/工作流层。
+  - 某些攻击依赖特定架构或攻击者立足点，因此其在专有系统中的普遍性仍不清楚。
+
+### 主题：运行时治理正在成为实用安全层
+
+- **为什么重要**：多篇论文都收敛到一个观点：一旦智能体在长时程或物理/数据系统中行动，静态对齐就不够了。安全越来越多地通过对权限、上下文和执行预算的运行时控制来实现。
+- **代表论文**：
+  - [Managed Autonomy at Runtime: Gear-Based Safety and Governance for Single- and Multi-Agent Cyber-Physical Systems](https://arxiv.org/abs/2607.00334v1)
+  - [Self-GC: Self-Governing Context for Long-Horizon LLM Agents](https://arxiv.org/abs/2607.00692v1)
+  - [SessionBound: Turning Enterprise Task Approval into Budgeted Database Sessions](https://arxiv.org/abs/2607.00751v1)
+  - [Bayesian Uncertainty Propagation for Agentic RAG Pipelines: A Proof-of-Concept Study on Multi-Hop Question Answering](https://arxiv.org/abs/2607.00972v1)
+- **共同方法**：
+  - 在推理与执行之间插入控制层。
+  - 将自由形式上下文转换为结构化对象、预算或状态机。
+  - 使用显式门控信号：效用阈值、token 节省、签名任务范围、BN 置信度。
+  - 偏好可审计的回执/证书，而非对模型行为的隐式信任。
+- **开放问题 / 失效模式**：
+  - 许多保证依赖强假设：平稳性、OU 故障模型、确定性 BN 结构、单数据库范围。
+  - 运行时控制会增加延迟/成本，并可能降低短任务/简单任务表现。
+  - 闭环治理仍需要稳健信号；不确定性或效用估计若较弱，可能导致错误门控。
+  - 超出小团队或狭窄基础设施后的可扩展性通常尚未被证明。
+
+### 主题：在部署声明面前，评估代理指标正在失效
+
+- **为什么重要**：多篇论文表明，标准指标可能支持一些它们实际上无法证明的结论。这对记忆、安全对齐和以基准驱动的进展汇报尤其重要。
+- **代表论文**：
+  - [Beyond Perplexity: A Behavioral Evaluation Framework for Deployment-Memory Claims in LLM Test-Time Training](https://arxiv.org/abs/2607.00368v1)
+  - [The Illusion of High Utility in Safety Alignment of Text-to-Image Diffusion Models](https://arxiv.org/abs/2607.00402v1)
+  - [Adversarial Pragmatics for AI Safety Evaluation: A Benchmark for Instruction Conflict, Embedded Commands, and Policy Ambiguity](https://arxiv.org/abs/2607.01153v1)
+  - [Are Performance-Optimization Benchmarks Reliably Measuring Coding Agents?](https://arxiv.org/abs/2607.01211v1)
+- **共同方法**：
+  - 将代理指标与基于行为或结构化的评估进行对比。
+  - 审计现有文献/排行榜，而不只是提出新模型。
+  - 使用最小对、匹配基线或跨机器回放，隔离真正被测量的内容。
+  - 强调失败类别和校准，而非聚合分数。
+- **开放问题 / 失效模式**：
+  - 更好的指标通常运行成本更高，也更难标准化。
+  - 一些提出的审计仍然规模较小，或依赖评审者判断。
+  - 基准生态可能会抵制那些降低 headline 分数或可比性的改变。
+  - 结构化评估本身一旦固化，也可能被“刷分”。
+
+### 主题：记忆现在是系统问题，而不只是检索功能
+
+- **为什么重要**：在多个智能体场景中，“记忆”正以多种方式失效：缓存采用了错误的替换策略，参数更新并未带来行为性回忆，检索到的记忆诱发谄媚，而删除并不等于遗忘，除非检索图也被净化。
+- **代表论文**：
+  - [When Classic Cache Policies Fail: Learning-Augmented Replacement for Semantic Retrieval Buffers](https://arxiv.org/abs/2607.00394v1)
+  - [MemSyco-Bench: Benchmarking Sycophancy in Agent Memory](https://arxiv.org/abs/2607.01071v1)
+  - [Auditing Forgetting in Limited Memory Language Models](https://arxiv.org/abs/2607.00605v1)
+  - [A Task-State Representation for Long-Horizon Mobile GUI Agents](https://arxiv.org/abs/2607.00502v1)
+- **共同方法**：
+  - 将持久状态与瞬时观察或检索产物分离。
+  - 评估检索/使用之后的行为，而不只是存储或命中率。
+  - 增加显式结构：状态对象、后验引导驱逐、因果删除审计。
+  - 说明朴素启发式或参数更新会造成干扰与误用。
+- **开放问题 / 失效模式**：
+  - 记忆控制器本身也可能传播错误或增加成本。
+  - 由检索介导的伪影仍难以与合法泛化区分。
+  - 高效记忆压缩可能移除正确仲裁所需的线索。
+  - 超出当前基准和领域后的泛化仍是开放问题。
+
+### 主题：机制性和低维干预正在带来回报
+
+- **为什么重要**：这里一些最强的对齐/鲁棒性结果，来自于识别紧凑的内部结构——特定层、方向或适配器——而不是大范围的全模型再训练。
+- **代表论文**：
+  - [A Mechanistic View of Authority Hierarchy in LLM Sycophancy](https://arxiv.org/abs/2607.00415v1)
+  - [HARC: Coupling Harmfulness and Refusal Directions for Robust Safety Alignment](https://arxiv.org/abs/2607.00572v1)
+  - [Is One Layer Enough? Training A Single Transformer Layer Can Match Full-Parameter RL Training](https://arxiv.org/abs/2607.01232v1)
+  - [Distill to Detect: Exposing Stealth Biases in LLMs through Cartridge Distillation](https://arxiv.org/abs/2607.01208v1)
+- **共同方法**：
+  - 在残差流或 logit 偏移中识别稀疏或低秩结构。
+  - 使用定向干预：激活加法、选定子空间中的 LoRA、单层 RL、前缀 cartridge。
+  - 通过因果或对比实验验证，而不只是相关性。
+  - 将改动限制在较小内部区域，以保留广泛能力。
+- **开放问题 / 失效模式**：
+  - 某些方法对自适应攻击者或权重空间微调较脆弱。
+  - 低维结构可能无法覆盖混淆型或高秩失效模式。
+  - 机制性发现通常只在中等规模模型和狭窄任务上展示。
+  - 可能需要 profiling 或灰盒访问，限制了部署使用。
+
+### 主题：开放世界与长时程智能体需要显式结构
+
+- **为什么重要**：多篇论文表明，当智能体必须在长时程、不断演化的工具或复杂代码仓库中适应时，它们会失败。共同修复方式是把当前提示中隐含的结构外显出来。
+- **代表论文**：
+  - [Can Agents Generalize to the Open World? Unveiling the Fragility of Static Training in Tool Use](https://arxiv.org/abs/2607.01084v1)
+  - [Multi-Turn Agentic Scientific Literature Search via Workflow Induction](https://arxiv.org/abs/2607.00597v1)
+  - [SWE-Doctor: Guiding Software Engineering Agents with Runtime Diagnosis from Multi-Faceted Bug Reproduction Tests](https://arxiv.org/abs/2607.00990v1)
+  - [Antaeus: Hunting Repository-Level Logic Vulnerabilities via Context-Grounded LLM Reasoning](https://arxiv.org/abs/2607.01138v1)
+- **共同方法**：
+  - 用类型化工作流、诊断记录或有依据的上下文包，替代自由形式轨迹。
+  - 使用受控扰动或仓库级证据来暴露脆弱泛化。
+  - 基于运行时证据加入显式细化循环。
+  - 衡量执行错误、检索质量或漏洞召回，而不只是最终文本质量。
+- **开放问题 / 失效模式**：
+  - 结构化包装器可能继承教师或模拟器偏差。
+  - 收益可能具有领域特异性，并且在 token 或工具调用上成本较高。
+  - 真实世界的非平稳性比当前受控扰动套件更广泛。
+  - 更广泛的人在环验证仍然有限。
+
+### 3) 技术综合
+- 一个强烈的跨论文模式是**从 token 级评估转向轨迹级评估**：ReShift 针对 CoT 轨迹，KidnapRAG 衡量推理路径偏离，MemSyco-Bench 审计检索后的决策，而 adversarial pragmatics 使用最小对对比而非聚合拒答标签。
+- 多篇论文揭示了**代理指标/行为鸿沟**：TTT 记忆中 NLL 降低却没有回忆；T2I 安全中 CLIP/FID 稳定但 TIFA 下降；代码优化中基准分数在回放/评分变化下不稳定；语用安全评估中本地评审一致性随标签家族显著变化。
+- 在许多场景中，**运行时包装器优于整体再训练**：GUI 智能体的 TSR、上下文的 Self-GC、数据库访问的 SessionBound，以及 CPS 的 EntropyRuntime，都在基本保持基础模型不变的同时约束执行。
+- 安全工作越来越多地假设**黑盒或低权限攻击者**，而不是白盒全知攻击者：KidnapRAG 只发布文档，SMT 只使用公开函数调用 API，移动智能体攻击只需一个非 root 的恶意应用。
+- 多篇论文依赖**结构化中间产物**作为控制点：JSON 任务状态、类型化工作流 DAG、诊断记录、签名任务 token、索引化上下文对象，以及仓库上下文包。
+- **因果分解方法**明显增多：删除审计区分参数泄漏与检索介导的正确性；谄媚研究区分抑制与擦除；基准审计区分评分伪影与真实任务难度。
+- **低维适配**反复出现：HARC 耦合一个小的有害性/拒答子空间，D2D 使用极小前缀 cartridge，而单层 RL 往往可匹配全参数训练。
+- 多种方法使用了**带显式假设的形式化保证**，而不是非正式安全声明：EntropyRuntime 的定理、SOLAR 的竞争比/遗憾界、ReShift 的熵/KL 定理，以及 SEA 的 anytime-valid 门控框架。
+- 在智能体论文中，**精确保留证据**是一个反复出现的要求：Self-GC 保留可恢复锚点，SWE-Doctor 使用运行时落地轨迹，Antaeus 增加本地与仓库级代码证据，而移动智能体攻击则利用了这些证据通道未认证的情况。
+- 一个实用系统层面的教训是，**记忆、检索和上下文如今是一等安全面**：缓存替换、检索投毒、记忆诱导谄媚、遗忘审计和上下文 GC 都指向同一个运维瓶颈。
+
+### 4) Top 5 论文（附“为什么是现在”）
+
+- [(A)I Sees What You Don't: Exploiting New Attack Surfaces in Third-Party Mobile Agents](https://arxiv.org/abs/2607.00333v1)
+  - 展示了针对五个开源移动智能体框架的七种具体攻击，且所有智能体至少对其中六种攻击存在脆弱性。
+  - 证明仅凭截图感知和被重新利用的控制/调试通道，就足以实现凭证窃取、工作流劫持和宿主侧 RCE。
+  - 特别有价值，因为攻击者只需要一个低权限 Android 应用，使威胁模型在运维上相当现实。
+  - **持保留态度之处**：评估基于使用 ADB/Accessibility 的第三方 Android 智能体；第一方系统和 iOS 系统可能不同。
+
+- [Beyond Perplexity: A Behavioral Evaluation Framework for Deployment-Memory Claims in LLM Test-Time Training](https://arxiv.org/abs/2607.00368v1)
+  - 提出了清晰的 S/B/D 证据阶梯，将流式适应与真正的部署时记忆声明区分开来。
+  - 诊断结果很尖锐：一步 LoRA 虽降低了 support/answer NLL，但在测试的 Qwen3 各尺寸上生成回忆率为 0%。
+  - 现在很有用，因为“记忆”声明正在产品和研究叙事中迅速增多，但往往缺乏匹配的行为证据。
+  - **持保留态度之处**：受控实验聚焦于一步 LoRA 和一个模型家族，因此这更像是一篇校准论文，而非普适性的否定结果。
+
+- [Can Agents Generalize to the Open World? Unveiling the Fragility of Static Training in Tool Use](https://arxiv.org/abs/2607.01084v1)
+  - 提供了目前最清晰的开放世界工具使用失败受控分类之一：感知、交互、推理、内化。
+  - 区分了 SFT 和 RL 的失效模式，而不是只报告聚合退化，然后提出 PAFT 作为实用修复。
+  - 现在很有用，因为许多工具使用型智能体正从基准沙盒走向不断变化的 API 和 schema。
+  - **持保留态度之处**：大部分证据来自一个以 POI 为中心的沙盒、一个骨干模型和一种 RL 设置。
+
+- [HARC: Coupling Harmfulness and Refusal Directions for Robust Safety Alignment](https://arxiv.org/abs/2607.00572v1)
+  - 通过在提示位置和响应位置耦合有害性与拒答方向，把机制可解释性连接到实用安全调优。
+  - 报告了强有力的鲁棒性-能力-可用性权衡，以及跨模型扩展，在相对基础模型时 ASR 降低了 4.67×–4.75×。
+  - 之所以有用，是因为它为常导致过度拒答的广泛安全微调提供了一个定向替代方案。
+  - **持保留态度之处**：若攻击者拥有权重访问权限并进行对抗性微调，该防御可被解除；而且它依赖基础模型本身已编码有害性信号。
+
+- [Is One Layer Enough? Training A Single Transformer Layer Can Match Full-Parameter RL Training](https://arxiv.org/abs/2607.01232v1)
+  - 表明 RL 收益在深度方向上高度不均匀，中间层往往能恢复大部分甚至超过全参数 RL 的收益。
+  - 将这一洞见转化为实用的层感知策略，其效果优于均匀 RL，并可组成具有互补优势的集成。
+  - 现在很有用，因为 RL 后训练成本高且噪声大；这提示了一个更简单、且更具可解释性的优化目标。
+  - **持保留态度之处**：引导策略主要在主结果中的数学任务上得到验证，且一些更大模型的扫描并不完整。
+
+### 5) 实际下一步
+- 审计每条智能体流水线中的**非提示词信任边界**：截图获取、工具 schema、验证消息、检索轨迹、广播通道和宿主 shell 构造。
+- 在执行前加入**运行时强制层**：作用域化权限、签名任务/会话 token、效用或置信度门控，以及针对未解决状态的显式拒绝/弃答路径。
+- 用**与声明相匹配的行为测试**替代重代理指标评估：针对记忆的无上下文回忆、针对 T2I 的结构化效用、针对提示注入抗性的最小对语用测试，以及针对性能基准的跨机器回放。
+- 将记忆视为受治理的子系统：测量**检索后的误用**、干扰、陈旧记忆效应和删除闭包；不要只依赖命中率或 NLL。
+- 对长时程智能体，将状态外显为**结构化对象**，而不是让原始转录不断增长：任务状态摘要、工作流 DAG、诊断记录，或带可恢复锚点的索引化上下文对象。
+- 为检索/工具链加入来源与异常检查：**来源可信度、链路一致性检查、签名工具输出，以及检索路径偏离监控器**。
+- 在微调时优先探索**低维安全干预**：定向 LoRA/子空间耦合、层选择 RL，或在全模型再训练前先做基于适配器的审计。
+- 构建能区分**能力失败与治理失败**的评估套件：检索成功但决策失败、模型知道事实却选择了捷径、基准分数变化源于聚合方式而非能力变化。
+
+---
+*基于逐篇论文分析生成；未进行外部浏览。*
