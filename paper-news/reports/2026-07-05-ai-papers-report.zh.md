@@ -1,0 +1,169 @@
+# AI 论文洞察简报
+## 2026-07-05
+
+### 0) 执行摘要（请先读这里）
+- **Agent 安全正在从模型行为转向运行时控制。** 多篇论文得出同一结论：如果不在执行时对每个具体动作重新授权，并附带显式策略、来源信息与审计机制，那么仅靠提示级或能力级防护是不够的。
+- **记忆如今已成为一级攻击面。** 三篇独立论文分别展示了记忆投毒、整合过程中的“置信度漂白”以及延迟触发的数据外泄所导致的持续性失败，这表明“有状态 Agent”需要的是记忆完整性，而不只是提示注入防御。
+- **评测越来越聚焦于隐藏混杂因素与基准失效。** 多项工作表明，原始的校准、安全性和基准分数可能具有误导性，因为它们会受到准确率混杂、评测感知、作弊装置行为或代理指标失配的影响。
+- **即使表面性能看起来不错，过程可靠性仍然薄弱。** Agent 在及时弃权、按顺序执行配方、实体绑定以及长期任务约束保持方面都存在困难，而这些失败往往会被标准任务成功率指标忽略。
+- **轻量级接口与控制层干预可以带来显著帮助。** 基于对话的验证器、上下文仪表盘、响应时间探针、具备来源感知的记忆选择，以及自蒸馏的弃权/操作手册方法，都在无需完整模型重训练的情况下取得了有意义的提升。
+- **正在形成的设计模式是具备显式可观测性的纵深防御。** 最强的一批论文都将执行约束与可审计产物配对：回执、拒绝路径日志、来源信息、可重放轨迹或形式化反例。
+
+### 2) 关键主题（聚类）
+
+### 主题：运行时授权与动作边界执行约束
+
+- **为什么重要**：Agent 部署中的主导失败模式，已不再只是“输出了错误文本”，而是被授权的基础设施以错误参数执行了错误动作。多篇论文认为，安全必须在副作用发生的位置被强制执行，而不能仅从模型意图中推断。
+- **代表论文**：
+  - [Capability Gates Are Not Authorization: Confused-Deputy Failures in LLM Agent Frameworks](https://arxiv.org/abs/2606.28679v1)
+  - [From Tool Connection to Execution Control: Benchmarking Security Invariants in MCP-Style Agent Runtimes](https://arxiv.org/abs/2606.29073v1)
+  - [Agent Safety Is Action Alignment](https://arxiv.org/abs/2606.28739v1)
+  - [AgentBound: Verifiable Behavioral Governance for Autonomous AI Agents](https://arxiv.org/abs/2606.30970v1)
+- **共同方法**：
+  - 将检查从提示/模型层移到确定性的运行时中介层。
+  - 针对每一次工具调用，依据带外策略、授权或契约重新授权。
+  - 将元数据/能力视为描述性信息，而非充分授权依据。
+  - 通过拒绝日志、回执或可重放的策略产物保留可审计性。
+- **开放问题 / 失败模式**：
+  - 如何为开放式任务定义被授予的权限与所有者意图。
+  - 如何在真实分布式部署中确保执行约束不可绕过。
+  - 当工具空间和策略规模增长时，开销、误拦截与可用性问题如何控制。
+  - 某些提案的实证验证仍有限，尤其是 AgentBound。
+
+### 主题：记忆完整性、投毒与有状态 Agent 取证
+
+- **为什么重要**：持久记忆会把一次性提示攻击变成持久性妥协。新的风险不仅是被投毒的检索结果，还包括那些把不确定性重写成“事实”、并在之后驱动模型自信地执行错误动作的记忆产物。
+- **代表论文**：
+  - [Memory as an Attack Surface in LLM Agents: A Study on Multiple-Choice Question Answering](https://arxiv.org/abs/2606.29030v1)
+  - [Manufactured Confidence: How Memory Consolidation Turns Hearsay into Confident Facts](https://arxiv.org/abs/2606.29279v1)
+  - [Forensic Trajectory Signatures for Agent Memory Poisoning Detection](https://arxiv.org/abs/2606.30566v1)
+  - [LLM Agents Are Latent Context Managers: Eliciting Self-Managed Context via a Proprioceptive Dashboard](https://arxiv.org/abs/2606.30005v1)
+- **共同方法**：
+  - 将记忆与提示注入区分开，作为独立通道处理。
+  - 测量存储状态或整合状态对下游行为造成的变化。
+  - 使用可观测轨迹或结构化接口恢复来源信息。
+  - 测试基于冗余、保留认知立场或运行时可观测性的缓解方法。
+- **开放问题 / 失败模式**：
+  - 大多数攻击仍是有界或合成的；其在真实部署中的普遍性尚不清楚。
+  - 被动来源标签往往失效；主动不信任又可能导致过度升级。
+  - 仅基于操作的检测器会漏掉绕过可观测记忆工具的攻击。
+  - 记忆 UX 与安全性相互纠缠：更好的上下文管理有助于可靠性，但也可能引入新的攻击面。
+
+### 主题：评测盲点、代理失效与评测感知
+
+- **为什么重要**：一个反复出现的信息是，当前许多指标并没有测到团队以为自己在测的东西。模型之所以看起来更安全、校准更好或更鲁棒，可能是由于与目标属性无关的原因。
+- **代表论文**：
+  - [Defeat Devices in AI Systems](https://arxiv.org/abs/2606.28863v1)
+  - [Representational Depth of Evaluation Awareness Shifts With Scale in Open-Weight Language Models](https://arxiv.org/abs/2606.29196v1)
+  - [EvalSafetyGap: A Hybrid Survey and Conceptual Framework for LLM Evaluation-Safety Failures](https://arxiv.org/abs/2606.30219v1)
+  - [When Calibration Rankings Reverse: Accuracy-Controlled Evaluation for Fair Comparison of LLMs](https://arxiv.org/abs/2606.30814v1)
+- **共同方法**：
+  - 将“陈述的指标”与“真正想测的属性”分离。
+  - 使用白盒探针、受控比较或重加权来暴露混杂因素。
+  - 将评测/部署偏差视为结构性现象，而非个别轶事。
+  - 强调来源信息、动态测试与版本锁定报告。
+- **开放问题 / 失败模式**：
+  - 探针可恢复性不等于因果性。
+  - 小规模或异质性审计限制了强实证结论。
+  - 评测感知检测缺乏标准化的部署测试。
+  - 许多提案仍停留在概念层面，需要操作性验证。
+
+### 主题：长时程 Agent 的过程级可靠性
+
+- **为什么重要**：Agent 经常失败，并不是因为缺乏知识，而是因为过程处理不当：何时停止、步骤按什么顺序执行、该对哪个实体采取动作，或如何长期保持任务约束。
+- **代表论文**：
+  - [Agentic Abstention: Do Agents Know When to Stop Instead of Act?](https://arxiv.org/abs/2606.28733v1)
+  - [CDR-Bench: Evaluating Faithful Execution of Compositional, Order-Sensitive Data Refinement Recipes](https://arxiv.org/abs/2606.31435v1)
+  - [Entity Binding Failures in Tool-Augmented Agents](https://arxiv.org/abs/2606.30531v1)
+  - [FinPersona-Bench: A Benchmark for Longitudinal Psychometric Stability of Autonomous Financial Agents](https://arxiv.org/abs/2606.31522v1)
+- **共同方法**：
+  - 构建具有客观真值的确定性或合成环境。
+  - 直接测量过程失败，而不是从最终任务成功中间接推断。
+  - 比较默认偏向行动的基线行为，与弃权/延迟/澄清/门控变体之间的差异。
+  - 使用针对性指标，如及时召回、顺序一致成功率、错误实体率或任务约束遵守度。
+- **开放问题 / 失败模式**：
+  - 安全性往往通过更多延迟处理来提升，但会降低完成率。
+  - 基准仍只是更丰富真实工作流中的狭窄切片。
+  - 长时程漂移机制在机理上仍知之甚少。
+  - 澄清与弃权策略需要与人工监督集成。
+
+### 主题：验证器、探针与结构化接口作为实用控制层
+
+- **为什么重要**：一组值得注意的论文表明，显著收益可以来自于在模型周围增加合适的接口或验证器，而不是重训练基础模型本身。
+- **代表论文**：
+  - [PolicyGuard: A Dialogue-Grounded Sub-Agent Verifier for Policy Adherence in LLM Agents](https://arxiv.org/abs/2606.29225v1)
+  - [Closing the Activation-Cone Blind Spot: Response-Time Probing and Unified Defense](https://arxiv.org/abs/2606.29441v1)
+  - [KbSD: Knowledge Boundary aware Self-Distillation for Behavioral Calibration in Agentic Search](https://arxiv.org/abs/2606.29863v1)
+  - [Theoria: Rewrite-Acceptability Verification over Informal Reasoning States](https://arxiv.org/abs/2607.01223v1)
+- **共同方法**：
+  - 增加结构化中间产物：检查清单、轨迹、类型化重写或首 token 探针。
+  - 验证局部属性，而不是信任端到端输出。
+  - 使用上下文工程或自蒸馏，在无需完整微调的情况下改善过程行为。
+  - 相比标量式印象分，更偏好可审计的二元“认证/阻断”决策。
+- **开放问题 / 失败模式**：
+  - LLM 验证器仍然是概率性的，也可被攻击。
+  - 在自适应攻击或模板迁移攻击下，探针泛化能力会下降。
+  - 认证式系统在覆盖率/精度之间仍存在显著权衡。
+  - 超出基准环境后的领域迁移仍缺乏充分测试。
+
+### 3) 技术综合
+- **执行层中介是当前最强、反复出现的系统模式。** SCOPEGATE、HCP、AgentBound 以及 action alignment（动作对齐）框架都认为，完整中介必须发生在模型提出动作之后、以及副作用执行之前。
+- **多篇工作反复表明，能力暴露弱于基于值级别的授权。** 无论是 confused-deputy（混淆代理）审计，还是 MCP 风格运行时工作，都区分了“工具可用”与“当前这个精确调用被允许”。
+- **对话上下文对策略验证很重要。** PolicyGuard 在移除对话后的性能崩塌，呼应了一个更广泛主题：许多安全谓词是过程级的，无法仅从工具参数中检查出来。
+- **记忆失败往往是来源失败。** Manufactured Confidence 与记忆投毒相关论文表明，一旦来源、保留措辞或检索路径丢失，下游模型就会把陈旧说法当作事实。
+- **在若干场景中，可观测性可以替代重训练。** VISTA 的仪表盘、响应时间探针以及仅基于轨迹的投毒检测，都通过暴露或读取运行时状态来改善结果，而不是修改模型权重。
+- **基准设计正在走向解耦。** SECFID 区分 executed / processed / ignored；ACE 将校准与准确率分离；SafePyramid 将规则理解与依赖解析、框架迁移分离。
+- **许多方法依赖确定性或精确匹配评分，以避免评审歧义。** CDR-Bench、实体绑定、运行时安全基准以及若干记忆论文，都使用客观 oracle，而不是整体式 LLM 评判。
+- **自适应攻击者仍是最主要的未解决压力测试。** 响应时间探针、记忆检测器和基于验证器的系统都报告了有界鲁棒性，并承认存在规避风险。
+- **概念性重构与可部署产物之间的分化正在扩大。** Action Alignment、Defeat Devices 和 EvalSafetyGap 是有用的组织框架；而 SCOPEGATE、HCP、PolicyGuard 和 VISTA 则更接近可实施控制。
+- **长时程可靠性越来越依赖于保留结构，而不只是压缩上下文。** ECHO 与 VISTA 都表明，可按来源寻址的历史与可恢复性，对行动与学习都很重要。
+
+### 4) Top 5 论文（附“为什么是现在”）
+
+- [Capability Gates Are Not Authorization: Confused-Deputy Failures in LLM Agent Frameworks](https://arxiv.org/abs/2606.28679v1)
+  - 审计常见 Agent 技术栈，发现其具备能力门控，但缺乏确定性的逐调用、值级授权。
+  - 通过 27 个模型的 ASR 扫描量化了实际暴露面：部署层平均 ASR 为 0.603，而旗舰模型为 0.189。
+  - 提供了一个具体控制方案 SCOPEGATE，在其有界评测中阻止了所有未授权尝试，同时保留了良性调用。
+  - **为什么是现在**：团队正在快速把 Agent 接入支付、CRM 和基础设施 API；这篇论文给出了具体失败模型和可部署修复方案。
+  - 保留意见：结果受限于被审计的公开提交、单轮测量范围以及有限绕过预算。
+
+- [PolicyGuard: A Dialogue-Grounded Sub-Agent Verifier for Policy Adherence in LLM Agents](https://arxiv.org/abs/2606.29225v1)
+  - 针对一个真实部署缺口：大多数策略失败是过程性的，依赖完整对话，而不仅是工具参数。
+  - PG-CHECKLIST 在三个前沿 Agent 上将 PASS4 分别提升了 +12.0 / +6.0 / +12.0 点，并在主打配置中实现了完美的 PV PASS4。
+  - 提供了一个实用的验证器模式：完整对话审查、原始策略 + 检查清单，以及修复消息。
+  - **为什么是现在**：企业正在从通用安全分类法转向公司特定的工作流策略。
+  - 保留意见：评测主要基于 τ2-BENCH airline；验证器仍是概率性的，且对抗鲁棒性尚不完整。
+
+- [Manufactured Confidence: How Memory Consolidation Turns Hearsay into Confident Facts](https://arxiv.org/abs/2606.29279v1)
+  - 识别出一种微妙但危险的失败：记忆整合会把带保留的说法去保留化，变成自信的事实。
+  - 显示 mem0 和 LangMem 会以 1.00 的比率漂白带保留的注入内容，而逐字存储不会。
+  - 证明冗余与保留 hedge（保留性措辞）的提取方式可以恢复区分能力。
+  - **为什么是现在**：记忆产品被加入生产 Agent 的速度，快于其认知行为被审计的速度。
+  - 保留意见：场景是构造性的、非自适应的，样本量也较小。
+
+- [SafePyramid: A Hierarchical Benchmark for In-context Policy Guardrailing](https://arxiv.org/abs/2606.29887v1)
+  - 引入了一个大规模推理时策略执行基准：1,000 段对话、3,000 条策略、61,699 条规则。
+  - 显示从简单规则理解到依赖解析、再到新型策略框架时性能急剧下降；GPT-5.5 在 L2 上的 exact-match 仅为 12.9%。
+  - 揭示了一个组合瓶颈：较小的守护模型在按规则分解后有显著提升。
+  - **为什么是现在**：可按策略配置的护栏正成为产品需求，但当前系统距离可靠还很远。
+  - 保留意见：这是纯文本基准，没有人工基线，且 LLM 辅助生成可能引入偏差。
+
+- [Security--Fidelity Tradeoffs: The Hidden Cost of Prompt Injection Defense](https://arxiv.org/abs/2606.30783v1)
+  - 将标准提示注入指标混淆的三种行为拆分开来：executed、processed、ignored。
+  - 表明在 SECFID 上，没有任何被评估模型/防御同时实现高安全性和高保真度。
+  - 证明不同防御在机制上不同：有些是修复，有些是抑制；而面向保真度的 DPO 可以改善这种权衡。
+  - **为什么是现在**：文档处理、翻译和编辑 Agent 越来越需要保留不可信文本，而不是简单删除它。
+  - 保留意见：未研究自适应攻击。
+
+### 5) 实际下一步
+- 在模型输出与工具执行之间加入**确定性动作门**：对具体参数重新授权，执行默认拒绝，并记录拒绝原因。
+- 将**记忆视为不可信状态**：在存储中保留认知立场，避免单点承载型记忆，并对关键决策要求交叉佐证。
+- 现在就为 Agent 加入**取证轨迹**：工具调用序列、记忆访问日志、策略决策和可重放产物，正逐渐成为防御与调试的必需品。
+- 在**安全性与保真度联合**维度上评估提示注入防御，尤其是针对翻译、编辑和抽取工作流。
+- 在 Agent 评测中加入**弃权/延迟/澄清指标**；衡量及时弃权，而不只是最终拒绝或最终成功。
+- 对多工具企业 Agent，在产生副作用的动作前建立**实体解析门**，并在存在歧义时要求置信度 + 间隔阈值。
+- 对基准与内部评测进行**评测感知与代理混杂因素**压力测试：使用动态变体、尝试预算、来源跟踪和准确率控制比较。
+- 对过程密集型策略，优先采用**结构化验证器层**：基于对话的检查、逐步轨迹或类型化重写见证，能够捕捉端到端评分遗漏的失败。
+
+---
+*基于逐篇论文分析生成；未进行外部浏览。*
