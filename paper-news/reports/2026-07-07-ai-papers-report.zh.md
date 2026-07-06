@@ -1,0 +1,184 @@
+# AI 论文洞察简报
+## 2026-07-07
+
+### 0) 执行要点（先读这个）
+- 长时程智能体评测正在变得更严苛、更贴近现实：OSWorld 2.0、EvoPolicyGym、SEATauBench 和 DigitalCoach 都表明，即使短任务的表面性能看起来不错，强模型在隐藏状态、本地化、落地对齐（grounding）和迭代改进上仍然会失效。
+- 多篇论文汇聚到同一个操作层面的结论：部署参数和环境细节与基础模型质量同样重要。量化、温度、评估器选择、多语言界面、记忆保留和停止策略，都会实质性改变安全性或可靠性。
+- 验证正在从二元终点指标转向结构化、过程感知信号。SEVA、GradeSQL、Beyond Compilation、AxDafny 和 Object Aligner 都表明，相比仅看编译/执行/通过，更丰富的中间反馈、学习式验证器或模式感知评分能带来提升。
+- 安全研究正越来越聚焦于供应链和部署：QuantGuard 针对量化触发后门，SurrogateShield 在保留更高效用的同时将 PII 留在本地，SrDetection 在无法访问语料库的情况下审计代码基准泄漏，而基于水印的数据集保护工作则澄清了主动式所有权测试何时有效、何时无效。
+- 评估器的稳健聚合与审计如今已成为一等问题。RoPoLL、EPC 和临床 LLM 裁判审计都表明，单一裁判或朴素平均可能掩盖漂移、偏差、污染或缺失的弃答行为。
+- 一个反复出现的工程模式是：用轻量适配替代完全重训练。用于审核漂移的 LoRA 更新、面向 VLM 的免训练能力演化、有界记忆保留，以及不依赖隐藏状态的学习式停止，都试图在尽量少改动核心模型的前提下改进已部署系统。
+
+### 2) 关键主题（聚类）
+
+### 主题：长时程智能体在状态、落地对齐和恢复上失效
+
+- **为什么重要**：最新一批最强的智能体基准已不再测试孤立动作；它们测试的是智能体能否维持任务模型、从错误中恢复，并在长工作流中持续保持落地对齐。跨论文来看，主要瓶颈不是局部动作能力，而是持续的状态跟踪和自适应纠错。
+- **代表论文**：
+  - [OSWorld2.0: Benchmarking Computer Use Agents on Long-Horizon Real-World Tasks](https://arxiv.org/abs/2606.29537v1)
+  - [EvoPolicyGym: Evaluating Autonomous Policy Evolution in Interactive Environments](https://arxiv.org/abs/2607.02440v1)
+  - [Selective Memory Retention for Long-Horizon LLM Agents](https://arxiv.org/abs/2606.29178v1)
+  - [DigitalCoach: Communication and Grounding Gaps in Human and Agentic Computer Use Coaching](https://arxiv.org/abs/2606.31980v1)
+- **共同方法**：
+  - 构建具有长轨迹、隐藏状态以及部分得分或轨迹诊断的有状态环境。
+  - 不仅分析最终成功，还分析智能体把预算花在何处、如何修复错误，以及是否保留了有用记忆。
+  - 用现实中的干扰因素进行压力测试：动态 UI 变化、带噪记忆写入、多模态落地对齐，以及隐藏验证划分。
+- **开放问题 / 失效模式**：
+  - 智能体在验证和修复上投入的预算过少；OSWorld 2.0 报告称，用于检测/修复错误的比例不足约 7%。
+  - 记忆可能帮助很大，但如果保留不加选择，被污染的检索库会降低精度。
+  - 多模态教练型智能体仍然没有充分利用视觉上下文，并且过度生成直接指令，而不是自适应指导。
+  - 强基准表现仍可能反映“调优主导型任务”；“综合生成主导型任务”依然难得多。
+
+### 主题：评估本身正在被审计
+
+- **为什么重要**：多篇论文认为，当前评估流程高估了能力，因为裁判、指标或基准表面形式本身很脆弱。该领域正转向评估器稳健性、语义忠实性和过程感知评分。
+- **代表论文**：
+  - [RoPoLL: Robust Panel of LLM Judges](https://arxiv.org/abs/2606.30931v1)
+  - [A Diagnostic Framework and Multi-Evaluator Audit of Evaluator-Driven Preference Dynamics in Self-Adapting LLM Agents](https://arxiv.org/abs/2606.29719v1)
+  - [Clinician-Level Agreement Without Clinical Caution: LLM Evaluator Limits in Medical AI Benchmarking](https://arxiv.org/abs/2607.01103v1)
+  - [Beyond Compilation: Evaluating Faithful Natural-Language-to-Lean Statement Formalization](https://arxiv.org/abs/2606.31002v1)
+- **共同方法**：
+  - 用多裁判、共识或稳健聚合方案替代单一标量一致性。
+  - 将表面有效性与语义忠实性分开（例如：可编译 vs 忠实；一致性 vs 弃答行为）。
+  - 显式测量评估器漂移、自我偏好、家族偏差和对污染的敏感性。
+- **开放问题 / 失效模式**：
+  - 在有偏或重尾失效下，对裁判取均值是脆弱的；RoPoLL 表明在污染下偏差可无界。
+  - 评估器版本漂移可能在几周内颠倒结论。
+  - 与人类高度一致，仍可能漏掉与安全相关的行为，如弃答或校准后的不确定性。
+  - 保守的共识指标能提高精度，但也可能带来假阴性和更高评估成本。
+
+### 主题：过程感知验证正在超越通过/失败启发式
+
+- **为什么重要**：多篇论文表明，更丰富的中间结构——证据对齐、奖励模型、验证器反馈、模式感知相似度——能同时提升性能和可审计性。这对安全关键生成尤其重要，因为“看起来有效”并不够。
+- **代表论文**：
+  - [SEVA: Self-Evolving Verification Agent with Process Reward for Fact Attribution](https://arxiv.org/abs/2606.29713v1)
+  - [Test-Time Verification for Text-to-SQL via Outcome Reward Models](https://arxiv.org/abs/2606.30851v1)
+  - [AxDafny: Agentic Verified Code Generation in Dafny](https://arxiv.org/abs/2606.32007v1)
+  - [Object Aligner: A Configurable JSON Schema Similarity Score for Graphs, Applied to LLM Prompt Optimization](https://arxiv.org/abs/2607.01972v1)
+- **共同方法**：
+  - 训练或设计对结构化输出打分的验证器，而不只看最终标签。
+  - 使用执行、编译或验证器诊断作为可扩展监督。
+  - 反馈局部化的修复信号，而不只是标量奖励。
+- **开放问题 / 失效模式**：
+  - 在结构化输出上，二元奖励会使 RL 信号塌缩；SEVA 直接展示了这一点。
+  - 执行等价和可编译性是有用但不完整的语义正确性代理。
+  - 已验证输出在运行时仍可能不实用或效率低下。
+  - 更丰富的验证器会增加离线训练或工程复杂度，也可能仍继承基准偏差。
+
+### 主题：部署时安全性取决于压缩、适配和接口
+
+- **为什么重要**：安全属性在不同部署选择下并不稳定。量化、温度、本地化界面和不断演化的数据流，都会以标准评估常常忽略的方式改变行为。
+- **代表论文**：
+  - [Breaking the Rounding Trap: Securing LLMs against Quantization-Conditioned Backdoors](https://arxiv.org/abs/2606.29239v1)
+  - [The Joint Effect of Quantization and Sampling Temperature on LLM Safety Alignment: A Factorial Analysis](https://arxiv.org/abs/2606.29581v1)
+  - [DriftGuard: Safety-Aware Multi-Monitor Detection and Selective Adaptation for Evolving Toxicity Moderation](https://arxiv.org/abs/2606.28725v1)
+  - [SEATauBench: Adapting Tool-Agent-User Evaluation Into Low-Resource Southeast Asian Languages](https://arxiv.org/abs/2606.28715v1)
+- **共同方法**：
+  - 直接评估训练后部署配置，而不是假设 FP16/贪心解码/英文基线可以迁移。
+  - 使用轻量适配或部署前优化，而不是完全重训练。
+  - 监控本地化或特定危害子空间，而不只是全局漂移。
+- **开放问题 / 失效模式**：
+  - 在良性设置中，量化通常对安全性中性，但它可能激活隐藏后门，或显著恶化某些较弱模型。
+  - 即使量化不是主要因素，温度也是决策不稳定性的主要驱动因素。
+  - 仅用英文评估会高估多语言工具智能体的就绪度，尤其是在完全本地化条件下。
+  - 危害感知监控器可能依赖生产环境中拿不到的标注。
+
+### 主题：安全与隐私防御正变得更实用、可测量
+
+- **为什么重要**：当前最强的安全论文，越来越少关注抽象威胁模型，越来越多关注可部署控制、可测量泄漏测试，以及开放权重生态中的现实攻击面。
+- **代表论文**：
+  - [SurrogateShield: Beyond Redaction for High-Utility, Privacy-Preserving LLM Interactions](https://arxiv.org/abs/2606.29567v1)
+  - [SrDetection: A Self-Referential Framework for Data Leakage Detection in Code Large Language Models](https://arxiv.org/abs/2606.29815v1)
+  - [Watermarking for Proprietary Dataset Protection](https://arxiv.org/abs/2607.00325v1)
+  - [AI-Generated PowerShell Malware: An Experimental Framework and Dataset](https://arxiv.org/abs/2606.30819v1)
+- **共同方法**：
+  - 构建具有明确威胁边界和可测输出的端到端流程。
+  - 在可能时优先采用无阈值或精确检验形式。
+  - 与现实基线比较，而不只是玩具攻击。
+- **开放问题 / 失效模式**：
+  - 合成数据集和受控测试床仍限制生态有效性。
+  - 某些保护方法要求比许多生产 API 所允许的更强访问假设。
+  - 保留效用的隐私防御仍存在地域、改写或隐式 PII 缺口。
+  - 开放权重的小型模型已经能够生成行为上相似的恶意软件，这对评估和发布规范带来双重用途压力。
+
+### 主题：免训练或轻量适配正在兴起
+
+- **为什么重要**：多篇论文展示了无需完整模型重训练也能获得有意义提升，这对需要快速迭代、降低成本或冻结骨干网络的生产系统很有吸引力。
+- **代表论文**：
+  - [Dynamo: Dynamic Skill-Tool Evolution for Vision-Language Agents](https://arxiv.org/abs/2606.30185v1)
+  - [Selective Memory Retention for Long-Horizon LLM Agents](https://arxiv.org/abs/2606.29178v1)
+  - [DriftGuard: Safety-Aware Multi-Monitor Detection and Selective Adaptation for Evolving Toxicity Moderation](https://arxiv.org/abs/2606.28725v1)
+  - [When Does Learning to Stop Help? A Cost-Aware Study of Early Exits in Reasoning Models](https://arxiv.org/abs/2606.30852v1)
+- **共同方法**：
+  - 保持基础模型冻结，通过记忆、工具、LoRA 或推理时控制进行适配。
+  - 使用小规模标注子集、选择性更新或检查点探针，瞄准价值最高的干预点。
+  - 显式评估成本/延迟，而不只看准确率。
+- **开放问题 / 失效模式**：
+  - 收益高度依赖具体场景；在较简单设置中，简单启发式往往能匹配学习式方法。
+  - 许多方法仍需要正确性信号、校准数据或交互式服务基础设施。
+  - 合成压力测试相较于自然噪声部署，可能高估收益。
+  - 轻量适配可能改善局部指标，但更广泛的泛化问题仍未解决。
+
+### 3) 技术综合
+- 一个强烈的跨论文模式是：**从终点指标转向轨迹/过程指标**。OSWorld 2.0 使用带检查点的部分奖励，EvoPolicyGym 记录提交-反馈-修订轨迹，SEVA 将奖励分解为结构化组件，而 Beyond Compilation 将编译成功与语义忠实性分开。
+- **验证器引导循环**正成为默认设计模式：AxDafny 使用 Dafny 诊断，GradeSQL 使用 ORM 对候选 SQL 进行重排序，SEVA 使用结构化过程奖励，而 Object Aligner 为提示优化输出精确修复差异。
+- 多篇论文表明：**全局平均值掩盖了真实失效模式**。DriftGuard 的全局 JS 漂移漏掉了与安全相关的变化；SEATauBench 表明语言正确性几乎无法解释任务成功；临床 LLM 裁判虽然与医生一致性相当，却漏掉了弃答行为。
+- **稳健性越来越意味着对接口的稳健性**，而不只是对提示的稳健性：本地化工具模式、动态 GUI、JSON 图重标记，以及量化部署，都会在名义任务不变的情况下改变结果。
+- **参数高效适配**以多种形式出现：用于审核漂移的 LoRA、GradeSQL 中的 LoRA 验证器调优、恶意软件实验中的 QLoRA/AWQ，以及用有界记忆保留替代模型更新。
+- **量化呈现出双重属性：既是效率工具，也是威胁面**。一篇论文发现标准 PTQ 在大多数情况下对安全性基本中性，只有某些弱模型例外；另一篇则表明，量化可以激活全精度审计无法发现的隐蔽后门。
+- **裁判可靠性如今被视为统计估计问题**：RoPoLL 引入稳健均值估计，EPC 使用耦合指标和 bootstrap，而医学评估则将 LLM 裁判与留一法医生上限进行比较。
+- **合成或受控扰动被广泛用于暴露隐藏脆弱性**：带噪记忆写入、评估器污染、图 ID 重标记、翻译语料，以及折叠式水印暴露，都揭示了标准基准上看不见的失效模式。
+- **成本感知评估正变得更明确**：LearnStop 模型探查额外开销和 H100 延迟，OSWorld 2.0 报告 token 效率权衡，QuantGuard 报告离线 GPU 成本，而 MultiSynt/MT 用达到基线所需 token 数来刻画收益。
+- 一个反复出现的方法论分野是：**能力 vs 忠实性**。编译/执行/通过率可能提升，但语义正确性、落地对齐、弃答或安全行为却可能变差。
+
+### 4) Top 5 论文（以及“为什么是现在”）
+
+#### [OSWorld2.0: Benchmarking Computer Use Agents on Long-Horizon Real-World Tasks](https://arxiv.org/abs/2606.29537v1)
+- 这是当前最有力的证据之一，表明计算机使用智能体距离可靠的端到端工作仍然很远：在 500 步时，最佳二元完成率也只有 20.6%。
+- 该基准异常贴近现实：108 个工作流、自托管服务、动态更新、部分奖励，以及显式的隐藏状态现象。
+- 它当前很有价值，因为它精确指出了前沿智能体失败的位置：隐式状态推断、多项目跟踪、冲突消歧，以及薄弱的自我修复。
+- 安全分析也非常具体，记录了凭证泄漏、UI 绕过和破坏性恢复动作。
+- **质疑 / 局限**：基准维护成本高，领域覆盖仍不完整，因此总体分数仍依赖任务组合。
+
+#### [Breaking the Rounding Trap: Securing LLMs against Quantization-Conditioned Backdoors](https://arxiv.org/abs/2606.29239v1)
+- 识别出一种现实的供应链威胁：模型在全精度下看起来干净，却只在标准部署量化后变得恶意。
+- QuantGuard 很实用：仅需部署前处理、无推理开销、只需小型校准集，也不需要改动下游量化器。
+- 结果覆盖广且具体：跨 6 个 LLM、3 种量化器和 3 种攻击场景，并展示了显著的安全恢复案例。
+- 它现在很有用，因为量化已是开放权重部署的标准做法，这使其成为真实的操作盲点。
+- **质疑 / 局限**：覆盖范围仍限于 INT8/FP4/NF4 风格设置，且自适应攻击者仍保留一定优势。
+
+#### [SEVA: Self-Evolving Verification Agent with Process Reward for Fact Attribution](https://arxiv.org/abs/2606.29713v1)
+- 这是“结构化奖励为何重要”的强有力例子：二元奖励 GRPO 会停滞，而过程奖励同时提升了 F1 和输出可审计性。
+- 该验证器输出对部署友好：证据对齐、推理链、校准置信度，以及带修复建议的错误分类。
+- 它现在很有价值，因为许多安全流程需要的是可检查的验证器，而不只是准确的验证器。
+- 自演化循环也提出了一个重要警告：针对性改进可能造就基准专家，而非通才。
+- **质疑 / 局限**：完整 GRPO 仅在 3B 规模上得到展示，且该方法存在负向预测偏置，需要缓解。
+
+#### [RoPoLL: Robust Panel of LLM Judges](https://arxiv.org/abs/2606.30931v1)
+- 它提出了一个理论上清晰、实践上后果重大的观点：在现实污染下，对裁判取平均并不稳健，增加裁判数量也无法解决这一点。
+- 用几何中位数替代均值既简单、无需调参，又在有偏污染下表现强劲。
+- 它现在很有用，因为 LLM 陪审团在评估流程中越来越常见，而这是一个低摩擦升级。
+- 论文还将稳健统计与具体的 LLM 裁判失效模式联系起来，例如解析失败和跨属性污染。
+- **质疑 / 局限**：经验性污染是合成的，且主要理论假设了简化的依赖/噪声结构。
+
+#### [MultiSynt/MT: Trillion-Token Multi-Parallel Pre-Training Data Translated Across 36 Languages](https://arxiv.org/abs/2607.00890v1)
+- 这是一个大规模、实用的数据发布：跨 36 种语言，约 4.8T 个翻译后的目标语言 token，并带有行级对齐。
+- 最具可操作性的核心结果是：翻译得到的高质量英文源数据，用约少 72% 的 token 就能达到原生数据基线，并且在相同 100B-token 预算下表现更好。
+- 它现在很有价值，因为多语言数据稀缺仍是瓶颈，尤其对非英语开放模型而言。
+- 论文也谨慎指出了盲点：即使标准基准表现强，翻译语料在习语性或文化落地任务上仍可能不如原生语料。
+- **质疑 / 局限**：收益混杂了源语料质量与翻译效果，且证据主要集中在单一模型规模和欧洲语言。
+
+### 5) 实际下一步
+- 在你的评估栈中加入**部署矩阵评估**：跨量化格式、温度、语言本地化和工具模式变体测试安全性与可靠性，而不是只测一个规范配置。
+- 对智能体系统，加入**轨迹诊断**：修复预算占比、隐藏状态失效、检索精度，以及“随时间推移的最佳验证表现”比单看最终成功更有信息量。
+- 用**稳健聚合**和跨裁判版本/家族的定期重基线，替代朴素的 LLM 裁判平均。
+- 如果你使用验证器模型，转向**结构化输出和过程奖励**；二元通过/失败监督正在同时损失性能和可审计性。
+- 对多语言或主权部署，不仅要基准测试本地化用户话语，还要测试**本地化工具、策略和数据库**。
+- 在审核或在线安全系统中，监控**特定危害的漂移信号**，并保留一条轻量适配路径，例如选择性 LoRA 更新。
+- 对隐私敏感产品，在默认采用删改前，先在效用和泄漏指标上测试**代理替换（surrogate substitution）**相对于占位符删改的效果。
+- 对长时间运行的智能体，评估**有界记忆保留**以及带噪写入条件下的检索精度；无界记忆并不是免费的收益。
+- 在代码/形式化方法工作流中，将**语法有效性、语义忠实性和运行时实用性**分开评估；仅靠编译/验证可能高估就绪度。
+- 如果你依赖静态解释数据集做监控，测试**行为正则化**是否能让解释跟踪当前模型行为，尤其是在训练后变更之后。
+
+---
+*根据逐篇论文分析生成；未进行外部浏览。*
