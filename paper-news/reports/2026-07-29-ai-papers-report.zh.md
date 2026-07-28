@@ -1,0 +1,188 @@
+# AI 论文洞察简报
+## 2026-07-29
+
+### 0) 执行要点（先读这个）
+- Agent 可靠性研究正从“它是否成功了？”转向“是什么状态、证据和权限让成功变得安全？”多篇论文指出，终点指标会掩盖记忆、隔离、代码修复和评估中的关键失效模式。
+- 一个反复出现的强模式是**运行时的关注点分离**：暂存 vs 提交、观察 vs 授权、检索 vs 应用、答案 vs 证据，以及成功 vs 来源。明确这些边界的系统报告了更好的安全性或更可解释的权衡。
+- 成本意识正成为全栈的一等公民：沙箱服务、主动式 RAG、幻觉评估、工作流搜索和自主研究都表明，一旦把延迟、token 或评估预算纳入考虑，单纯的质量指标结论可能会反转。
+- 基于检索的记忆仍然是 Agent 的主要弱点。多篇论文表明，仅仅存储事实是不够的；真正困难的是在正确时刻呈现正确事实，尤其当相关性依赖潜在世界知识而非查询相似度时。
+- 后训练与蒸馏方法正变得更有结构：证据门控的教师回退、协议蒸馏和多教师整合都能改善 Agent 行为，但也有多篇论文警告，优化过程可能恢复了奖励，却没有恢复预期机制。
+- 开放前沿能力仍在持续推进：Kimi K3 推动了开放多模态 MoE 规模和长上下文服务，但当天更具可操作性的进展主要集中在基础设施、评估和运行时控制，而非纯模型扩展。
+
+### 2) 关键主题（聚类）
+
+### 主题：运行时安全需要显式的状态、来源和权限边界
+
+- **为什么重要**：多篇论文表明，当系统把观察结果、记忆写入、工具参数和验证器输出都视为可立即执行时，Agent 就会失败。把状态转换显式化——尤其是在不可逆动作之前——能提升安全性和可审计性。
+- **代表论文**：
+  - [MemTX: Transactional Belief Commit for Stateful Agent Memory](https://arxiv.org/abs/2607.23929v1)
+  - [ContainmentBench: Trace-Based Evaluation of Post-Injection Containment in Tool-Using LLM Agents](https://arxiv.org/abs/2607.23999v1)
+  - [Agentic Permissions Policy Algebra for Taint Confinement in LLM Agents](https://arxiv.org/abs/2607.24625v1)
+  - [Looping Is Not Reliability: State-Bound Evidence and Typed Revision Contracts for Agentic Code Repair](https://arxiv.org/abs/2607.24604v1)
+- **共同方法**：
+  - 将暂定/暂存状态与已提交/动作安全状态分离。
+  - 将动作绑定到来源、权限或精确的代码/记忆状态。
+  - 对不可逆动作施加比普通读写更强的证据门槛。
+  - 当后续证据推翻先前状态时，加入回滚、修复或隔离机制。
+- **开放问题 / 失效模式**：
+  - 当信息被转写或在没有显式血缘记录的情况下隐式传播时，来源缺口仍然存在。
+  - 外部副作用通常只是被记录或补偿，而不是真正回滚。
+  - 保证依赖于可信的插桩、声明式契约或清洗器的正确性。
+  - 如果控制过于保守，或没有同时优化活性，系统效用可能崩塌。
+
+### 主题：仅看结果的评估方式正在失效
+
+- **为什么重要**：一个正确答案或安全终点，往往掩盖了模型是否使用了被授权的证据、执行是否到达可恢复状态，或者防御是否保留了有用行为。当天的评估论文推动走向对轨迹、状态和来源敏感的报告方式。
+- **代表论文**：
+  - [Success Is Not Self-Explanatory: Auditing Success Provenance in Agent Evaluation](https://arxiv.org/abs/2607.24054v1)
+  - [Accuracy Hides How Language Models Fail: Measuring Failure States Under Matched Output Budgets](https://arxiv.org/abs/2607.24268v1)
+  - [ContainmentBench: Trace-Based Evaluation of Post-Injection Containment in Tool-Using LLM Agents](https://arxiv.org/abs/2607.23999v1)
+  - [The Cost of Knowing: A Resource-Aware Protocol for Benchmarking Hallucination Beyond Static Leaderboards](https://arxiv.org/abs/2607.24063v1)
+- **共同方法**：
+  - 将评估拆分为干预前状态与事后正确性。
+  - 使用匹配干预（如 CLEAN/GOLD/SHAM）来测试对价值的依赖，而不仅是是否暴露。
+  - 报告轨迹级或阶段级指标，而不是单一终止标签。
+  - 在基准输出中纳入验证覆盖率、评分器来源和成本惩罚。
+- **开放问题 / 失效模式**：
+  - 许多研究仍然是合成的、单模型的，或特定于某个基准。
+  - LLM 评审和选择性裁决仍可能扭曲结论。
+  - 轨迹指标会低估日志未捕获的隐式语义影响。
+  - 更丰富的报告提升了诊断能力，但也使排行榜的简洁性变差。
+
+### 主题：检索与记忆失败越来越关乎路由，而非存储
+
+- **为什么重要**：多篇论文表明，Agent 往往存下了正确的信息，也能在被直接要求时回忆出来，但当信息需要被间接呈现或在预算约束下被调出时，系统仍会失败。瓶颈在于决定检索什么、保留什么可见、以及对什么采取行动。
+- **代表论文**：
+  - [Keep It InMind: Benchmarking the Implicit-Association Blind Spot in Agent Memory](https://arxiv.org/abs/2607.24368v1)
+  - [When Should Active RAG Retrieve? A Budget-Aware Evaluation of Utility, Calibration, and Cost](https://arxiv.org/abs/2607.24010v1)
+  - [EviBack: Search-Agent Reinforcement Learning via Evidence-Constrained Teacher Backoff](https://arxiv.org/abs/2607.23955v1)
+  - [Eviction as Estimation: A Fixed-Lag Smoothing View of Test-Time Memory, and When Measuring Beats Accumulating](https://arxiv.org/abs/2607.24667v1)
+- **共同方法**：
+  - 将检索重构为显式预算下的效用估计问题。
+  - 衡量决定性事实在决策时刻是否真的存在。
+  - 当最终奖励稀疏时，为证据收集加入弱过程监督。
+  - 将记忆保留/驱逐视为延迟估计问题，而非即时过滤。
+- **开放问题 / 失效模式**：
+  - 更好的嵌入能提升召回，但未必能解决间接应用问题。
+  - 阈值校准往往无法迁移到留出预算。
+  - 在构造性的内生复用场景中有效的信号，可能在自然基准上失效。
+  - 始终可见的记忆有助于诊断，但无法扩展，也不利于隐私保护。
+
+### 主题：成本感知的系统设计正在成为竞争优势
+
+- **为什么重要**：多篇论文表明，一旦把延迟、内存、API 调用或评估预算纳入考虑，系统排名和设计选择都会发生实质变化。这对 Agent 服务和自主研究循环尤其相关。
+- **代表论文**：
+  - [SpecBox: Speculative Sandbox Scheduling for Efficient LLM Agent Serving](https://arxiv.org/abs/2607.23933v1)
+  - [Agent-UCT: Upper Confidence Bounds Applied to Trees for Agentic Workflow Optimization with Cost-Awareness](https://arxiv.org/abs/2607.24162v1)
+  - [The Cost of Knowing: A Resource-Aware Protocol for Benchmarking Hallucination Beyond Static Leaderboards](https://arxiv.org/abs/2607.24063v1)
+  - [Efficiency Matters in Autonomous Research](https://arxiv.org/abs/2607.24647v1)
+- **共同方法**：
+  - 从静态质量指标转向成本调整或 anytime 目标。
+  - 利用重叠与复用：预热、前缀缓存、共享执行前缀、自适应预算分配。
+  - 将部署建模为受约束优化问题，而不是单纯最大化准确率。
+  - 在匹配预算下或沿前沿曲线比较系统，而不是只看单一工作点。
+- **开放问题 / 失效模式**：
+  - 成本模型通常是不完整的，遗漏了完整延迟/能耗或人工运维开销。
+  - 收益可能依赖于共置部署、确定性重放或特定基础设施假设。
+  - 搜索与调度策略可能无法拟合长时程依赖。
+  - 成本感知指标可能高度依赖应用场景，难以标准化。
+
+### 主题：结构化后训练与蒸馏有帮助，但机制才是关键
+
+- **为什么重要**：蒸馏和 RL 正在改善 Agent 行为，但多篇论文表明，优化可能学到捷径、风格伪影，或聚合奖励黑客，而不是预期的推理或协作机制。
+- **代表论文**：
+  - [From Proprietary to Open-Source: Bridging the Distribution Gap via Multi-Agent Protocol Distillation in Agentic Search](https://arxiv.org/abs/2607.24280v1)
+  - [EviBack: Search-Agent Reinforcement Learning via Evidence-Constrained Teacher Backoff](https://arxiv.org/abs/2607.23955v1)
+  - [Moral Hazard in Multi-Agent Language Models](https://arxiv.org/abs/2607.23982v1)
+  - [The Physics of Multi-Turn Long-Horizon Planning: From Pre-training to Post-training via Single- and Multi-Teacher On-Policy Agentic Distillation](https://arxiv.org/abs/2607.24720v1)
+- **共同方法**：
+  - 加入结构化的中间监督，而不是只依赖最终结果。
+  - 使用受约束或特权表示来迁移推理，同时避免风格漂移。
+  - 分析优化是否恢复了预期的潜在机制，而不仅仅是奖励。
+  - 研究教师、规划模式和学生世界模型之间的兼容性。
+- **开放问题 / 失效模式**：
+  - 当教师的过程性知识与学生内部结构不匹配时，蒸馏可能失败。
+  - Prompt 优化可能提升奖励，却绕过代价高昂的协作动作。
+  - 离线协议合成和教师构建会带来不小的一次性成本。
+  - 结果通常在受控或基准环境中最强，向更混乱领域的迁移尚不明确。
+
+### 主题：统计保证正从聚合动作转向更细粒度的风险单元
+
+- **为什么重要**：聚合校准可能掩盖高风险字段或子群体中的集中失效。新的保形方法试图认证那些在操作上真正重要的单元：工具调用中的语义角色，以及分层用户群体。
+- **代表论文**：
+  - [Beyond Aggregate Risk: Role-Stratified Conformal Risk Control for LLM Tool Calls](https://arxiv.org/abs/2607.24343v1)
+  - [Hierarchical Group-Conditional Conformal Risk Control for Selective Prediction in Language Models](https://arxiv.org/abs/2607.24562v1)
+- **共同方法**：
+  - 用按角色或按群体的阈值替代单一全局阈值。
+  - 使用有限样本保形界和显式多重性控制。
+  - 接受参与率/效用权衡，以换取更强保证。
+  - 分析分布偏移敏感性，以及稀有层中的可认证下限。
+- **开放问题 / 失效模式**：
+  - 稀有角色/群体可能缺乏足够的校准数据，无法提供有用保证。
+  - 在交互式或重复字段场景中，可交换性假设可能失效。
+  - 更强保证通常会降低参与率或效用。
+  - 保证只覆盖限定输出，不覆盖完整轨迹或遗漏动作。
+
+### 3) 技术综合
+- 一个常见的系统模式是**动作前门控**：MemTX 对不可逆工具调用施加动作安全记忆门控；APPA 在分发前检查预期标签下降；StateSeal 将验证器证据绑定到精确代码状态后才准入。
+- 多篇论文用**双层或分阶段评估**替代单体分数：先看执行状态，再看正确性（[Accuracy Hides How Language Models Fail](https://arxiv.org/abs/2607.24268v1)）；用 CLEAN/GOLD/SHAM 做来源对照（[Success Is Not Self-Explanatory](https://arxiv.org/abs/2607.24054v1)）；以及安全/记忆/效用阶段（[ContainmentBench](https://arxiv.org/abs/2607.23999v1)）。
+- 检索论文越来越区分**存储、呈现和应用**。InMind 分别衡量直接召回、目标召回和间接应用；Active RAG 则把排序质量与阈值迁移、成本分开。
+- 多项工作表明，**匹配预算评估**会改变结论：主动式 RAG 的阈值无法命中留出预算，MAS-HQ 在加入成本惩罚后事实性排名反转，而匹配输出上限下仍会产生不同的执行状态混合。
+- 蒸馏方法正变得更**保结构**：MAPD 使用 JSON 协议以避免 tokenizer/logit 不匹配和风格漂移；EviBack 的教师不能覆盖证据不足；规划 gym 结果表明，OPD 比起不匹配的过程细节，更能迁移共享规划模式。
+- 一个显著趋势是从**聚合保证转向局部化保证**：工具调用中按字段的语义角色，以及分层子群体校准，都指出全局认证会掩盖集中风险。
+- 多篇论文把**复用与重叠**作为主要效率杠杆：SpecBox 让沙箱启动与解码重叠；Agent-UCT 复用执行前缀；fluid 在链之间重新分配评估预算；Kimi K3 则协同设计长上下文 kernel、缓存和 expert 并行。
+- 今天的负面结果尤其有信息量：RMM 的固定滞后驱逐在构造性的内生复用场景中有帮助，但在标准基准上无效；GEPA 可以提升团队成功率，却绕过了原本预期的高成本查询机制。
+- 一个反复出现的失效模式是**针对内生或弱代理指标进行优化**：自写验证会偏离部署真相，奖励模型会记住数据集捷径，而聚合安全指标会掩盖效用崩塌或子群体伤害。
+- 多篇论文使用**受控合成环境**并非作为最终目标，而是作为机制探针：道德风险博弈、规划 gym、隔离轨迹和代码修复干预，都隔离了在宽泛基准中难以观察的特定因果结构。
+
+### 4) Top 5 论文（附“为什么是现在”）
+
+#### [MemTX: Transactional Belief Commit for Stateful Agent Memory](https://arxiv.org/abs/2607.23929v1)
+- 提出一种记忆中间件，将原始观察、暂定信念、已提交信念和动作安全状态分离。
+- 加入来源、权限、冲突裁决、动作门控，以及基于推导 DAG 的类型化级联修复。
+- 报告称在一个受控基准中于大多数骨干模型上取得最佳表现，并且是在重放流水线中唯一实现零实际下游伤害的方法。
+- **为什么是现在**：共享持久记忆正成为工具型 Agent 的标准配置，而这是目前最清晰的提案之一，旨在让记忆在动作边界上而不仅仅在写入时变得安全。
+- **持保留意见 / 局限性**：修复只覆盖已记录来源，可逆性是静态的，而且该协议无法检测某些跨提交边界的基于转写的“洗白”。
+
+#### [ContainmentBench: Trace-Based Evaluation of Post-Injection Containment in Tool-Using LLM Agents](https://arxiv.org/abs/2607.23999v1)
+- 将 prompt 注入后的隔离重构为一种轨迹属性，而不只是终点成功/失败标签。
+- 对分阶段场景中的消息、工具提议、记忆写入、污点标签和授权决策进行插桩。
+- 表明两种防御即使在“零已提交伤害”的终点上完全相同，在记录轨迹或授权效用上，73.5% 的匹配对仍然不同。
+- **为什么是现在**：Agent 安全评估正受限于粗粒度指标；这项工作提供了一个具体的测量层，用于比较防御，同时避免奖励“把一切都拦掉”的行为。
+- **持保留意见 / 局限性**：研究是合成的、单模型的，而且 intent-ledger 策略是在 oracle 假设下评估的。
+
+#### [SpecBox: Speculative Sandbox Scheduling for Efficient LLM Agent Serving](https://arxiv.org/abs/2607.23933v1)
+- 使用 token 流意图预测加上马尔可夫式跨步预取，在工具调用最终确定前预热沙箱。
+- 加入语义结果缓存，以及针对大工件的带外共享内存传输。
+- 相比按需沙箱，P99 端到端延迟最高降低 2.9×；相比预留沙箱，峰值内存降低 45.9%。
+- **为什么是现在**：MCP 风格的工具生态正在让沙箱启动和工件传输成为 Agent 服务中的真实生产瓶颈。
+- **持保留意见 / 局限性**：预测器仅是一阶马尔可夫模型，而零拷贝传输假设的是共置部署，而非完全解耦的集群。
+
+#### [Keep It InMind: Benchmarking the Implicit-Association Blind Spot in Agent Memory](https://arxiv.org/abs/2607.24368v1)
+- 隔离出一种结构性记忆失效：已存储事实本应通过世界知识影响后续答案，但检索从未将其呈现出来。
+- 表明检索系统可以达到近乎完美的直接召回，却仍低于 16.0% 的间接应用，而直接在上下文中可见时可达到 84.0%。
+- “始终在状态中”的诊断方式恢复了大部分差距，说明主要问题在于路由/可见性，而非存储或模型知识。
+- **为什么是现在**：许多生产助手依赖向量记忆检索，仿佛“存了就会用”；这篇论文表明，对于与安全相关的个性化，这一假设严重错误。
+- **持保留意见 / 局限性**：基准规模不大，领域偏向安全/健康，而且“始终在状态中”的修复只是诊断性的，不适合直接部署。
+
+#### [Kimi K3: Open Frontier Intelligence](https://arxiv.org/abs/2607.24653v1)
+- 发布了一个 2.8T 参数的原生多模态 MoE，激活参数为 104B，上下文长度为 1M token。
+- 结合了 Kimi Delta Attention、Attention Residuals、Stable LatentMoE、原生视觉，以及大量训练与服务系统协同设计。
+- 报告称在推理、编码、Agent 和视觉基准上达到前沿级表现，优于大多数被评估模型，但整体上仍落后于最强的闭源系统。
+- **为什么是现在**：它实质性抬高了开放长上下文多模态 Agent 的能力上限，并提供了很可能扩散到更广泛开放生态中的基础设施思路。
+- **持保留意见 / 局限性**：尽管规模巨大且开放发布，它整体上仍落后于顶级闭源模型，而且报告没有深入量化训练/部署外部性。
+
+### 5) 实际下一步
+- 为 Agent 技术栈加入**状态/动作边界插桩**：区分暂定记忆与已提交记忆，并在不可逆工具调用前要求更强检查。
+- 用**轨迹级效用指标**评估 prompt 注入防御，而不只是终点伤害；特别要衡量受污染输入下的授权任务完成情况。
+- 对记忆系统，除直接召回外，还要记录**决策时刻的目标召回**；如果某个事实是间接重要的，就测试答案生成时它是否真的可见。
+- 在 Active RAG 中，报告**精确前沿、可部署阈值前沿、实际使用率和阈值迁移误差**，而不是单一的“50% 检索”点。
+- 如果用 RL 训练搜索 Agent，可尝试**仅在全零组上使用弱证据感知回退奖励**，并强制一个门控，不能把证据不足转成正监督。
+- 对代码或工具 Agent，保留**最后一个已知良好检查点**，并将验证器输出绑定到精确状态；不要假设正确性在多次修订中具有吸收性。
+- 在校准工具安全时，从整次调用阈值转向对高风险参数（如收件人、凭证或账户 ID）的**按角色或按字段控制**。
+- 在服务栈中，在扩展模型规模之前先原型化**投机式预热 + 前缀/状态复用**；今天的系统论文表明，编排层面的收益仍被低估。
+- 对自主研究或工作流搜索，优化**anytime AUC / 成本调整效用**，而不只是最终最佳分数；固定预算下的效率差异很大。
+- 审计奖励模型和自我改进 Agent 的**代理漂移**：将内生自评分或 RM 偏好与封存或留出的部署真相进行比较。
+
+---
+*基于逐篇论文分析生成；未进行外部浏览。*
