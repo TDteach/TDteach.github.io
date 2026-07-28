@@ -1,167 +1,100 @@
+> 英文版：[/paper-news/2026-07-27/](/paper-news/2026-07-27/)
+
+<div class="paper-news-stats" style="border:2px solid #3b82f6;background:#f0f7ff;border-radius:10px;padding:12px 14px;margin:14px 0 18px 0"><p><strong>运行统计</strong></p><ul><li><strong>候选论文</strong>: 本地 selector-pool 快照中保留 120 篇</li><li><strong>入选论文</strong>: 30</li><li><strong>已完成精读</strong>: 30</li><li><strong>本地快照时间窗 (UTC)</strong>: 2026-07-27T00:00:00Z → 2026-07-28T00:00:00Z <em>(来自当前存档的候选元数据)</em></li><li><strong>证据基础</strong>: 本次重做主要锚定 <code>selected.json</code> 与 <code>analyses.all.json</code>。该目录中保留的候选快照与入选集合并不完全一致，因此下面的综合判断以 30 篇已完成分析的论文为准。</li></ul>
+
+<details class="paper-news-details"><summary><strong>展开查看用于本次综述的入选论文列表</strong></summary><div style="overflow-x:auto;"><table class="paper-news-table"><thead><tr><th>arXiv ID</th><th>Title / Links</th><th>Category</th><th>Score</th><th>Selection reason</th><th>Tags</th></tr></thead><tbody><tr><td><code>2607.21325</code></td><td><a href="https://arxiv.org/abs/2607.21325v1">Toward cryptographically verifiable authorization for autonomous AI agents: A security hypothesis, preliminary formal model, and proof-of-concept implementation</a><br/><a href="https://arxiv.org/pdf/2607.21325v1.pdf">PDF</a></td><td>Privacy/Security</td><td>93</td><td>Cryptographically verifiable authorization for autonomous agents; strong agent security relevance.</td><td>agent-security, authorization, cryptography, formal-models, tool-use</td></tr><tr><td><code>2607.21495</code></td><td><a href="https://arxiv.org/abs/2607.21495v1">Toward Continuous Assurance for the Democratization of AI Agent Creation in Industry</a><br/><a href="https://arxiv.org/pdf/2607.21495v1.pdf">PDF</a></td><td>Other</td><td>92</td><td>Practical continuous assurance for citizen-built AI agents; strong reliability/governance relevance.</td><td>agents, safety, governance, monitoring, reliability, enterprise</td></tr><tr><td><code>2606.29280</code></td><td><a href="https://arxiv.org/abs/2606.29280v1">Deterministic Decisions for High-Stakes AI. A Zero-Egress Pipeline with the Deployability of RAG and the Accuracy of Machine Learning</a><br/><a href="https://arxiv.org/pdf/2606.29280v1.pdf">PDF</a></td><td>Alignment</td><td>91</td><td>Finds major LLM intervention bias in high-stakes advice; strong empirical comparison to supervised policy learning.</td><td>llm-reliability, high-stakes-ai, calibration, rag, evaluation</td></tr><tr><td><code>2607.21111</code></td><td><a href="https://arxiv.org/abs/2607.21111v1">TOUR: A Trajectory-Level Unlearning Benchmark for Offline Reinforcement Learning</a><br/><a href="https://arxiv.org/pdf/2607.21111v1.pdf">PDF</a></td><td>Privacy/Security</td><td>90</td><td>Benchmark for unlearning in offline RL with privacy audits and utility anchors; highly reusable.</td><td>unlearning, offline-RL, privacy, benchmark, evaluation</td></tr><tr><td><code>2606.28710</code></td><td><a href="https://arxiv.org/abs/2606.28710v1">The Two Genie Game: Adoption and Welfare in Audit-Grounded AI Governance</a><br/><a href="https://arxiv.org/pdf/2606.28710v1.pdf">PDF</a></td><td>Alignment</td><td>90</td><td>Directly studies AI governance, RLHF vs harm-minimizing agents, and welfare/adoption tradeoffs.</td><td>ai-governance, alignment, rlhf, game-theory, safety</td></tr><tr><td><code>2607.21461</code></td><td><a href="https://arxiv.org/abs/2607.21461v1">AREX: Towards a Recursively Self-Improving Agent for Deep Research</a><br/><a href="https://arxiv.org/pdf/2607.21461v1.pdf">PDF</a></td><td>Alignment</td><td>90</td><td>Recursively self-improving research agent with verification loop; highly relevant to agent reliability.</td><td>agents, self-improvement, verification, deep-research, reliability</td></tr><tr><td><code>2607.11175</code></td><td><a href="https://arxiv.org/abs/2607.11175v1">The Path to Self-Evolving Clinical Systems: Scaling Medical Agents from Assistance to Autonomy</a><br/><a href="https://arxiv.org/pdf/2607.11175v1.pdf">PDF</a></td><td>Other</td><td>90</td><td>Deployment-first roadmap for autonomous medical agents with benchmarks, training envs, and trust taxonomy.</td><td>medical-agents, autonomy, benchmarking, deployment, safety</td></tr><tr><td><code>2607.21143</code></td><td><a href="https://arxiv.org/abs/2607.21143v1">One More Turn, Less Regret: A Regret-Based Multi-Turn Benchmark for LLMs&#x27; Clarification Policies</a><br/><a href="https://arxiv.org/pdf/2607.21143v1.pdf">PDF</a></td><td>Alignment</td><td>90</td><td>Benchmark for multi-turn clarification policies with regret-based evaluation; useful for agent reliability.</td><td>evaluation, agents, benchmark, clarification, reliability, policy</td></tr><tr><td><code>2607.12252</code></td><td><a href="https://arxiv.org/abs/2607.12252v1">FinResearchBench II: A Deep Research Benchmark with Consensus-Derived Gold Rubrics for Distinguishing Financial Report Quality</a><br/><a href="https://arxiv.org/pdf/2607.12252v1.pdf">PDF</a></td><td>Other</td><td>90</td><td>Benchmark for deep research agents with consensus-derived rubrics; strong eval reuse value.</td><td>benchmark, evaluation, agents, llm-judges, finance</td></tr><tr><td><code>2607.21482</code></td><td><a href="https://arxiv.org/abs/2607.21482v1">Agentic coding without the cloud: evaluating open-weight large language models on longitudinal data preparation tasks</a><br/><a href="https://arxiv.org/pdf/2607.21482v1.pdf">PDF</a></td><td>Other</td><td>89</td><td>Useful benchmark for local open-weight coding agents on sensitive data workflows.</td><td>agents, evaluation, open-weight, privacy, coding</td></tr><tr><td><code>2607.15095</code></td><td><a href="https://arxiv.org/abs/2607.15095v1">Digital Pantheon: Simulating and Auditing Coalition Formation with LLM Agents</a><br/><a href="https://arxiv.org/pdf/2607.15095v1.pdf">PDF</a></td><td>Alignment</td><td>88</td><td>LLM multi-agent coalition simulation with DPO+RAG; relevant to auditing ideological agent behavior.</td><td>llm-agents, multi-agent, auditing, dpo, rag</td></tr><tr><td><code>2607.19243</code></td><td><a href="https://arxiv.org/abs/2607.19243v1">Inference-Time Steering for Cross-Lingual Factual Consistency in LLMs</a><br/><a href="https://arxiv.org/pdf/2607.19243v1.pdf">PDF</a></td><td>Alignment</td><td>88</td><td>Inference-time methods for cross-lingual factual consistency in LLMs; strong reliability focus.</td><td>LLMs, factuality, multilingual, steering, reliability</td></tr><tr><td><code>2607.15001</code></td><td><a href="https://arxiv.org/abs/2607.15001v1">LQCDMaster: Agentic Scientific Computing for Lattice Quantum Chromodynamics Research</a><br/><a href="https://arxiv.org/pdf/2607.15001v1.pdf">PDF</a></td><td>Other</td><td>88</td><td>Domain-specialized scientific agent with tool constraints; strong agentic workflow and reliability relevance.</td><td>agents, scientific-computing, tool-use, reliability, code-generation</td></tr><tr><td><code>2606.31167</code></td><td><a href="https://arxiv.org/abs/2606.31167v1">MIRTH: Mutual-Information Reasoning with Temporal Hubs for Vision-Language-Action Agents</a><br/><a href="https://arxiv.org/pdf/2606.31167v1.pdf">PDF</a></td><td>Alignment</td><td>88</td><td>Advances VLA agents with temporal memory, latent reasoning, and efficient action decoding.</td><td>VLA, agents, robotics, reasoning, temporal, efficiency</td></tr><tr><td><code>2607.18006</code></td><td><a href="https://arxiv.org/abs/2607.18006v1">MADA-RL: Multi-Agent Debate-Aware Reinforcement Learning for Parameter-Efficient Reasoning in Compact Models</a><br/><a href="https://arxiv.org/pdf/2607.18006v1.pdf">PDF</a></td><td>Alignment</td><td>88</td><td>Debate-aware RL for compact LLM reasoning with concrete PEFT gains and reusable training idea.</td><td>LLM, reasoning, RL, post-training, PEFT, multi-agent</td></tr><tr><td><code>2606.31831</code></td><td><a href="https://arxiv.org/abs/2606.31831v1">An Agentic AI Framework to Accelerate Scientific Discovery in Plant Phenotyping</a><br/><a href="https://arxiv.org/pdf/2606.31831v1.pdf">PDF</a></td><td>Other</td><td>88</td><td>Agentic AI for scientific workflows; concrete multi-agent system with real lab use potential.</td><td>agents, scientific-discovery, workflow-automation, tool-use, applied-ai</td></tr><tr><td><code>2607.11084</code></td><td><a href="https://arxiv.org/abs/2607.11084v1">NVAITC AI Scientist: A Governed End-to-End Research System -- A Hypertension GWAS Case Study</a><br/><a href="https://arxiv.org/pdf/2607.11084v1.pdf">PDF</a></td><td>Privacy/Security</td><td>88</td><td>Governed end-to-end AI scientist system with oversight, privacy boundaries, and reproducibility.</td><td>agents, governance, oversight, privacy, scientific-workflows, reproducibility</td></tr><tr><td><code>2607.14905</code></td><td><a href="https://arxiv.org/abs/2607.14905v1">Show Me How You Reason and I&#x27;ll Tell You Who You Are: Reasoning Graphs for Robust LLM Authorship Attribution</a><br/><a href="https://arxiv.org/pdf/2607.14905v1.pdf">PDF</a></td><td>Robustness</td><td>88</td><td>Robust LLM authorship attribution via reasoning graphs, targeting paraphrase-resistant detection.</td><td>LLM, authorship-attribution, reasoning, robustness, evaluation</td></tr><tr><td><code>2607.18975</code></td><td><a href="https://arxiv.org/abs/2607.18975v1">Mi-Memory: A Lifecycle Memory Framework for Personal AI</a><br/><a href="https://arxiv.org/pdf/2607.18975v1.pdf">PDF</a></td><td>Other</td><td>87</td><td>Personal AI memory framework emphasizes governance, auditability, forgetting, and evidence-grounded continuity.</td><td>agent-memory, personal-ai, governance, auditability, privacy</td></tr><tr><td><code>2607.20848</code></td><td><a href="https://arxiv.org/abs/2607.20848v1">Auditing Evidence Use in Medical LLM Diagnosis</a><br/><a href="https://arxiv.org/pdf/2607.20848v1.pdf">PDF</a></td><td>Interpretability</td><td>87</td><td>Audits whether medical LLMs use evidence faithfully, not just final accuracy.</td><td>llm-reliability, evaluation, faithfulness, medical-ai, auditing</td></tr><tr><td><code>2607.14439</code></td><td><a href="https://arxiv.org/abs/2607.14439v1">Active Real-World Factor-Based Evaluation for Generalist Robot Policies</a><br/><a href="https://arxiv.org/pdf/2607.14439v1.pdf">PDF</a></td><td>Robustness</td><td>87</td><td>Active real-world evaluation for generalist robot policies; practical framework for finding failures.</td><td>evaluation, robotics, generalist-agents, real-world, safety</td></tr><tr><td><code>2607.18973</code></td><td><a href="https://arxiv.org/abs/2607.18973v1">Verifiable Self-Evolution for Open-Ended Dialogue Skills via Future-Feedback Prediction</a><br/><a href="https://arxiv.org/pdf/2607.18973v1.pdf">PDF</a></td><td>Alignment</td><td>86</td><td>Verifiable self-evolution for dialogue agents via future-feedback prediction; alignment-relevant.</td><td>agents, alignment, self-improvement, dialogue, verification</td></tr><tr><td><code>2607.06452</code></td><td><a href="https://arxiv.org/abs/2607.06452v1">From Voting to Agent Collaboration: Answer-Type-Aware LLM Pipelines for BioASQ 14b</a><br/><a href="https://arxiv.org/pdf/2607.06452v1.pdf">PDF</a></td><td>Other</td><td>86</td><td>LLM QA pipeline emphasizes robustness, evidence grounding, self-reflection, and agent collaboration.</td><td>llm, agents, grounding, biomedical-qa, evaluation</td></tr><tr><td><code>2607.21404</code></td><td><a href="https://arxiv.org/abs/2607.21404v1">MemTools: A Unified Research Framework for Interoperable Agent Memory</a><br/><a href="https://arxiv.org/pdf/2607.21404v1.pdf">PDF</a></td><td>Other</td><td>86</td><td>Unified framework for interoperable agent memory and controlled evaluation; reusable agent infra.</td><td>agents, memory, frameworks, evaluation, interoperability</td></tr><tr><td><code>2607.05396</code></td><td><a href="https://arxiv.org/abs/2607.05396v1">From Fixed to Free Cameras: Calibration-Free View-Robust Vision-Language-Action Model</a><br/><a href="https://arxiv.org/pdf/2607.05396v1.pdf">PDF</a></td><td>Robustness</td><td>86</td><td>Practical VLA robustness: calibration-free camera adaptation for real-world robot deployment.</td><td>VLA, robotics, robustness, generalization, multimodal</td></tr><tr><td><code>2607.18684</code></td><td><a href="https://arxiv.org/abs/2607.18684v1">When to Trust the Map: Confidence-Aware LLM Routing for Automotive CVE-to-ATM Mapping</a><br/><a href="https://arxiv.org/pdf/2607.18684v1.pdf">PDF</a></td><td>Privacy/Security</td><td>86</td><td>Confidence-calibrated LLM routing for safety-critical vuln mapping; strong selective automation angle.</td><td>security, LLM, calibration, evaluation, automotive, selective-automation</td></tr><tr><td><code>2607.11012</code></td><td><a href="https://arxiv.org/abs/2607.11012v1">EasyOPD: An Easy-to-use On-Policy Distillation Framework for Large Language Models</a><br/><a href="https://arxiv.org/pdf/2607.11012v1.pdf">PDF</a></td><td>Other</td><td>86</td><td>Reusable on-policy distillation framework for LLMs; practical post-training infra with broad impact.</td><td>LLM, distillation, post-training, framework, reproducibility</td></tr><tr><td><code>2607.21412</code></td><td><a href="https://arxiv.org/abs/2607.21412v1">Euclid-MCP: A Model Context Protocol Server for Deterministic Logical Reasoning via Prolog</a><br/><a href="https://arxiv.org/pdf/2607.21412v1.pdf">PDF</a></td><td>Alignment</td><td>86</td><td>Standardized MCP tool for deterministic symbolic reasoning; promising for safer tool-augmented agents.</td><td>agents, tool-use, reasoning, neuro-symbolic, MCP, reliability</td></tr><tr><td><code>2607.15216</code></td><td><a href="https://arxiv.org/abs/2607.15216v1">Symbal: Detecting Systematic Misalignments in Model-Generated Captions</a><br/><a href="https://arxiv.org/pdf/2607.15216v1.pdf">PDF</a></td><td>Alignment</td><td>85</td><td>Detects systematic caption misalignments in MLLM data; useful for reliability auditing and dataset quality.</td><td>multimodal-llm, reliability, auditing, dataset-quality, evaluation</td></tr><tr><td><code>2607.05111</code></td><td><a href="https://arxiv.org/abs/2607.05111v1">From Multiplicity to Vulnerability: Privacy Amplification Risk from One-Dataset-Multiple-Model Exposure</a><br/><a href="https://arxiv.org/pdf/2607.05111v1.pdf">PDF</a></td><td>Privacy/Security</td><td>85</td><td>Shows privacy leakage compounds across multiple models trained on one dataset; important API risk.</td><td>privacy, membership-inference, data-leakage, theory, APIs</td></tr></tbody></table></div></details></div>
+
 # AI 论文洞察简报
 ## 2026-07-27
 
-### 0) 核心结论（请先阅读）
-- 评估正从单一终局指标转向**过程感知审计**：多篇论文指出，仅看准确率会掩盖证据使用、澄清策略、遗忘、图像描述和治理中的失败。
-- 在高风险场景中，**确定性与可验证性优于通用 LLM 流畅性**：结构化监督策略、符号后端、经纪式执行和审计轨迹反复证明，比自由形式生成更优或能显著降低风险。
-- 在智能体系统中，最强的模式是将**状态管理视为一等能力**：递归验证循环、生命周期记忆、协议感知的记忆工具和受治理的编排，都把上下文维护当作核心基础设施。
-- 机器人论文展示了一种共同的鲁棒性配方：**将问题分解**，而不是单纯扩大端到端策略——例如，将几何与控制分离、将记忆与动作解码分离，或将潜在推理与执行分离。
-- 隐私/安全研究正从孤立模型分析扩展到**组合系统风险**：多个暴露模型、轨迹级遗忘审计以及密码学绑定授权，都在针对那些只会在系统边界处出现的失败。
-- 对前沿/安全团队的一个实际启示是：少投入在“再多一个提示词”，多投入在**可审计接口、匹配控制和部署时不变量**上。
+### 0) 核心结论（请先读这里）
+- 今天最强的模式是：**可靠性提升主要来自结构，而不是更流畅的表达。** 在错误代价真实存在的场景里，确定性决策层、符号后端和校准路由反复优于开放式 LLM 行为。
+- **过程感知评估正在取代只看终点的评分。** 医学证据使用、澄清遗憾，以及“采用 vs. 福利”这样的工作，都在追问系统是否走了正确路径，而不仅仅是最后看起来像成功。
+- 对 agent 来说，瓶颈越来越是**状态治理**：递归验证、记忆生命周期设计，以及持续性 assurance 正变成一等工程原语。
+- 多篇论文还清楚地区分了**被采用**与**真正有益**。一个系统可能更容易被用户选择、更容易显得可信，却并不一定更安全或更有社会价值。
+- 实用教训很直接：如果你想要可部署的可靠 AI，就该在生成之外建立明确控制边界，而不是期待基础模型自己约束自己。
 
 ### 2) 关键主题（聚类）
 
-### 主题：审计行为，而不只是输出
+### 主题：结构化可靠性
 
-- **为什么重要**：多篇论文认为，最终答案正确性对于安全关键部署来说过于薄弱。正在出现的替代方案是行为审计：对证据、对话状态或数据集结构进行干预，并衡量模型/系统是否作出连贯响应。
+- **为什么重要**：在最有后果的设置里，自由生成正不断让位于有边界的决策系统。真正占优的不是“更会说”，而是预测、证据与行动之间更紧的接口。
+- **代表论文**：
+  - [Deterministic Decisions for High-Stakes AI](https://arxiv.org/abs/2606.29280v1)
+  - [Euclid-MCP](https://arxiv.org/abs/2607.21412v1)
+  - [When to Trust the Map](https://arxiv.org/abs/2607.18684v1)
+  - [Toward cryptographically verifiable authorization for autonomous AI agents](https://arxiv.org/abs/2607.21325v1)
+- **共同方法**：
+  - 用确定性策略、符号检查或置信度门控，把生成与执行分离。
+  - 优先采用狭窄动作 schema 和可审计的决策回执，而不是无限制自然语言输出。
+  - 把 defer / abstain 当成产品能力，而不是失败。
+- **开放问题 / 失败模式**：
+  - 结构化接口也可能继承本体覆盖不足或任务定义脆弱的问题。
+  - 领域内胜利仍需跨场景迁移验证。
+  - 如果没有更强的执行绑定，形式化授权仍然不完整。
+
+### 主题：过程审计
+
+- **为什么重要**：今天多篇最佳论文都表明，顶层分数本身可能会误导。真正该问的是：系统是否使用了正确证据、问了正确追问、并以合理方式在成本与风险之间做了权衡。
 - **代表论文**：
   - [Auditing Evidence Use in Medical LLM Diagnosis](https://arxiv.org/abs/2607.20848v1)
-  - [Symbal: Detecting Systematic Misalignments in Model-Generated Captions](https://arxiv.org/abs/2607.15216v1)
-  - [One More Turn, Less Regret: A Regret-Based Multi-Turn Benchmark for LLMs' Clarification Policies](https://arxiv.org/abs/2607.21143v1)
-  - [TOUR: A Trajectory-Level Unlearning Benchmark for Offline Reinforcement Learning](https://arxiv.org/abs/2607.21111v1)
+  - [One More Turn, Less Regret](https://arxiv.org/abs/2607.21143v1)
+  - [FinResearchBench II](https://arxiv.org/abs/2607.12252v1)
+  - [The Two Genie Game](https://arxiv.org/abs/2606.28710v1)
 - **共同方法**：
-  - 将行为分解为结构化单元：证据子集、文本/图像簇、潜在意图，或遗忘/保留/非成员划分。
-  - 使用基于干预的指标，而不只看 top-1 准确率：诊断边际、后悔值、多攻击隐私审计、用于发现重复失败的 Accuracy@K。
-  - 在判定失败前加入鲁棒性过滤器或匹配控制。
-  - 将强交互视为需要解释的假设，而不是自动视为失当行为的证明。
+  - 用证据角色分析、策略遗憾或福利敏感比较替代最终答案评分。
+  - 让权衡变得可见：效用 vs. 轮次、采用 vs. 福利、准确率 vs. 证据忠实性。
+  - 用结构化探针区分真正良好的行为与表面上可以接受的结果。
 - **开放问题 / 失败模式**：
-  - 审计结论可能高度依赖基准抽象、模拟器或注入的合成错误。
-  - 许多结果是描述性的，而不是对真实部署中发生率的估计。
-  - 更难的第二阶段任务仍然薄弱，尤其是视觉线索发现和高阶因果归因。
-  - 行为审计仍无法恢复潜在推理，也不能保证现实世界安全。
+  - 审计层本身仍可能依赖特定 benchmark 或 judge。
+  - 遗憾与福利代理指标未必与真实用户体验一致。
+  - 许多结果目前仍主要成立于精细仪表化的环境中。
 
-### 主题：面向高风险智能体的可验证与确定性基础设施
+### 主题：受治理 agent
 
-- **为什么重要**：一个反复出现的设计选择是，将关键决策从无约束生成中移出，放入确定性或受治理的底层中。在“看起来合理”远远不够的领域，这能提升可复现性、时延表现和可审计性。
+- **为什么重要**：长时程 agent 越来越像系统工程问题。新的主线是显式治理记忆、自我修订和交接，而不是期待更大的模型自行吸收协调负担。
 - **代表论文**：
-  - [Deterministic Decisions for High-Stakes AI. A Zero-Egress Pipeline with the Deployability of RAG and the Accuracy of Machine Learning](https://arxiv.org/abs/2606.29280v1)
-  - [Euclid-MCP: A Model Context Protocol Server for Deterministic Logical Reasoning via Prolog](https://arxiv.org/abs/2607.21412v1)
-  - [NVAITC AI Scientist: A Governed End-to-End Research System -- A Hypertension GWAS Case Study](https://arxiv.org/abs/2607.11084v1)
-  - [Toward cryptographically verifiable authorization for autonomous AI agents: A security hypothesis, preliminary formal model, and proof-of-concept implementation](https://arxiv.org/abs/2607.21325v1)
-- **共同方法**：
-  - 用结构化状态、显式策略或符号执行替代自由形式推理或动作选择。
-  - 通过 broker、gateway 或工具服务器，将编排与受保护执行分离。
-  - 将证明轨迹、日志或密码学绑定作为一等输出暴露出来。
-  - 评估的不只是质量，还包括可部署性：时延、翻转率、重放抵抗，或仅聚合访问。
-- **开放问题 / 失败模式**：
-  - 确定性系统也可能继承基准或策略设定错误，并以很高置信度给出错误结果。
-  - 对请求的形式化授权，仍不同于证明同一请求确已被执行。
-  - 许多系统只在狭窄领域或单一机构中得到验证。
-  - 符号层或治理层增加了集成复杂度，若没有新的抽象，可能难以扩展到更广泛的任务类别。
-
-### 主题：智能体状态、记忆与递归式自我改进
-
-- **为什么重要**：长时程智能体越来越受限于状态管理，而不是原始模型能力。最强的系统会显式组织记忆、压缩轨迹，并用验证来决定保留或修订什么。
-- **代表论文**：
-  - [AREX: Towards a Recursively Self-Improving Agent for Deep Research](https://arxiv.org/abs/2607.21461v1)
-  - [Mi-Memory: A Lifecycle Memory Framework for Personal AI](https://arxiv.org/abs/2607.18975v1)
-  - [MemTools: A Unified Research Framework for Interoperable Agent Memory](https://arxiv.org/abs/2607.21404v1)
-  - [Verifiable Self-Evolution for Open-Ended Dialogue Skills via Future-Feedback Prediction](https://arxiv.org/abs/2607.18973v1)
-- **共同方法**：
-  - 将中间状态外化为类型化工件：已验证发现、未解决约束、分层记忆，或固定记录元组。
-  - 使用显式更新/修复循环，而不是无限制地累积上下文。
-  - 将记忆/运行时基础设施与评估协议分离，以便隔离组件效应。
-  - 通过留出验证或有界治理检查来约束演化。
-- **开放问题 / 失败模式**：
-  - 大多数证据是模块化或角色特定的，而不是端到端闭环的。
-  - 超出当前递归/上下文限制后的长时程扩展仍不清楚。
-  - 记忆兼容性检查通常是结构性的，而不是行为性的。
-  - 离线验证目标在反事实分布偏移下仍可能失效。
-
-### 主题：通过分解实现具身鲁棒性
-
-- **为什么重要**：这里的机器人论文提升鲁棒性，并不是简单地增大模型，而是将脆弱的端到端映射分解为几何、时间记忆、潜在推理和高效解码。
-- **代表论文**：
-  - [MIRTH: Mutual-Information Reasoning with Temporal Hubs for Vision-Language-Action Agents](https://arxiv.org/abs/2606.31167v1)
-  - [From Fixed to Free Cameras: Calibration-Free View-Robust Vision-Language-Action Model](https://arxiv.org/abs/2607.05396v1)
-- **共同方法**：
-  - 加入压缩的时间状态，而不是完整视频注意力。
-  - 在感知与动作之间插入潜在推理或几何头。
-  - 使用确定性变换在坐标系/视角之间映射，而不是强迫策略自行内化这些变换。
-  - 通过分块或解码设计，显式权衡吞吐量与控制质量。
-- **开放问题 / 失败模式**：
-  - 真实世界验证在范围和具身多样性上仍然有限。
-  - 在极端视角变化或超长任务下，性能仍会下降。
-  - 潜在推理提升了控制，但比文本计划更难审计。
-  - 固定大小的压缩记忆仍可能遗忘关键的长程状态。
-
-### 主题：组合条件下的系统级隐私与治理
-
-- **为什么重要**：隐私和治理失败越来越多地源于组合效应：多个 API 在同一数据上训练、用错误指标审计删除声明，或采用动态奖励了错误的安全目标。
-- **代表论文**：
-  - [From Multiplicity to Vulnerability: Privacy Amplification Risk from One-Dataset-Multiple-Model Exposure](https://arxiv.org/abs/2607.05111v1)
-  - [TOUR: A Trajectory-Level Unlearning Benchmark for Offline Reinforcement Learning](https://arxiv.org/abs/2607.21111v1)
-  - [The Two Genie Game: Adoption and Welfare in Audit-Grounded AI Governance](https://arxiv.org/abs/2606.28710v1)
+  - [AREX](https://arxiv.org/abs/2607.21461v1)
   - [Toward Continuous Assurance for the Democratization of AI Agent Creation in Industry](https://arxiv.org/abs/2607.21495v1)
+  - [Mi-Memory](https://arxiv.org/abs/2607.18975v1)
+  - [MemTools](https://arxiv.org/abs/2607.21404v1)
 - **共同方法**：
-  - 将部署建模为多组件系统，而不是单一模型工件。
-  - 区分看似有利的局部指标与真实目标：隐私、福利或运营就绪性。
-  - 使用匹配控制、外部参考或治理层来避免虚假的安心感。
-  - 强调采用、可用性和安全性是可分离的目标。
+  - 加入显式验证循环、就绪性检查、生命周期状态和记忆契约。
+  - 让 agent 基础设施可检查，以便把失败定位到记忆、策略或环境层。
+  - 把治理视为运行时架构，而不只是政策文档。
 - **开放问题 / 失败模式**：
-  - 强理论结果往往依赖风格化假设。
-  - 治理框架在真实世界覆盖率/错误率测量方面仍较薄弱。
-  - 像 DP 这样的防御会降低但未必消除残余的组合风险。
-  - 当依赖项不透明或由外部托管时，运营保障仍然困难。
+  - 目前多数证据仍来自 benchmark、原型或内部案例研究。
+  - 更强的状态机制也会增加复杂度与运维负担。
+  - 可靠的递归式自我改进距离被真正证明，还很远。
 
-### 3) 技术综合
-- 多篇论文收敛到一种**双层模式**：灵活的生成式前端，加上受约束的后端用于评分、执行或验证（Euclid-MCP、NAIS、确定性干预策略、CVA、SYMBAL）。
-- **匹配控制**正成为核心评估原语：遗忘中的重训练参考、离线 RL 中的匹配非成员、澄清中的相对基准后悔值，以及金融中的人类/LLM 共识验证。
-- 一个常见失败模式是**指标漂白**：高流畅性、高采用率或接近随机攻击 AUC，可能掩盖错误决策、福利损失或残余记忆。
-- 多篇论文用**分解的潜在结构**替代不透明的端到端优化：相对诊断的证据角色、以相机为中心的动作加几何头、时间枢纽加推理 token、分层记忆工件。
-- **推理时干预**仍然出人意料地有竞争力：在跨语言一致性中，persona prompting 在综合有效性/安全性/泛化上优于更重的 steering/DPO。
-- 对于紧凑或本地模型，收益往往来自**更好的训练信号或脚手架**，而不只是规模：反事实评论家优势、关键步骤监督、确定性策略学习和领域特定工具。
-- 对**工件级可复现性**有强烈推动：YAML 配置的 OPD、经 broker 的工作流日志、证明树、回滚记录，以及机器检查的定理骨架。
-- 在安全关键领域，论文反复区分**观察有效性与反事实有效性**：未来反馈预测、证据使用审计和治理模型都避免过度宣称离线日志能证明什么。
-- 在智能体论文中，**上下文压缩被视为策略**，而不只是记忆优化：AREX 中的 update_context、MemStack 的有界组装、LiteMem 的渐进披露，以及 MemTools 中协议感知的记忆时机。
-- 基准越来越多地被设计为暴露**过程权衡**——时延 vs 成功、轮次 vs 后悔值、效用 vs 隐私、吞吐量 vs 控制质量——而不只是总体准确率。
+### 3) 技术综述
 
-### 4) Top 5 论文（附“为什么是现在”）
+这份综述以本地保留的入选论文集合和 <code>analyses.all.json</code> 中 30 篇已完成精读为基础。今天的关键结论并不是由某一个模型家族或某一个排行榜主导，而是来自多个领域里重复出现的设计动作。
 
-#### [AREX: Towards a Recursively Self-Improving Agent for Deep Research](https://arxiv.org/abs/2607.21461v1)
-- 将深度研究重构为递归验证与精炼，而不是一条漫长的搜索轨迹。
-- 基准覆盖面很强：AREX-Base 在 BrowseComp 上报告 82.5，在 GAIA 上 85.4，在 DeepSearchQA 上 89.9，在 WideSearch-en 上 82.0。
-- 消融实验异常具有决策参考价值：上下文更新将 BrowseComp 从 59.6 提升到 71.4，外循环进一步提升到 82.5。
-- 为什么是现在：这为需要保留已验证状态并从部分失败中恢复的长时程智能体提供了一个具体配方。
-- 怀疑性看法：递归是有界的，且论文除消融外，对失败分析提供得较为有限。
+最清晰的动作是**在生成之后约束行动**。Deterministic Decisions 是最尖锐的例子：一旦把决策问题表达成显式状态，监督式策略就在干预忠实度上显著超过零样本和 RAG 风格的 LLM arms。Euclid-MCP、可验证授权，以及置信度路由也体现了同样直觉：让语言模型负责提出候选或映射，但在系统真正行动前，必须经过确定性或校准层。
 
-#### [From Multiplicity to Vulnerability: Privacy Amplification Risk from One-Dataset-Multiple-Model Exposure](https://arxiv.org/abs/2607.05111v1)
-- 识别出一种许多隐私审计忽视、但非常现实的部署威胁模型：在同一数据集上训练的多个 API 会放大成员泄露。
-- PRIME 在视觉和语言任务上都稳定优于单模型 MIA；例如 UTKFace 的 AUC 从 0.793 上升到 0.925。
-- 其理论具有操作意义：随着暴露模型增多，泄露单调增加；当任务相关性更低时，泄露更大。
-- 为什么是现在：许多组织正通过多个任务特定端点，将同一批数据产品化。
-- 怀疑性看法：该威胁模型假设已知共享数据来源，并能访问来自同分布的 shadow data。
+第二个动作是**让评估关心机制本身**。医学证据使用审计关注模型推理是否真的跟随证据；One More Turn, Less Regret 把澄清行为视为完整对话策略，而不是一次看起来“很 helpful”的追问；The Two Genie Game 更进一步，把更容易被采用的系统与真正提升福利的系统分离开来。这些工作共同反驳了一个偷懒假设：性能、偏好与安全会自然对齐。
 
-#### [Auditing Evidence Use in Medical LLM Diagnosis](https://arxiv.org/abs/2607.20848v1)
-- 将医学评估从“诊断是否正确”推进到“是否连贯地使用了证据”。
-- 发现大多数强交互在临床上是合理的，但无效案例集中在被否定/缺失的发现以及临床局部证据上。
-- 稳定性过滤显著提升了审计精度，从 0.55 提高到 0.80。
-- 为什么是现在：医学 LLM 部署越来越受信任与可审计性瓶颈限制，而不只是基准准确率。
-- 怀疑性看法：结果是受提示条件影响的行为审计，而不是对潜在推理或临床安全性的直接测量。
+第三个动作是**把 agent 状态工程化，而不是口头带过**。AREX 把验证当成研究轮次之间的递归控制信号；Mi-Memory 和 MemTools 关注记忆生命周期与互操作性；持续 assurance 工作则把 readiness、ownership 与 monitoring 纳入系统边界。于是今天的整体感觉，不是“模型更聪明了”，而是“agent 系统开始具备运行纪律”。
 
-#### [Deterministic Decisions for High-Stakes AI. A Zero-Egress Pipeline with the Deployability of RAG and the Accuracy of Machine Learning](https://arxiv.org/abs/2606.29280v1)
-- 表明零样本 LLM 咨询系统可能系统性地偏向干预，而监督式结构化策略基本消除了这种偏差。
-- 修正后的 ONNX Decision Transformer 报告了 93.6% 的保真度、0% 的翻转率和低于 5 ms 的时延。
-- 还揭示了一个评估警告：LLM-as-judge 分数可能与实际决策质量发生偏离。
-- 为什么是现在：许多企业正尝试将通用 LLM 技术栈用于运营决策，而这些场景更看重保守性和可复现性。
-- 怀疑性看法：该基准目标是研究者定义的事后 oracle，而不是经过验证的真实世界干预真值。
+### 4) 值得优先读的论文
 
-#### [MIRTH: Mutual-Information Reasoning with Temporal Hubs for Vision-Language-Action Agents](https://arxiv.org/abs/2606.31167v1)
-- 同时解决三个机器人瓶颈：时间定位、中间推理和动作解码效率。
-- 报告在 LIBERO 上平均 98.1%，在 LIBERO-Long 上 95.3%，且消融清楚支持记忆和基于 MI 的推理的作用。
-- 真实机器人恢复能力提升到 12.1%，而单帧 OpenVLA 为 5.2%。
-- 为什么是现在：具身系统正碰到鲁棒性和时延天花板，而单帧 VLA 难以突破。
-- 怀疑性看法：潜在推理不可供人类直接阅读，且验证仍局限于静态单臂操作。
+1. **[Deterministic Decisions for High-Stakes AI](https://arxiv.org/abs/2606.29280v1)**  
+   如果你关心真实后果下的可靠性，这是最值得先读的一篇。它的核心结论很难忽视：一旦进入结构化决策问题，监督式策略能消除许多流畅 LLM 系统反复带回来的行动偏差。  
+   **局限：** 最强证据仍集中在单一、结构化很强的教育支持场景。
 
-### 5) 实际下一步
-- 在你的评估栈中，加入**过程审计与准确率并行**：证据使用扰动、基于后悔值的对话评估，以及匹配控制的隐私审计。
-- 对高风险决策，原型化一条**确定性的结构化策略路径**，并将其与当前 LLM/RAG 技术栈在校准、翻转率和干预偏差上进行比较。
-- 将智能体记忆视为基础设施：记录**类型化状态工件、检索轨迹、溢出/丢弃事件和回滚记录**，而不只是最终响应。
-- 如果你暴露了多个在共享数据上训练的模型，建立一个**数据集复用隐私预算**，并测试联合 MIA，而不只是逐模型审计。
-- 对长时程智能体，实现一个显式的**状态刷新/更新工具**，用于保留已验证发现、未解决约束和被拒绝假设。
-- 在多语言或文化敏感部署中，在更重的微调之前先测试**简单的推理时 persona steering**；同时衡量目标偏移和附带事实损伤。
-- 对受监管场景中的工具使用型智能体，用 broker 式访问、仅聚合返回和可审计日志，将**编排与执行分离**。
-- 在机器人或具身智能体中，在扩大端到端上下文之前，优先采用**分解式鲁棒性修复**——几何头、时间记忆、块大小调优。
+2. **[Auditing Evidence Use in Medical LLM Diagnosis](https://arxiv.org/abs/2607.20848v1)**  
+   它很重要，因为它说明“答对”本身是一种危险的安慰信号。论文审计的是诊断是否真正依赖忠实证据，这比“最后答案对不对”更接近部署现实。  
+   **局限：** 部分审计解释仍绑定在专家定义的证据角色上。
 
----
-*基于逐篇论文分析生成；未进行外部浏览。*
+3. **[AREX: Towards a Recursively Self-Improving Agent for Deep Research](https://arxiv.org/abs/2607.21461v1)**  
+   值得读的核心在于它的控制循环设计：验证被提升成研究轮次之间的递归算子，而不是再加一个 reranker。  
+   **局限：** 基准收益还不能证明它能在更混乱的真实研究任务上稳定自我改进。
+
+4. **[One More Turn, Less Regret](https://arxiv.org/abs/2607.21143v1)**  
+   作为评估论文很有用，因为它惩罚无意义的额外交互，把澄清策略变成可度量的端到端行为。  
+   **局限：** 像多数对话策略基准一样，它依赖一个受控的隐藏意图环境。
+
+5. **[When to Trust the Map](https://arxiv.org/abs/2607.18684v1)**  
+   这是一篇很好的选择性自动化配套论文：它把置信度变成一个安全关键映射任务中的路由策略，而这正是许多真实部署真正需要的有边界自治。  
+   **局限：** 当前证据仍相当依赖具体领域与主干模型。
