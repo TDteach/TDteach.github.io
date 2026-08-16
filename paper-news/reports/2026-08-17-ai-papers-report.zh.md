@@ -1,0 +1,187 @@
+# AI 论文洞察简报
+## 2026-08-17
+
+### 0) 执行要点（先读这个）
+- 评估正在从最终答案打分转向**过程问责**：多篇论文认为，对于科学、医学、GIS、金融和多模态推理中的智能体，关键问题是工作流、证据链和验证过程是否可检查、可重放，而不只是输出看起来是否正确。
+- 智能体论文中的一个反复出现的模式是**将控制知识结构化外置**：循环策略、工作流记忆、查询条件化轨迹复用、可迁移的 GUI 工作流上下文，以及类型化 rubric 图，都把关键推理/控制状态移到基础模型之外，从而可以被审计、版本化和改进。
+- 基准测试正变得更真实也更严苛：GISAgentBench、ELICITED、FrontierFinance、Avalon-ToM-Bench、DUPLEXWORLD 和 AD2-Bench 都表明，一旦任务需要多步执行、反事实敏感性、视角采择、基于证据的落地，或带噪真实世界交互，强模型仍然会明显吃力。
+- 安全研究正在从经典的准确率攻击扩展到**资源、时间和基础设施攻击**：SNN 海绵攻击针对能耗，时间投毒隐藏在时间塌缩表示中，OSS 恶意软件检测聚焦可扩展语义分流，而拓扑合成/安全设计自动化正变得可执行且可做合规检查。
+- 对实践者而言，最可操作的设计模式是：**离线检索或学习丰富经验，但在线提供紧凑、任务条件化的支持**。原始长轨迹、隐式 rubric 和不受约束的记忆迁移往往有害；简洁的目标绑定摘要、类型化图和带安全门控的更新更有帮助。
+- 多篇论文表明，**推理质量的瓶颈往往在观察与表示，而不只是生成**：查询条件化视觉裁剪、显式证据原子和潜在提示恢复，都通过改变模型所条件化的信息来改善下游行为。
+
+### 2) 关键主题（聚类）
+
+### 主题：工作流问责优先于仅看答案的评估
+
+- **为什么重要**：多篇论文指出，当智能体运行在高风险领域时，精确输出或基准分数并不足够。真正重要的是，从问题到答案的路径是否可追踪、可重放，并且是否针对正确证据完成验证。
+- **代表论文**：
+  - [Evaluating Agentic Bioinformatics through Function, Evidence, and Validation](https://arxiv.org/abs/2607.27556v1)
+  - [ELICITED: EHR-grounded Longitudinal Interactive Conversations for Information-seeking Triage Evaluation and Decision-making](https://arxiv.org/abs/2608.09024v1)
+  - [Graph-Structured Rubrics: Compiling Rubrics into Typed Evaluation Graphs for LLM Judges](https://arxiv.org/abs/2608.12097v1)
+  - [Beyond Local Accuracy: A Protocol-Level Identifiability Audit for Controlled LLM Reasoning Evaluation](https://arxiv.org/abs/2608.13326v1)
+- **共同方法**：
+  - 用结构化单元替代整体打分：工作流功能、证据类型、验证阶段、事件—轮次谱系、类型化 rubric 节点，或协议支持单元。
+  - 通过 schema、DAG、ledger 或有限支持审计，使组合过程显式且可重放。
+  - 将获取与下游使用分离：智能体问了什么、哪些证据变得可用、最终决策如何形成。
+  - 在可能时使用确定性或有验证器支持的组件，以减少评估器歧义。
+- **开放问题 / 失败模式**：
+  - 当源工件不完整时，报告缺口可能伪装成能力缺口。
+  - 多条流程仍依赖 LLM 评审器，带来评估器敏感性。
+  - 在受控环境中很强的过程形式化，不一定能干净迁移到开放式自然任务。
+  - 更好的工作流轨迹本身并不保证临床或科学有效性。
+
+### 主题：面向长时程智能体的外部记忆与自演化控制
+
+- **为什么重要**：一个重要趋势是将智能体控制知识视为可复用资产，而不是短暂上下文。这使得跨任务的更安全适配、版本管理、回滚和定向复用成为可能，而无需重写骨干模型。
+- **代表论文**：
+  - [OpenLoopEvolve: A Verifiable Self-Evolution Framework for Loop Policies in Long-Horizon Complex Tasks](https://arxiv.org/abs/2608.09380v1)
+  - [GeoForge: Non-Parametric Self-Evolving Agents for Earth-Observation Reasoning](https://arxiv.org/abs/2608.10494v1)
+  - [Beyond Retrieval: Query-Conditioned Reuse of Long-Horizon Agent Trajectories](https://arxiv.org/abs/2608.12847v1)
+  - [CoAdapt-GUI: Joint Workflow Context and Policy Adaptation for Unseen GUI Applications](https://arxiv.org/abs/2608.11588v1)
+- **共同方法**：
+  - 将可复用控制状态外置为循环策略、工作流图、SOP、轨迹支持对象或类型化工作流条目。
+  - 在部署前通过验证、配对评估、linting 或安全检查对更新进行门控。
+  - 保持骨干模型冻结或仅轻度适配，同时演化非参数记忆或小型适配器。
+  - 将已完成轨迹蒸馏为紧凑、可复用的工件，而不是重放原始轨迹。
+- **开放问题 / 失败模式**：
+  - 在大绑定偏移或稀有任务下，检索质量和支持格式仍然脆弱。
+  - 安全门可能剪掉罕见但有效的经验，限制学习。
+  - 超出已测试领域和基准的泛化仍然薄弱。
+  - 大规模持续演化的成本与稳定性仍未解决。
+
+### 主题：更真实的智能体基准暴露规划—执行鸿沟
+
+- **为什么重要**：新的基准正更接近实践者工作流，并显示模型往往大致知道该做什么，却无法精确执行、正确落地证据，或适应交互约束。
+- **代表论文**：
+  - [GISAgentBench: A Practitioner-Sourced Benchmark for Evaluating LLM Agents on GIS Tasks](https://arxiv.org/abs/2608.01645v1)
+  - [FrontierFinance: A Challenging Benchmark for Measuring Frontier Intelligence of Finance Agents](https://arxiv.org/abs/2608.11683v1)
+  - [DuplexWorld: Can voice agents help you get through the day?](https://arxiv.org/abs/2608.10716v1)
+  - [Avalon-ToM-Bench: Evaluating Fine-Grained Theory of Mind via Asymmetric Game Mechanics](https://arxiv.org/abs/2608.09638v1)
+- **共同方法**：
+  - 使用实践者或专家编写的任务，并配备可执行输出或带来源归因的 rubric。
+  - 在工具预算、噪声信道或信息不对称条件下评估完整工作流。
+  - 将失败分解为规划、排序、落地、检索或沟通等子错误。
+  - 相比自由形式的整体判断，更偏好确定性打分或 rubric 集成。
+- **开放问题 / 失败模式**：
+  - 单次运行或贪心式评估可能低估方差。
+  - 尽管有二元 rubric，一些任务仍部分带有主观性。
+  - 基准真实性提升了维护和重新标注的成本与复杂度。
+  - 很强的对话能力或规则知识，往往仍无法转化为精确任务完成。
+
+### 主题：观察与证据选择成为新的瓶颈
+
+- **为什么重要**：多篇论文表明，失败往往在真正推理开始前就已发生：模型看错区域、保留了错误片段，或条件化在过时的轨迹细节上。更好的证据选择有时比单纯扩大生成规模更有效。
+- **代表论文**：
+  - [Q-CueGraph: Query-Conditioned Visual Evidence Graphs for Multimodal Reasoning](https://arxiv.org/abs/2608.04452v1)
+  - [Lightweight Chunk Selection for Mobile Retrieval-Augmented Generation](https://arxiv.org/abs/2608.03148v1)
+  - [Evidence-Grounded Trustworthy Multimodal Reasoning and Evaluation Benchmark in Complex Urban Scenes](https://arxiv.org/abs/2608.10954v1)
+  - [Beyond Retrieval: Query-Conditioned Reuse of Long-Horizon Agent Trajectories](https://arxiv.org/abs/2608.12847v1)
+- **共同方法**：
+  - 将隐式注意力转化为显式选择对象：裁剪图、证据原子、原型或目标绑定支持笔记。
+  - 让选择受查询条件化，而不是依赖通用相似度或整段上下文摄入。
+  - 在严格的面积、token 或移动端算力预算下使用紧凑支持。
+  - 用下游可答性或正确性，而不仅是定位，来训练或优化选择器。
+- **开放问题 / 失败模式**：
+  - 候选池可能完全遗漏所需证据。
+  - 单步选择可能无法处理需要迭代式或全局证据整合的任务。
+  - 紧凑支持虽能提升效率，但仍可能漏掉细微约束。
+  - 在对抗性或语义变换下的质量影响与鲁棒性仍研究不足。
+
+### 主题：安全正在扩展到能耗、时间、供应链和设计时攻击面
+
+- **为什么重要**：这里的安全论文较少关注标准误分类，而更多关注在操作层面有意义的失效模式：电池耗尽、隐藏的时间后门、大规模恶意 OSS，以及有缺陷的网络拓扑合成。
+- **代表论文**：
+  - [Driving up Inference Energy on SNNs: Per-Sample and Universal Sponge Attacks](https://arxiv.org/abs/2607.27990v1)
+  - [Temporal Poisoning: Clean-Label Backdoors via Event Redistribution in SNNs](https://arxiv.org/abs/2607.28075v1)
+  - [MalTotal: Cost-Effective and Language-Agnostic Malicious Code Poisoning Detection for Millions of Repositories](https://arxiv.org/abs/2608.03232v1)
+  - [TopoIntent: Compiling Security Intent into Executable, Compliance-Checked Network Topologies](https://arxiv.org/abs/2608.13389v1)
+- **共同方法**：
+  - 针对不那么显眼的攻击面：能耗、时间顺序、仓库语义或拓扑设计工件。
+  - 将轻量过滤与更深层的语义或可执行验证结合起来。
+  - 直接衡量操作权衡：运行时间、token 成本、能耗估计、合规满足度或 ACL 后通过率。
+  - 至少提供部分防御挂钩，如时间检测器、合规修复循环或可扩展切片。
+- **开放问题 / 失败模式**：
+  - 一些结果依赖估计值，而非硬件实测效果。
+  - 防御可能对自适应攻击者较脆弱。
+  - 静态分析后端和模拟器限制了语言或部署覆盖范围。
+  - 大规模语义流水线会引入自身的提示注入和幻觉风险。
+
+### 主题：领域特定鲁棒性揭示条件推理失效
+
+- **为什么重要**：在医学和社会推理中，模型在静态任务上常显得胜任，但一旦任务要求条件撤销、视角约束或交互式信息引出，就会失败。
+- **代表论文**：
+  - [Evaluating Counterfactual Sensitivity to Patient Information in Medication-Safety Reasoning](https://arxiv.org/abs/2608.03028v1)
+  - [Avalon-ToM-Bench: Evaluating Fine-Grained Theory of Mind via Asymmetric Game Mechanics](https://arxiv.org/abs/2608.09638v1)
+  - [ELICITED: EHR-grounded Longitudinal Interactive Conversations for Information-seeking Triage Evaluation and Decision-making](https://arxiv.org/abs/2608.09024v1)
+- **共同方法**：
+  - 构造配对项或视角受限项，使正确答案应在受控变化下翻转。
+  - 将规则回忆与条件应用分离，将内部表征与外显答案分离。
+  - 使用基于来源或基于事件的标注，以保持标签可审计。
+  - 分析诸如激活 vs 撤销、表征 vs 表达等不对称性。
+- **开放问题 / 失败模式**：
+  - 合成或基准化设置可能无法覆盖完整的现实不确定性。
+  - 模型可能提到相关变化事实，却仍未更新决策。
+  - 机制层面的发现通常局限于可探测的开放模型。
+  - 临床和社会部署有效性仍远远超出基准成功本身。
+
+### 3) 技术综合
+- 一个常见的系统模式是**冻结骨干 + 结构化外部状态**：GeoForge、CoAdapt-GUI、OpenLoopEvolve、Nutrition Data Service 和 Memory Decoder 都避免重写整个模型，而是附加版本化记忆、适配器或类型化存储。
+- 多篇论文用**编译式或类型化中间程序**替代隐式 LM 行为：GSR 将 rubric 编译为 DAG，TopoIntent 将意图编译为 schema 有效的拓扑，而 identifiability audit 将评估编译为支持单元和碰撞检查。
+- **验证器支持的循环**正日益成为核心：DelScout、OpenLoopEvolve、ELICITED、TopoIntent 和 bioinformatics FEV 都将执行、重放或验证视为权威，而不是模型置信度。
+- 研究正明显从**把检索当作访问**转向**把检索当作受控复用**：QCR、移动端 chunk 选择、Q-CueGraph 和 Nutrition Data Service 都表明，选择或变换检索到的证据，与找到证据同样重要。
+- 多篇论文使用**配对或反事实评估**来暴露隐藏脆弱性：MedPIC-Bench GF/CF 配对、identifiability 的 target/sham supports、Champion–Challenger 循环的配对评估，以及 QCR 中 source–target 绑定偏移分析。
+- 在多模态工作中，显式落地往往采取**局部化证据单元**的形式：Q-CueGraph 中的裁剪图、EGVOR 中的证据原子、OCR/layout 图锚点，以及 ELICITED 中的事件—轮次谱系。
+- 安全论文越来越为**操作现实性**而优化：SNN 海绵攻击中的通用 XOR 覆盖、对 rate frames 不可见的 clean-label 时间重映射、带 token 成本核算的 12 万仓库恶意软件扫描，以及基于 Mininet 的拓扑验证。
+- 多项结果显示出**规划/执行鸿沟**：GIS 智能体覆盖了 68–83% 的所需功能角色，但平均严格成功率仅 0.238；金融和语音智能体也表现出尚可的中间行为，但终任务完成较弱。
+- 一个反复出现的失败模式是**陈旧或误用的上下文**：原始长轨迹、源特定 GUI 记忆、固定案例医学回忆，以及整图多模态推理，都会在模型无法重新绑定当前条件时退化。
+- RL 与自我改进论文正汇聚到**通过对已访问前缀施加更丰富监督来提升样本效率**：LOPD 蒸馏潜在特权上下文，SINKFLEX-RL 降低长 rollout 的内存障碍，Intern-S2 使用部分 rollout 加上 on-policy 蒸馏。
+
+### 4) Top 5 论文（附“为什么是现在”）
+
+#### [Evaluating Agentic Bioinformatics through Function, Evidence, and Validation](https://arxiv.org/abs/2607.27556v1)
+- 提出 FEV 框架，将工作流**Function**、可追踪的**Evidence**和与主张对齐的**Validation**分离。
+- 映射了 109 个系统和 28 个基准/评估资源，给出了当前生物智能体强项与弱项的具体图景。
+- 大多数映射用例止步于 V3 科学评估，只有 7 个达到前瞻性经验性 V4，这对部署宣称是一个有用的现实校验。
+- **为什么是现在**：随着科学智能体从 demo 走向实验室工作流，这为审计一个智能体结论是否在科学上站得住脚提供了实用模板。
+- **持保留意见 / 局限**：这是一篇结构化叙述性综述，因此计数反映的是采样文献和论文报告质量，而不是整个领域全貌。
+
+#### [GISAgentBench: A Practitioner-Sourced Benchmark for Evaluating LLM Agents on GIS Tasks](https://arxiv.org/abs/2608.01645v1)
+- 提供 349 个来自实践者的 GIS 任务，带有可执行参考轨迹和精确的空间输出真值。
+- 表明当前智能体距离在真实空间工作流中可靠运行还很远：最佳严格 TSR 为 0.327，平均 TSR 为 0.238。
+- 失败分析在操作上尤其有用：缺失必需操作（28.3%）和顺序违规（18.4%）占主导。
+- **为什么是现在**：这是最清楚说明“智能体会调用工具”在输出必须满足 CRS、几何和容差约束时远远不够的例子之一。
+- **持保留意见 / 局限**：当前 harness 不包含商业 GIS 工具箱，并且每个任务只做单次贪心运行。
+
+#### [Beyond Retrieval: Query-Conditioned Reuse of Long-Horizon Agent Trajectories](https://arxiv.org/abs/2608.12847v1)
+- 通过冻结检索、只改变所选记忆如何交付给执行智能体，干净地隔离了检索后的问题。
+- QCR 的紧凑支持对象达到 62.3% 成功率，比注入完整原始轨迹高 10.7 个点，同时在线 token 使用量约减少 48.9%。
+- 分层结果非常可操作：原始轨迹在超长记忆和大绑定偏移下效用崩塌，而 QCR 仍保持稳健。
+- **为什么是现在**：许多智能体记忆系统仍假设“检索更多轨迹”会有帮助；这篇论文表明，记忆的表示方式才是真正的杠杆。
+- **持保留意见 / 局限**：只评估成功的源轨迹和单记忆复用，不涉及多记忆组合或失败历史。
+
+#### [MalTotal: Cost-Effective and Language-Agnostic Malicious Code Poisoning Detection for Millions of Repositories](https://arxiv.org/abs/2608.03232v1)
+- 将敏感 API 提取、混合语义切片和 LLM 裁决结合起来，用于多语言 OSS 恶意软件检测。
+- 报告在五种语言上的平均 F1 约为 93.1%，并通过切片/预过滤实现 94% 的 token 降低。
+- 大规模部署结果尤其值得注意：12 万仓库、730 万文件、564 个此前未知的恶意仓库，估计成本约 338 美元。
+- **为什么是现在**：供应链安全需要既可扩展、又足够便宜以支持持续运行的语义分流能力。
+- **持保留意见 / 局限**：依赖静态分析后端成熟度，且不追踪跨语言流。
+
+#### [Evaluating Counterfactual Sensitivity to Patient Information in Medication-Safety Reasoning](https://arxiv.org/abs/2608.03028v1)
+- 构建 MedPIC-Bench，这是一个基于来源、包含 467 个经专家验证的用药安全问题的基准，并带有相连的 guideline-following 与反事实配对。
+- 发现 28 个模型在原始案例上的平均表现从 63.6% 降到反事实上的 45.1%；配对准确率平均仅 20.0%。
+- 最重要的诊断是撤销失败：模型常常注意到患者事实已变化，却仍保留原始用药判断。
+- **为什么是现在**：这是一个很强的例子，说明静态医学 QA 准确率会高估条件性临床推理的安全性。
+- **持保留意见 / 局限**：合成 vignette 测试的是规则适用性，而不是完整临床决策。
+
+### 5) 实际下一步
+- 在智能体评估中加入**工作流级日志与重放工件**：输入、参数、工具版本、中间输出和验证门都应成为一等指标，而不是附录材料。
+- 构建智能体记忆时，避免默认注入原始长轨迹；应测试**目标绑定支持 schema**，如不变量、重新绑定要求、适用条件和验证护栏。
+- 对高风险领域，在标准准确率之外加入**反事实与撤销测试**，衡量当触发条件消失时模型是否会撤回结论。
+- 在基准和仪表盘中区分**规划覆盖率**与**精确执行成功率**；许多系统在轨迹角色覆盖上看似胜任，却在严格终态检查中失败。
+- 在多模态系统中，对**模型看向了哪里**进行监测：比较整图推理与显式裁剪/证据策略，并记录失败是由于候选遗漏、选择错误，还是读取器误读。
+- 对自我改进型智能体，优先采用**可回滚的版本化外部策略/记忆**，而不是运行中提示重写或不透明的持续更新。
+- 在安全流水线中，直接衡量**操作成本曲面**——token、延迟、能耗、验证器调用和错误链接率——而不只是准确率。
+- 对于 LLM-as-judge 设置，将 rubric 或协议编译为**类型化、确定性的组合层**，使模型提供语义判断，但不掌握隐藏的聚合逻辑。
+
+---
+*基于逐篇论文分析生成；未进行外部浏览。*
