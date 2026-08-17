@@ -1,0 +1,174 @@
+# AI Paper Insight Brief
+## 2026-08-18
+
+### 0) Executive takeaways (read this first)
+- Agent work is shifting from “add another module” to **runtime governance**: several papers argue that memory, routing, skills, roles, and retrieval only help when paired with explicit verification, bounded authority, and auditable state transitions.
+- **Evaluation itself is under audit.** Multiple papers show benchmark scores can be structurally misleading: low OCR CER can hide semantic hallucinations, shared-rollout driving scores can invert policy rankings, and static detector benchmarks miss adaptive adversaries.
+- A recurring pattern is **specialization beats generic scale in constrained domains**: corpus-specific clinical RAG matches or exceeds frontier LLMs on HealthBench, logistic regression beats LLMs on most wet-lab reaction classes, and deterministic/rule-based components remain critical in standards review and report generation.
+- **Verifier-backed adaptation is emerging as the practical path for cheaper agents**: MERA, SKILLER, SkillEvo, SkillLens, SMA, and ECAT all improve smaller or frozen systems by learning from traces, skills, or memory rather than relying only on larger base models.
+- Robustness failures increasingly come from **mismatch problems**: pretraining vs generation context in diffusion LMs, prompt format vs weight-space composition, confidence vs missing information in clinical QA, and benchmark metric vs real semantic fidelity in OCR.
+- For safety-minded teams, the actionable frontier is not just stronger models but **better interfaces around them**: trusted ledgers, replay admission gates, calibrated abstention, retrieval discipline, and benchmark CI for numerical/semantic failure modes.
+
+### 2) Key themes (clusters)
+
+### Theme: Verified agent runtimes and controlled adaptation
+
+- **Why it matters**: Many of today’s gains come not from changing base models, but from wrapping them in verifiers, memory, routing, and structured update loops. The common lesson is that adaptation is useful only when admission is conservative and failures are localized.
+- **Representative papers**:
+  - [MERA: Model Evolution and Routing with Skill Adaptation for Agentic Systems at Scale](https://arxiv.org/abs/2608.10333v1)
+  - [SKILLER: Language-Level Reinforcement Learning for Reusable Skill Extraction in Small Language Models](https://arxiv.org/abs/2608.10538v1)
+  - [SkillEvo: Self-Renewing Evolution Gradients from Multi-Turn Interaction Feedback](https://arxiv.org/abs/2608.13120v1)
+  - [From Cognitive Architectures to Language Agents: A Mechanism-Level Review of Lineage, Convergence, and Migration Gaps](https://arxiv.org/abs/2607.23942v1)
+- **Common approach**:
+  - Use verifier-grounded traces as the unit of learning or admission.
+  - Separate runtime serving from offline adaptation or memory writing.
+  - Externalize reusable skills/procedures instead of relying only on weight updates.
+  - Add fallback or replay gates so improvements must survive joint evaluation before deployment.
+- **Open questions / failure modes**:
+  - Verifier coverage remains the bottleneck; missed semantic failures can make “safe” adaptation look better than it is.
+  - Many results are strongest on step-local, checkable tasks; long-horizon reasoning may still stay with the strongest model.
+  - Skill/memory growth can create redundancy, bloat, or stale procedures without lifecycle management.
+  - Several systems show underpowered or domain-limited transfer evidence outside their primary benchmark.
+
+### Theme: Benchmark validity and metric failure audits
+
+- **Why it matters**: A growing share of papers are not proposing new capabilities but showing that current metrics and benchmark pipelines can reward the wrong behavior. This is high leverage because invalid evaluation can misdirect entire research agendas.
+- **Representative papers**:
+  - [When Shared Rollouts Fail in Defensive Driving Evaluation: A NAVSIM Score Basis Audit](https://arxiv.org/abs/2608.04896v1)
+  - [When Low CER is Not Enough: An Analysis of Hallucinations in Vision-Language OCR Systems on Historical Uruguayan Documents](https://arxiv.org/abs/2607.24077v1)
+  - [Build it, Break it, Repeat: Benchmarking and improving LLM-manipulated disinformation detection in social media posts](https://arxiv.org/abs/2608.09510v1)
+  - [When Confidence Fails: Overconfidence in LLMs under Uncertainty and Missing Clinical Information](https://arxiv.org/abs/2608.09080v1)
+- **Common approach**:
+  - Stress-test standard metrics with adversarial or structurally perturbed settings.
+  - Compare aggregate scores to semantically critical failures or ranking inversions.
+  - Add manual or checklist-based audits alongside automated metrics.
+  - Use negative controls and mechanism-localizing interventions to identify where the metric breaks.
+- **Open questions / failure modes**:
+  - Many domains still lack scalable semantic-fidelity metrics beyond surface overlap.
+  - LLM-as-judge or benchmark-specific evaluators can themselves encode hidden biases.
+  - Static held-out tests remain poor proxies for adaptive adversaries.
+  - Numerical or character-level correctness can still mask wrong causal class, wrong entity, or unsafe confidence.
+
+### Theme: Domain-specific grounding beats generic fluency
+
+- **Why it matters**: In high-stakes domains, broad model competence often underperforms systems with curated corpora, deterministic checks, or narrow empirical baselines. The practical implication is to invest in corpus design and structured grounding before chasing larger models.
+- **Representative papers**:
+  - [A corpus-specific clinical RAG system matches or outperforms newer frontier LLMs on HealthBench](https://arxiv.org/abs/2608.12138v1)
+  - [onepot-Bench 0: towards lab-aware in silico chemistry benchmarks](https://arxiv.org/abs/2608.02595v1)
+  - [Benchmarking and Enhancing LLMs for Rule-Intensive Review of National Standard Documents](https://arxiv.org/abs/2608.06312v1)
+  - [V-FiLLM: Verified Financial LLM Reasoning Benchmark](https://arxiv.org/abs/2608.11047v1)
+- **Common approach**:
+  - Build task-specific corpora or synthetic generators with controllable difficulty.
+  - Pair LLM reasoning with deterministic rule scanners, verified computation, or curated retrieval.
+  - Evaluate exact diagnosis or verified arithmetic rather than generic answer quality.
+  - Analyze where general models fail: empirical judgment, local context, unit handling, or normative references.
+- **Open questions / failure modes**:
+  - Proprietary corpora and architectures limit reproducibility in some of the strongest domain systems.
+  - Synthetic or injected benchmarks may not fully capture naturally occurring errors.
+  - Communication polish can trade off against local grounding or strict correctness.
+  - Domain transfer beyond the benchmarked locale, language, or document format is often unproven.
+
+### Theme: Memory, retrieval, and role abstractions as external control surfaces
+
+- **Why it matters**: Several papers converge on the idea that reusable behavior should live in explicit artifacts—skill cards, procedure memories, role markers, ledgers—rather than only in opaque weights. This improves auditability and often helps frozen or small models.
+- **Representative papers**:
+  - [SkillLens: Visual Skill Cards for Retrieval-Augmented GUI Action Prediction and On-Policy Distillation](https://arxiv.org/abs/2608.10775v1)
+  - [Spatial Memory Agent: Experience-Grounded Procedure Memory for Spatial Intelligence](https://arxiv.org/abs/2608.12743v1)
+  - [ExRole: From Team Trajectories to Executable Roles in Multi-Agent Language Models](https://arxiv.org/abs/2608.11949v1)
+  - [Reconcile Once, Write Anytime: A Trust-Tiered Librarian and a Multi-Agent Writer for Drift-Free, Point-in-Time Research](https://arxiv.org/abs/2608.12984v1)
+- **Common approach**:
+  - Convert trajectories or sources into compact external artifacts with explicit schemas.
+  - Retrieve a bounded subset of evidence or procedures at runtime.
+  - Rank memories by empirical reliability, trust tier, or future utility.
+  - Distill retrieved behavior back into a student or route capacity based on role identity.
+- **Open questions / failure modes**:
+  - Retrieval quality is often the dominant bottleneck; irrelevant memory can actively hurt.
+  - Most systems still lack mature delete/merge/compress policies for long-term memory stores.
+  - Offline-induced roles or memories may drift under new task distributions.
+  - External artifacts improve auditability, but not necessarily closed-loop robustness in harder retrieval regimes.
+
+### Theme: New benchmarks for frontier reasoning breadth, research ability, and long-horizon engineering
+
+- **Why it matters**: The benchmark frontier is broadening from short QA toward research proofs, associative breadth, repository migration, and multimodal design. These tasks better reflect where agentic systems fail in practice: context assembly, structural consistency, and long-horizon control.
+- **Representative papers**:
+  - [TCS-BENCH: Benchmarking State-of-the-Art Generative AI Theoretical Computer Science Research Ability](https://arxiv.org/abs/2608.09538v1)
+  - [From Reasoning Depth to Reasoning Breadth: Evaluating Multi-Point Associative Reasoning in Large Language Models](https://arxiv.org/abs/2608.10444v1)
+  - [Entropy-based Code Adversarial Translation for Real-world Repository Migration](https://arxiv.org/abs/2608.09273v1)
+  - [AutoDesign: Meta-Harness Optimization for Long-Horizon Agentic Design](https://arxiv.org/abs/2608.13560v1)
+- **Common approach**:
+  - Construct tasks that require context compression, multi-step synthesis, or repository/artifact-level consistency.
+  - Use automated but calibrated verifiers or rubric-based evaluators to scale assessment.
+  - Measure not just final accuracy but robustness to perturbation, cost, and iterative improvement.
+  - Treat scaffolding/harness design as a first-class optimization target.
+- **Open questions / failure modes**:
+  - Automated verifiers are still imperfect and often calibrated on relatively small human-reviewed sets.
+  - Many benchmarks remain narrow slices of broader real-world workflows.
+  - Long-horizon gains can come with very high token or latency costs.
+  - Better benchmark realism does not automatically imply better transfer to deployment.
+
+### 3) Technical synthesis
+- A strong cross-paper pattern is **verification as the control plane**: brute-force numerical checks in statistical mechanics, executable tests in code generation, deterministic QC in report writing, and benchmark verifiers in skill evolution all serve as admission filters rather than mere metrics.
+- Several systems separate **observation from promotion**: MERA logs traces online but only admits updates via joint replay; AutoDesign gates harness edits on train/dev splits; librarian/writer architectures reconcile once and write later from a frozen snapshot.
+- **Externalized memory objects** are becoming standardized: Visual Skill Cards, procedural memory cards, role markers, metric ledgers, and skill books all package reusable behavior into auditable artifacts.
+- Retrieval systems increasingly use **two-stage selection**: cheap semantic filtering first, then richer reranking by trust, reliability, or visual evidence budget.
+- Multiple papers show that **surface metrics are insufficient**: CER/WER, first-token interaction, static held-out accuracy, and aggregate driving scores can all miss the actual failure mode.
+- There is a recurring move from generic “reasoning” to **task-structured decomposition**: exact diagnosis matching in standards review, typed computation trees in finance, tractable-class prediction in physics, and role-conditioned turns in multi-agent QA.
+- Small or frozen models improve most when given **bounded, executor-specific support** rather than generic prompts: SKILLER tailors skills to the executor, SkillLens distills card-conditioned behavior, and SMA ranks memories by transfer reliability.
+- Several papers expose **mismatch pathologies** as a root cause: diffusion pretraining vs continuation inference, norm fine-tuning vs prompt steering, answer confidence vs missing information, and benchmark rollout transformations vs intended behavioral semantics.
+- Domain papers repeatedly show **hybrid stacks outperform pure LLM stacks**: deterministic scanners, logistic regression baselines, curated corpora, and rule tables remain competitive or superior in narrow high-stakes settings.
+- A notable methodological trend is **negative controls and mechanism localization**: random/irrelevant VSCs, label permutation, same-source solver controls, and closed candidate bundles (GraSP) are used to rule out overclaimed mechanisms.
+
+### 4) Top 5 papers (with “why now”)
+
+- [When Shared Rollouts Fail in Defensive Driving Evaluation: A NAVSIM Score Basis Audit](https://arxiv.org/abs/2608.04896v1)
+  - Shows a benchmark-level failure where actor-blind probes can outrank actor-aware policies under the audited NAVSIM v2.2 setup.
+  - Localizes the issue to a dependency-sensitive shared rollout/refit path plus reference-conditioned forgiveness.
+  - Provides a concrete audit recipe: blind probes, overwrite reporting, dependency disclosure, and rollout stability checks.
+  - **Why now**: as autonomous-driving claims increasingly rely on large benchmark aggregates, this paper argues score validity must be established before behavioral conclusions.
+  - Skepticism / limitation:
+    - Scope is limited to a specific documented-stack condition and backend; it does not claim prevalence across all platforms or leaderboard settings.
+
+- [MERA: Model Evolution and Routing with Skill Adaptation for Agentic Systems at Scale](https://arxiv.org/abs/2608.10333v1)
+  - Demonstrates that invocation-level trace replay can materially improve a small coder model: 28.7% to 49.7% pass with four-cycle SFT+GRPO.
+  - Shows a deployable operating point with verifier-backed fallback: 88.3% pass at 60.8% of always-large-model cost.
+  - Contributes a conservative systems recipe: input-only router, skill book, verifier, fallback, and joint replay admission.
+  - **Why now**: cost pressure is pushing teams toward smaller models, and this is one of the clearest protocols for improving them without sacrificing verified quality.
+  - Skepticism / limitation:
+    - Much of the deployed quality preservation comes from verification and fallback; router strength and cross-domain evidence remain limited.
+
+- [A corpus-specific clinical RAG system matches or outperforms newer frontier LLMs on HealthBench](https://arxiv.org/abs/2608.12138v1)
+  - Finds that a curated India/LMIC-specific clinical RAG system ranks first on 4,023 English HealthBench questions under the primary judge.
+  - In a neutral-judge sensitivity analysis, VITA reaches parity with GPT-5.5 on mean score while retaining advantages on points-weighted score and questions won.
+  - Sharpens the design hypothesis that corpus specificity can improve clinical accuracy, completeness, and context awareness.
+  - **Why now**: this is a direct counterpoint to the narrative that generic frontier models have already subsumed specialized clinical systems.
+  - Skepticism / limitation:
+    - Corpus and architecture are proprietary, and the neutral-judge rerun narrows the claim from superiority to parity.
+
+- [onepot-Bench 0: towards lab-aware in silico chemistry benchmarks](https://arxiv.org/abs/2608.02595v1)
+  - Introduces a benchmark spanning basic cheminformatics, refusal behavior, and private wet-lab reaction judgment.
+  - Shows a strong split between chemistry literacy and empirical lab judgment: a logistic-regression baseline beats LLMs on 7 of 8 reaction classes, and no model is above chance on catalyst preference.
+  - Surfaces safety inconsistencies across representations and target classes, including signs of memorization on designer-drug analogs.
+  - **Why now**: chemistry capability and misuse concerns are rising, and this paper argues current public benchmarks overstate readiness for real lab decisions.
+  - Skepticism / limitation:
+    - It is still a proxy benchmark, not an agent-in-the-loop wet-lab evaluation, and the catalyst-preference set is small.
+
+- [Reconcile Once, Write Anytime: A Trust-Tiered Librarian and a Multi-Agent Writer for Drift-Free, Point-in-Time Research](https://arxiv.org/abs/2608.12984v1)
+  - Proposes a clean architectural split between a deterministic, trust-tiered librarian and a writer that composes from a frozen point-in-time snapshot.
+  - Reports elimination of 6,845 contradictory figures down to 0 in delivered reports via a shared metric ledger.
+  - Adds a deterministic QC gate with perfect recall/precision on injected controls and a write-back loop for future corrections.
+  - **Why now**: long-form research/report generation is moving into production, and this paper offers a concrete answer to drift, provenance loss, and temporal leakage.
+  - Skepticism / limitation:
+    - It is an industry case study with English-only, limited-tier corpus assumptions and some illustrative rather than large held-out experiments.
+
+### 5) Practical next steps
+- Add **verifier-backed admission** to any agent improvement loop: no skill, router, memory, or harness update should ship without replay against fixed checks and ablations.
+- Audit your benchmarks for **score-basis failures** using blind probes, negative controls, and perturbations that preserve semantics but alter surface form.
+- Replace single aggregate metrics with **critical-unit evaluation**: named entities for OCR, abstention/UCER for clinical QA, unit/scale robustness for finance, and exact diagnosis matching for rule-heavy review.
+- Externalize reusable behavior into **auditable artifacts**: skill cards, memory cards, role markers, or ledgers with explicit schemas and provenance.
+- For small-model deployment, prioritize **executor-specific adaptation** over generic prompting; tailor skills and retrieval to the actual serving model.
+- Build **retrieval discipline**: cheap first-stage filtering, bounded evidence budgets, trust/reliability reranking, and tests showing irrelevant retrieval hurts.
+- In high-stakes domains, benchmark against **simple structured baselines** (logistic regression, deterministic scanners, curated RAG) before assuming larger LLMs are best.
+- Track **mismatch risks** explicitly in evals: train/inference context mismatch, prompt-format sensitivity, confidence under missing information, and dependency-version sensitivity in scoring pipelines.
+
+---
+*Generated from per-paper analyses; no external browsing.*
