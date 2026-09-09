@@ -21,34 +21,33 @@ author_profile: false
   {% assign latest_zh = site.paper_news | where: 'url', latest_zh_url | first %}
 {% endunless %}
 {% assign featured = latest_zh | default: latest %}
-{% assign home_papers = featured.article_index | default: featured.top_papers %}
-{% assign lead = home_papers | first %}
-{% capture lead_url %}{{ featured.url | relative_url }}{% if lead.paper_id %}#paper-{{ lead.paper_id | replace: '/', '-' | escape }}{% endif %}{% endcapture %}
+{% assign has_homepage = false %}
+{% if featured.homepage.headline and featured.homepage.dek and featured.homepage.items.size > 0 %}{% assign has_homepage = true %}{% endif %}
 <section class="pn-home-issue" aria-labelledby="latest-headline">
-  <header class="pn-home-lead" data-paper-id="{{ lead.paper_id | escape }}">
+  <header class="pn-home-lead">
     <p class="pn-home-date"><time datetime="{{ latest_date }}">{{ latest_date | date: '%Y年%m月%d日' }}</time></p>
-    <h1 id="latest-headline"><a href="{{ lead_url }}">{{ lead.headline | default: lead.title | default: featured.brief_title | escape }}</a></h1>
-    {% if lead.paper_title %}<p class="pn-home-original"><a href="{{ lead_url }}">{{ lead.paper_title | escape }}</a></p>{% endif %}
-    {% if lead.opening_html %}<div class="pn-home-opening">{{ lead.opening_html }}</div>{% endif %}
-    <div class="pn-home-actions">
-      <a class="pn-home-button" href="{{ lead_url }}">{% if latest_zh %}阅读全文{% else %}Read article{% endif %} →</a>
-      {% if latest_zh %}<a class="pn-home-language" href="{{ latest.url | relative_url }}" lang="en" hreflang="en">English</a>{% endif %}
-    </div>
+    {% if has_homepage %}
+    <h1 id="latest-headline">{{ featured.homepage.headline | escape }}</h1>
+    <p class="pn-home-dek">{{ featured.homepage.dek | escape }}</p>
+    {% else %}
+    <h1 id="latest-headline">{{ featured.brief_title | default: latest_date | escape }}</h1>
+    {% endif %}
   </header>
-  {% if home_papers.size > 1 %}
+  {% if has_homepage %}
   <div class="pn-home-grid">
-    {% for paper in home_papers offset:1 %}
-    {% capture article_url %}{{ featured.url | relative_url }}{% if paper.paper_id %}#paper-{{ paper.paper_id | replace: '/', '-' | escape }}{% endif %}{% endcapture %}
+    {% for paper in featured.homepage.items %}
+    {% capture article_url %}{{ featured.url | relative_url }}#paper-{{ paper.paper_id | replace: '/', '-' | escape }}{% endcapture %}
     <article class="pn-home-card" data-paper-id="{{ paper.paper_id | escape }}">
-      {% if paper.paper_id %}<span class="pn-home-badge">arXiv · {{ paper.paper_id | escape }}</span>{% endif %}
-      <h2><a href="{{ article_url }}">{{ paper.headline | default: paper.title | escape }}</a></h2>
-      {% if paper.paper_title %}<p class="pn-home-original"><a href="{{ article_url }}">{{ paper.paper_title | escape }}</a></p>{% endif %}
-      {% if paper.opening_html %}<div class="pn-home-opening">{{ paper.opening_html }}</div>{% endif %}
-      <a class="pn-home-card-link" href="{{ article_url }}">{% if latest_zh %}阅读全文{% else %}Read article{% endif %} →</a>
+      <h2><a href="{{ article_url }}">{{ paper.title | escape }}</a></h2>
+      <p class="pn-home-reason">{{ paper.reason | escape }}</p>
     </article>
     {% endfor %}
   </div>
   {% endif %}
+  <div class="pn-home-actions">
+    <a class="pn-home-button" href="{{ featured.url | relative_url }}">{% if latest_zh %}中文全文{% else %}Read the issue{% endif %} →</a>
+    {% if latest_zh %}<a class="pn-home-language" href="{{ latest.url | relative_url }}" lang="en" hreflang="en">English</a>{% endif %}
+  </div>
 </section>
 
 {% endif %}
