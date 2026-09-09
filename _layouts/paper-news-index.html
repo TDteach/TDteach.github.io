@@ -2,19 +2,10 @@
 layout: default
 ---
 
-{% include base_path %}
-
-<div id="main" role="main" class="paper-news-main">
-  {% include sidebar.html %}
-
-  <article class="page" itemscope itemtype="http://schema.org/CreativeWork">
-    {% if page.title %}<meta itemprop="headline" content="{{ page.title | markdownify | strip_html | strip_newlines | escape_once }}">{% endif %}
-    {% if page.excerpt %}<meta itemprop="description" content="{{ page.excerpt | markdownify | strip_html | strip_newlines | escape_once }}">{% endif %}
-
-    <div class="page__inner-wrap">
-      <section class="page__content" itemprop="text">
-        {{ content }}
-      </section>
-    </div>
-  </article>
-</div>
+<main id="main" class="pn-shell pn-index pn-index--brief" lang="zh-CN">
+  <nav class="pn-topbar" aria-label="paper-news">
+    <span class="pn-brand">paper-news</span>
+    <a href="#archive">往期</a>
+  </nav>
+  {{ content }}
+</main>

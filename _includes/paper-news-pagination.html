@@ -1,0 +1,19 @@
+{% assign current_date = page.date | date: '%Y-%m-%d' %}
+{% assign current_zh = false %}
+{% if page.lang contains 'zh' or page.url contains '-zh/' or page.url contains '/zh/' %}{% assign current_zh = true %}{% endif %}
+{% assign older_issue = nil %}{% assign newer_issue = nil %}
+{% assign chronological = site.paper_news | sort: 'date' %}
+{% for issue in chronological %}
+  {% assign issue_zh = false %}
+  {% if issue.lang contains 'zh' or issue.url contains '-zh/' or issue.url contains '/zh/' %}{% assign issue_zh = true %}{% endif %}
+  {% if issue_zh == current_zh %}
+    {% assign candidate_date = issue.date | date: '%Y-%m-%d' %}
+    {% if candidate_date < current_date %}{% assign older_issue = issue %}{% endif %}
+    {% if candidate_date > current_date and newer_issue == nil %}{% assign newer_issue = issue %}{% endif %}
+  {% endif %}
+{% endfor %}
+<nav class="pn-bottom-nav" aria-label="{% if current_zh %}期次导航{% else %}Issue navigation{% endif %}">
+  {% if older_issue %}<a href="{{ older_issue.url | relative_url }}">← {{ older_issue.date | date: '%Y-%m-%d' }}</a>{% endif %}
+  <a href="#issue-date">{% if current_zh %}回到页首{% else %}Back to top{% endif %} ↑</a>
+  {% if newer_issue %}<a href="{{ newer_issue.url | relative_url }}">{{ newer_issue.date | date: '%Y-%m-%d' }} →</a>{% endif %}
+</nav>

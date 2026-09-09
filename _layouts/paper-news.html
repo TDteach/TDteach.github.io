@@ -2,149 +2,25 @@
 layout: default
 ---
 
-{% include base_path %}
-
 {% assign is_zh = false %}
-{% if page.lang and page.lang contains 'zh' %}
-  {% assign is_zh = true %}
-{% elsif page.permalink and page.permalink contains '-zh/' %}
-  {% assign is_zh = true %}
-{% endif %}
+{% if page.lang contains 'zh' or page.url contains '-zh/' or page.url contains '/zh/' %}{% assign is_zh = true %}{% endif %}
+{% assign issue_date = page.date | date: '%Y-%m-%d' %}
+{% assign other_url = '/paper-news/' | append: issue_date | append: '-zh/' %}
+{% if is_zh %}{% assign other_url = '/paper-news/' | append: issue_date | append: '/' %}{% endif %}
+{% assign other_pages = site.paper_news | where: 'url', other_url %}
 
-<div id="main" role="main" class="paper-news-main">
-  {% include sidebar.html %}
-
-  <article class="page paper-news-issue" itemscope itemtype="http://schema.org/CreativeWork">
-    {% if page.title %}<meta itemprop="headline" content="{{ page.title | markdownify | strip_html | strip_newlines | escape_once }}">{% endif %}
-    {% if page.excerpt %}<meta itemprop="description" content="{{ page.excerpt | markdownify | strip_html | strip_newlines | escape_once }}">{% endif %}
-    {% if page.date %}<meta itemprop="datePublished" content="{{ page.date | date: "%B %d, %Y" }}">{% endif %}
-
-    <div class="page__inner-wrap">
-      <section class="paper-news-brief" aria-labelledby="paper-news-title">
-        <div class="paper-news-brief__header">
-          <p class="paper-news-kicker">{% if is_zh %}{{ page.date | date: "%Y年%-m月%-d日" }} AI 研究简报{% else %}{{ page.date | date: "%B %-d, %Y" }} Research Brief{% endif %}</p>
-          <h1 id="paper-news-title">{{ page.brief_title | default: page.title }}</h1>
-          {% if page.brief_dek %}
-            <p class="paper-news-dek">{{ page.brief_dek }}</p>
-          {% endif %}
-        </div>
-
-        {% if page.takeaways or page.lead_paper %}
-          <div class="paper-news-overview">
-            {% if page.takeaways %}
-              <section class="paper-news-takeaways" aria-labelledby="paper-news-takeaways-title">
-                <h2 id="paper-news-takeaways-title">{% if is_zh %}核心要点{% else %}Takeaways{% endif %}</h2>
-                <ol>
-                  {% for takeaway in page.takeaways limit:3 %}
-                    <li>{{ takeaway }}</li>
-                  {% endfor %}
-                </ol>
-              </section>
-            {% endif %}
-
-            {% if page.lead_paper %}
-              <article class="paper-news-lead-card">
-                <div class="paper-news-rank">#1</div>
-                <div>
-                  <h2>{% if is_zh %}先读这篇：{% else %}Start with: {% endif %}{{ page.lead_paper.title }}</h2>
-                  {% if page.lead_paper.why %}
-                    <p><strong>{% if is_zh %}为什么先读：{% else %}Why it catches my eye:{% endif %}</strong> {{ page.lead_paper.why }}</p>
-                  {% endif %}
-                  {% if page.lead_paper.skepticism %}
-                    <p><strong>{% if is_zh %}建议重点质疑：{% else %}Read skeptically for:{% endif %}</strong> {{ page.lead_paper.skepticism }}</p>
-                  {% endif %}
-                  {% if page.lead_paper.tags %}
-                    <div class="paper-news-tags">
-                      {% for tag in page.lead_paper.tags %}
-                        <span>{{ tag }}</span>
-                      {% endfor %}
-                    </div>
-                  {% endif %}
-                  <div class="paper-news-card-links">
-                    {% if page.lead_paper.url %}<a href="{{ page.lead_paper.url }}">arXiv</a>{% endif %}
-                    {% if page.lead_paper.pdf %}<a href="{{ page.lead_paper.pdf }}">PDF</a>{% endif %}
-                  </div>
-                </div>
-              </article>
-            {% endif %}
-          </div>
-        {% endif %}
-
-        {% if page.themes %}
-          <section class="paper-news-themes" aria-labelledby="paper-news-themes-title">
-            <h2 id="paper-news-themes-title">{% if is_zh %}主题{% else %}Themes{% endif %}</h2>
-            <div class="paper-news-theme-grid">
-              {% for theme in page.themes limit:3 %}
-                <article class="paper-news-theme">
-                  <strong>{{ theme.title }}</strong>
-                  <span>{{ theme.text }}</span>
-                </article>
-              {% endfor %}
-            </div>
-          </section>
-        {% endif %}
-
-        {% if page.signals %}
-          <div class="paper-news-signals" aria-label="{% if is_zh %}研究信号{% else %}Research signals{% endif %}">
-            {% for signal in page.signals limit:3 %}
-              <article class="paper-news-signal">
-                <b>{{ signal.label }}</b>
-                <strong>{{ signal.title }}</strong>
-                <span>{{ signal.text }}</span>
-              </article>
-            {% endfor %}
-          </div>
-        {% endif %}
-      </section>
-
-      {% if page.top_papers %}
-        <section class="paper-news-section" aria-labelledby="top-papers">
-          <div class="paper-news-section__head">
-            <div>
-              <h2 id="top-papers">{% if is_zh %}值得优先阅读的论文{% else %}Papers Worth Your Reading Time{% endif %}</h2>
-              <p>{% if is_zh %}按研究价值排序：新意、方法可复用性、证据质量，以及是否值得带着怀疑去读。{% else %}Ranked for research usefulness: novelty, method pattern, evidence quality, and skepticism value.{% endif %}</p>
-            </div>
-          </div>
-
-          <div class="paper-news-paper-grid">
-            {% for paper in page.top_papers limit:3 %}
-              <article class="paper-news-paper-card">
-                <div class="paper-news-paper-card__top">
-                  <h3>{{ paper.title }}</h3>
-                  <span class="paper-news-paper-rank">#{{ forloop.index }}</span>
-                </div>
-                {% if paper.why %}
-                  <p>{{ paper.why }}</p>
-                {% endif %}
-                {% if paper.why_now or paper.skepticism %}
-                  <dl>
-                    {% if paper.why_now %}
-                      <div><dt>{% if is_zh %}为什么现在值得读{% else %}Why now{% endif %}</dt><dd>{{ paper.why_now }}</dd></div>
-                    {% endif %}
-                    {% if paper.skepticism %}
-                      <div><dt>{% if is_zh %}怀疑点{% else %}Skepticism{% endif %}</dt><dd>{{ paper.skepticism }}</dd></div>
-                    {% endif %}
-                  </dl>
-                {% endif %}
-                <div class="paper-news-card-links">
-                  {% if paper.url %}<a href="{{ paper.url }}">arXiv</a>{% endif %}
-                  {% if paper.pdf %}<a href="{{ paper.pdf }}">PDF</a>{% endif %}
-                </div>
-              </article>
-            {% endfor %}
-          </div>
-        </section>
-      {% endif %}
-
-      <section class="page__content paper-news-report-body" itemprop="text">
-        {{ content }}
-      </section>
-
-      <footer class="page__meta">
-        {% include page__taxonomy.html %}
-      </footer>
-
-      {% include post_pagination.html %}
+<main id="main" class="pn-shell pn-reader pn-legacy" lang="{% if is_zh %}zh-CN{% else %}en{% endif %}">
+  <nav class="pn-topbar" aria-label="paper-news">
+    <a class="pn-brand" href="{{ '/paper-news/' | relative_url }}">paper-news</a>
+    <div class="pn-topbar__links">
+      <a href="{{ '/paper-news/#archive' | relative_url }}">{% if is_zh %}往期{% else %}Archive{% endif %}</a>
+      {% if other_pages.size > 0 %}<a href="{{ other_url | relative_url }}">{% if is_zh %}English{% else %}中文{% endif %}</a>{% endif %}
     </div>
-  </article>
-</div>
+  </nav>
+  <header class="pn-issue-header" id="issue-date"><h1><time datetime="{{ issue_date }}">{{ issue_date | replace: '-', '.' }}</time></h1></header>
+  <div class="pn-prose" itemscope itemtype="https://schema.org/Article">
+    <meta itemprop="headline" content="{{ page.title | escape }}">
+    <div itemprop="articleBody">{{ content }}</div>
+  </div>
+  {% include paper-news-pagination.html %}
+</main>

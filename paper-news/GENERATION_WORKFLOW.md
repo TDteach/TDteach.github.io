@@ -1,294 +1,75 @@
-# Paper News Generation Workflow
+# Paper-news 页面维护
 
-Use this workflow when generating `_paper_news/YYYY-MM-DD.md` from a daily AI paper report.
+新版页面服务于每天约半小时的研究阅读。页面呈现已批准的研究文章；排版和导航不能新增论文判断、总结或跨论文趋势。
 
-## Goal
+## 内容与页面契约
 
-The page should read like a research brief, not a pipeline log. The first screen must answer:
+- `_pages/paper-news.md` 是真实站点入口。沿用线上简报的宽版白色圆角外框、青绿色日期、大号黑色标题和浅灰卡片。首篇标题与完整首段置于头部，其余文章各占一张卡片；每篇原论文名与全文链接指向相应文章锚点。最新期次只在顶部出现，其他期次按月份归档，可检索日期或标题。
+- `_layouts/paper-news-research.html` 包装新版文章，提供期次、语言和归档导航。
+- `_layouts/paper-news.html` 为既有旧期提供相同的外层阅读排版，保留原有 Markdown 正文，不再复制 front matter 的主题、推荐、要点或论文卡。
+- `_layouts/paper-news-index.html` 提供首页外层。
+- `_includes/paper-news-pagination.html` 根据实际存在的同语言期次生成前后链接。
+- `assets/css/paper-news.css` 是站点与 Python 预览共用的样式来源。所有规则限定在 `.pn-shell`，不改变个人网站其他页面。
+- `assets/js/paper-news.js` 只增强归档检索；关闭 JavaScript 后，每个月和每期链接仍然可用。
+- `src/render_research_brief.py` 从已批准 JSON 生成正文 HTML、独立预览与 Markdown。正文使用本地 MathML，不依赖浏览器端公式脚本。
 
-- What is the shortest useful headline for today's research movement?
-- What are the 3 focus areas a researcher can understand at a glance?
-- Which paper should a researcher open first?
-- What is the biggest shift or warning from today's papers?
+阅读页依次呈现文章标题、链接至准确版本的原论文名、正文、已有阅读理由和可展开的来源位置。页首目录提供文章跳转，默认收起。首页只摘取已批准正文的首段，不新写摘要，不截断条件。彩色徽标显示真实 arXiv ID，不生成主题口号或数量宣告。首篇不再重复出现在卡片或归档中。
 
-The generated Markdown has two jobs:
+## 新版 front matter
 
-1. Preserve the full daily report body for deep reading.
-2. Add structured front matter that the Jekyll layouts use to create the visual top section on `/paper-news/` and `/paper-news/YYYY-MM-DD/`.
-
-## Current Layout Contract
-
-The current site uses these files:
-
-- `_pages/paper-news.md`: the index page at `/paper-news/`.
-- `_layouts/paper-news-index.html`: removes the default page title so the research brief is the first visual element.
-- `_layouts/paper-news.html`: renders an individual daily issue.
-- `assets/css/main.scss`: styles the researcher-focused paper-news components.
-
-The index page uses the latest English issue's front matter:
-
-- `brief_title` and `brief_dek` become the main headline.
-- `themes[0..2]` become the three focus cards under the headline.
-- `lead_paper` becomes the `Best first paper` item in `Start here`.
-- `top_papers[1]` becomes `Also worth opening`.
-- `signals[0]` becomes `Biggest shift`.
-- `brief_dek` is also used in the recent-issues list.
-
-The daily issue page uses:
-
-- `brief_title`, `brief_dek`
-- `takeaways`
-- `themes`
-- `lead_paper`
-- `signals`
-- `top_papers`
-
-If any field is missing, the page will still build, but the top section will feel empty. Do not omit required fields.
-
-## Extraction Recipe From The Raw Daily Report
-
-Start from the raw daily report body, usually containing:
-
-- `Executive takeaways`
-- `Key themes (clusters)`
-- `Technical synthesis`
-- `Top 5 papers`
-- selected-paper table with arXiv IDs, scores, reasons, and tags
-
-Generate the structured front matter as follows:
-
-### `brief_title`
-
-Extract the dominant movement across the day. Use 3-6 words. It should be a claim, not a label.
-
-Good:
-
-- `AI reliability gets real.`
-- `Agent evaluation gets harder.`
-- `Robustness moves downstream.`
-
-Bad:
-
-- `Daily AI Paper Report`
-- `Today’s AI Papers`
-- `What should I read?`
-
-### `brief_dek`
-
-Condense the top 2-3 executive takeaways into one sentence. It should explain why the title is true.
-
-### `themes`
-
-Create exactly 3 themes from `Key themes (clusters)` or the strongest recurring ideas in `Executive takeaways`.
-
-Each theme must be short enough for a card:
-
-- `title`: 2-4 words.
-- `text`: one concrete sentence, preferably under 22 words.
-
-The index page labels these cards as:
-
-- `Why it matters`
-- `What changed`
-- `What to watch`
-
-So order the themes accordingly:
-
-1. The most important implication.
-2. The clearest shift from prior expectations.
-3. The thing to monitor next.
-
-### `takeaways`
-
-Create exactly 3 high-level conclusions from `Executive takeaways`. These can be longer than theme card text because they are shown on the daily issue page, not the compact index hero.
-
-### `lead_paper`
-
-Choose the paper a researcher should open first. Do not pick purely by score. Prefer a paper with:
-
-- a reusable method,
-- a surprising result,
-- strong deployment relevance,
-- a claim likely to be cited,
-- or a useful limitation.
-
-Fill:
-
-- `title`
-- `url`
-- `pdf`
-- `why`: one sentence explaining why this paper should be opened first.
-- `skepticism`: one sentence with the main caveat.
-- `tags`: 2-4 short tags.
-
-### `top_papers`
-
-Create 3-5 entries from the `Top 5 papers` section. The first item should normally match `lead_paper`.
-
-For each:
-
-- `why`: why a researcher should spend time on it.
-- `why_now`: why it is timely now.
-- `skepticism`: what could limit the claim.
-
-The index page uses `top_papers[1]` as `Also worth opening`, so make the second paper genuinely complementary to the first.
-
-### `signals`
-
-Create exactly 3 signals. These are not topics; they are research movements, warnings, or method patterns.
-
-The index page only shows `signals[0]` as `Biggest shift`, so put the strongest signal first.
-
-Each signal:
-
-- `label`: concrete category, not generic wording.
-- `title`: specific claim a researcher can agree or disagree with.
-- `text`: concrete evidence from the day’s papers.
-
-Good labels:
-
-- `Evaluation shift`
-- `Agent pattern`
-- `Robustness bet`
-- `Safety warning`
-- `Deployment gap`
-- `Method pattern`
-
-Avoid labels like:
-
-- `Signal`
-- `Tension`
-- `Bet`
-- `Theme`
-- `Insight`
-
-## Length Budget For The Visual Top Section
-
-The front matter controls a compact visual layout. Keep it tight:
-
-- `brief_title`: 3-6 words.
-- `brief_dek`: 18-35 words.
-- `themes.*.title`: 2-4 words.
-- `themes.*.text`: under 22 words.
-- `signals.*.title`: under 9 words.
-- `signals.*.text`: under 28 words.
-- `lead_paper.why`: under 30 words.
-- `lead_paper.skepticism`: under 26 words.
-
-## Required File Path
-
-Create the English issue at:
-
-```text
-_paper_news/YYYY-MM-DD.md
-```
-
-Create the Chinese issue at:
-
-```text
-_paper_news/YYYY-MM-DD-zh.md
-```
-
-## Required Front Matter
-
-Every new English issue should use this front matter schema:
+同步程序只从已批准内容确定性地产生这些字段。不得使用模型生成首页元数据。
 
 ```yaml
----
-layout: paper-news
-title: "Daily AI Paper Report (YYYY-MM-DD)"
-date: YYYY-MM-DD
-permalink: /paper-news/YYYY-MM-DD/
+layout: paper-news-research
+brief_format: research
+title: "2026-08-29 · paper-news"
+date: 2026-08-29
+lang: zh-CN
+permalink: /paper-news/2026-08-29-zh/
 author_profile: false
-brief_title: "Concise information-bearing headline."
-brief_dek: "One sentence explaining the main research pattern and why it matters."
-lead_paper:
-  title: "Paper title"
-  url: "https://arxiv.org/abs/..."
-  pdf: "https://arxiv.org/pdf/....pdf"
-  why: "Why this paper should be opened first."
-  skepticism: "The most important limitation or caveat."
-  tags:
-    - short tag
-    - short tag
-takeaways:
-  - "Most important research-level conclusion."
-  - "Second important conclusion."
-  - "Third important conclusion."
-themes:
-  - title: "Short theme name"
-    text: "One sentence explaining the theme."
-  - title: "Short theme name"
-    text: "One sentence explaining the theme."
-  - title: "Short theme name"
-    text: "One sentence explaining the theme."
-signals:
-  - label: "Concrete category"
-    title: "Specific research claim."
-    text: "Concrete evidence or implication in one sentence."
-  - label: "Concrete category"
-    title: "Specific research claim."
-    text: "Concrete evidence or implication in one sentence."
-  - label: "Concrete category"
-    title: "Specific research claim."
-    text: "Concrete evidence or implication in one sentence."
-top_papers:
-  - title: "Paper title"
-    url: "https://arxiv.org/abs/..."
-    pdf: "https://arxiv.org/pdf/....pdf"
-    why: "Why a researcher should spend time on it."
-    why_now: "Why this is timely."
-    skepticism: "Main caveat."
----
+brief_title: "第一篇已批准文章的标题"
+translation_url: /paper-news/2026-08-29/
+translation_label: English
+article_index:
+  - paper_id: "2608.27782"
+    headline: "该篇已批准的文章标题"
+    paper_title: "Original title from paper_metadata"
+    opening_html: "<p>已批准正文的完整首段，经安全渲染。</p>"
 ```
 
-## Writing Rules
+`article_index` 遵循正文顺序，`headline` 与正文一致，`paper_title` 来自已绑定内容哈希的原论文元数据。`opening_html` 只能由 `render_article_opening(article)` 生成：完整首段经已有安全 HTML/MathML 渲染，保留原文文字与链接；模板直接输出该安全字段，禁止把任意原始 HTML 或模型生成的摘要填入其中。链接格式是 `#paper-` 加论文 ID，仅将旧式 ID 中的 `/` 替换为 `-`。读者审查通过后重新排版不修改原始 article 或 content_hash。
 
-- `brief_title` should be short and information-bearing. Aim for 3-6 words.
-- Avoid vague titles like “What should I read today?” or “Today’s AI paper digest.”
-- Good title pattern: “AI reliability gets real.”
-- `brief_dek` carries the nuance. Keep it to one sentence.
-- `lead_paper.why` should describe the paper’s research value, not its score.
-- `lead_paper.skepticism` is mandatory; researchers trust pages that show judgment.
-- `takeaways` is mandatory. Use 3 high-level conclusions from the executive takeaways.
-- `themes` is mandatory. Use 3 theme cards that summarize the day’s intellectual clusters.
-- `signals` should summarize the day’s intellectual structure, not paper categories.
-- Avoid generic signal labels such as `Signal`, `Tension`, `Bet`, `Theme`, or `Insight`.
-- Use concrete labels that name the actual research movement, such as `Evaluation shift`, `Agent pattern`, `Robustness bet`, `Safety warning`, `Deployment gap`, or `Method pattern`.
-- Each signal title should make a specific claim a researcher can agree or disagree with.
-- Each signal text should mention concrete evidence from the day’s papers, not abstract phrasing.
-- `top_papers` should contain 3-5 papers. The template currently displays the first 3.
-- Keep telemetry such as candidates, selected count, and deepread completion inside the report body, not the front-page headline.
+旧稿中的 `themes`、`takeaways`、`lead_paper`、`signals`、`top_papers` 不再是新版必填项。旧期缺少 `article_index` 时，首页可使用已有 `top_papers.title`，不生成新摘要。
 
-## Body Order
+## 本地预览
 
-After the front matter, keep the current long report body format:
+有 Ruby、Bundler 和 Jekyll 时，在 `site` 目录执行 `bundle exec jekyll serve`。这是正式模板兼容性的完整检查路径。
 
-1. Language link.
-2. Optional run stats/details block.
-3. `# AI Paper Insight Brief`.
-4. Executive takeaways.
-5. Key themes.
-6. Technical synthesis.
-7. Top papers.
+当前 Windows 环境没有 Ruby/Jekyll，可使用隔离依赖的忠实预览工具：
 
-The `paper-news` layout renders the structured front matter first, then renders the full Markdown report below it.
+```powershell
+python -m pip install --target D:\paper-news\site\local\preview-tools python-liquid libsass
+python D:\paper-news\src\preview_paper_news.py --brief D:\paper-news\data\2026-08-29\experiments\terra-autonomous-v2\brief.approved.json
+python -m http.server 4173 --bind 127.0.0.1 --directory D:\paper-news\site\local\preview
+```
 
-## Generation Checklist
+入口：`http://127.0.0.1:4173/paper-news/`。
 
-Before saving the file, verify:
+该工具读取真实 Liquid 页面、三种布局、个人站页眉页脚、现有期次，并编译实际 SCSS。`--brief` 只在内存中加入未发布的已批准期次，不写入 `site/_paper_news`。依赖和产物均位于已忽略的 `site/local`，不提交、不发布。工具不读取 `.env`、不调用模型、不执行 Git。
 
-- The front matter is valid YAML.
-- `layout` is `paper-news`.
-- `brief_title` is not the same as `title`.
-- `themes` has exactly 3 entries and each entry is visually short.
-- `takeaways` has exactly 3 entries.
-- `signals` has exactly 3 entries and `signals[0]` is the strongest because it appears on the index page.
-- `lead_paper` is not selected only by score; it is selected for research value.
-- `top_papers` has at least 3 entries and `top_papers[1]` is a good companion paper.
-- The report body still includes the full detailed analysis after the front matter.
-- Pipeline telemetry stays in the body, not in `brief_title`, `brief_dek`, `themes`, or `signals`.
+局限写入 `preview-manifest.json`：使用 Python Liquid，旧期 Markdown 使用 Python Markdown 而非 kramdown；跳过 HTML 压缩及分析统计；个人站页脚已有一个多余的 `%` 仅在本地适配；只构建 paper-news，个人站其他栏目仍应通过原生 Jekyll 验证。新版正文已经由正式 renderer 产生 HTML，站点预览与独立预览使用同一文章结构和 MathML。
 
-## Chinese Pages
+独立预览也可指定语言与归档链接：
 
-Chinese pages can keep the existing `layout: single` until the Chinese brief schema is added. If adding a Chinese structured version, use translated field values and `layout: paper-news`.
+```powershell
+python src/render_research_brief.py path/to/brief.approved.json --output path/to/index.html --translation-url en.html --archive-url http://127.0.0.1:4173/paper-news/#archive
+```
+
+## 检查
+
+- 新版正文与已批准 JSON 的文字、数字、条件、顺序和来源一致。
+- 首页每篇各出现一次，展示的首段与已批准正文一致，阅读全文链接能打开对应文章；中英文和前后期次链接指向实际页面。
+- 搜索清空后恢复月份展开状态；无 JavaScript 仍可访问全部归档。
+- 中文行长、长英文论文名和来源在窄屏下不造成整页横向滚动。
+- 公式保持 MathML，长独立公式可水平滚动；打印不隐藏正文或证据条件。
+- 仅同步经过健康检查的已批准期次。不要把本地预览产物当作已经发布的页面。

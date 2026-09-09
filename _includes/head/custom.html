@@ -1,6 +1,10 @@
 {% include base_path %}
 
 <!-- start custom head snippets -->
+{% if page.layout == 'paper-news' or page.layout == 'paper-news-index' or page.layout == 'paper-news-research' %}
+<link rel="stylesheet" href="{{ '/assets/css/paper-news.css' | relative_url }}">
+{% if page.layout == 'paper-news-index' %}<script src="{{ '/assets/js/paper-news.js' | relative_url }}" defer></script>{% endif %}
+{% endif %}
 
 <link rel="apple-touch-icon" sizes="57x57" href="{{ base_path }}/images/apple-touch-icon-57x57.png?v=M44lzPylqQ">
 <link rel="apple-touch-icon" sizes="60x60" href="{{ base_path }}/images/apple-touch-icon-60x60.png?v=M44lzPylqQ">
@@ -26,8 +30,10 @@
 
 
 <!-- Support for MatJax -->
+{% unless page.layout == 'paper-news-research' %}
 <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
 <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+{% endunless %}
 
 
 <!-- Google tag (gtag.js) / GA4 -->

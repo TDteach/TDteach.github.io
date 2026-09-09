@@ -1,0 +1,19 @@
+---
+layout: default
+---
+
+<main id="main" class="pn-shell pn-reader" lang="{{ page.lang | default: 'en' }}">
+  <nav class="pn-topbar" aria-label="paper-news">
+    <a class="pn-brand" href="{{ '/paper-news/' | relative_url }}">paper-news</a>
+    <div class="pn-topbar__links">
+      <a href="{{ '/paper-news/#archive' | relative_url }}">{% if page.lang contains 'zh' %}往期{% else %}Archive{% endif %}</a>
+      {% if page.translation_url %}<a href="{{ page.translation_url | relative_url }}" hreflang="{% if page.lang contains 'zh' %}en{% else %}zh-CN{% endif %}">{{ page.translation_label }}</a>{% endif %}
+    </div>
+  </nav>
+  <div itemscope itemtype="https://schema.org/Article">
+    <meta itemprop="headline" content="{{ page.title | escape }}">
+    <meta name="paper-news-content-hash" content="{{ page.content_hash | escape }}">
+    <div itemprop="articleBody">{{ content }}</div>
+  </div>
+  {% include paper-news-pagination.html %}
+</main>
