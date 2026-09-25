@@ -1,0 +1,101 @@
+# 2026-09-25
+
+## Zero-pass agent tasks need adjudication before difficulty claims
+
+*[What Makes a Terminal-Bench Task Hard? Separating Genuine Hardness from Fake-Hardness on an Adjudicated Agentic Corpus](https://arxiv.org/abs/2609.26826v1)*
+
+### The audit
+
+An all-fail result is not self-interpreting. The same zero pass rate can reflect a genuine capability gap, missing context, a broken reference solution, infrastructure failure, or a verifier bypass. The paper’s concrete warning is that lack of saturation and genuine difficulty are not the same thing.
+
+The authors examine this distinction on a frozen Terminal-Bench 3 / Frontier-Bench 0.1 production record containing 1,081 pull requests, 639 scored tasks, 28,801 trials, and $105,933 in logged agent spend. For the 125 tasks with no honest pass, they combine task artifacts, reference-solution runs, empty-solution controls, adversarial trials, trajectories, telemetry, and review records, then apply an ordered validity screen. The resulting label is deliberately narrow: a certified-unsolved candidate has an observed authored-route pass, infrastructure that did not dominate failures, no observed strict verifier bypass, and failure by all evaluated agents.
+
+The counts change the interpretation of “zero.” Of the 125 all-fail tasks, 78 meet that certified-unsolved criterion. The other 47 are divided into 14 broken-oracle tasks, 8 infrastructure-limited tasks, 4 exploit-only-passable tasks, and 21 whose solvability is not certified by the available evidence. These categories do not establish intrinsic hardness; they identify what the archived evidence supports.
+
+The paper also supplies a graded signal for tasks that do have honest passes. Among 346 such tasks, the minimum recorded output tokens needed to obtain the first archived pass distinguishes broader genuine-hard candidates from tractable tasks with AUC=0.750 (95% CI [0.700, 0.801]) in this snapshot. This is a cost signal, not a proof of capability difficulty.
+
+For a benchmark maintainer, the transferable operation is to make a zero-pass event an audit trigger: preserve the oracle and reference runs alongside empty-solution and adversarial controls, infrastructure telemetry, trajectories, and review records; then report the resulting evidence-qualified category instead of only the pass rate. The paper’s own caution should remain attached to the label: 53 of the 78 certified-unsolved candidates have only one recorded reference run. The labels are not definitive proofs, the run evidence is observational rather than a fully crossed experiment, and all quantitative results belong to one frozen snapshot. Treat “certified-unsolved” as an archival claim about evidence—and repeat the oracle check before using it as a claim about model incapability.
+
+Read this to learn a reusable per-item audit protocol for turning zero-pass agent tasks into evidence-qualified benchmark records before interpreting them as model failures.
+
+[abstract; Section 2, paragraph 2 (S2.p2.1); Section 1, paragraph 5 (S1.p5.1); Abstract (abstract1.1); Section 1, paragraph 8 (S1.p8.1) and Section 5 (S5.p3.1–S5.p4.1); Section 3, paragraph 6 (S3.p6.1); Section 6, paragraph 5 (S6.p5.1); Section 6, paragraph 7 (S6.p7.1); Section 6, paragraph 9 (S6.p9.1)](https://arxiv.org/abs/2609.26826v1)
+
+## An Audit of 15 ToolUniverse Scientific Tools Reports 91 Silent Agent–Tool Failures
+
+*[Silent Failures in Agent-Tool Interaction: An Audit of ToolUniverse](https://arxiv.org/abs/2609.26836v1)*
+
+The paper examines a failure that task-completion scores can miss: a tool invocation appears successful, but some information or functionality is missing and no notification reaches the agent or user. It audits 15 scientific tools integrated in the ToolUniverse environment, treating ToolUniverse as the experimental setting rather than the study’s object.
+
+A useful baseline is ToolFailBench, which isolates whether an agent uses returned evidence in its final answer through 1,000 single-turn tasks and four labels: Tool-Skip, Result-Ignore, Output-Fabrication, and Unnecessary-Tool-Use. The present audit changes the unit of diagnosis: it traces the failure locus across tool, API, wrapper, and agent layers, making omissions and semantic loss inspectable before they appear as a final answer.
+
+The method combines LLM-assisted candidate discovery, automated testing, repeated agent executions, and manual validation. The authors apply a seven-way taxonomy: tool limitation, complete or partial API gap, complete or partial wrapper gap, agent usability gap, and agent interpretation gap. This turns a vague “the call worked” assessment into a question about which interface transformation lost information.
+
+Within the sampled environment, the audit reports 91 failures manually validated after LLM-based candidate discovery and automated testing. Fifty-one occurred at the API layer and 25 at the wrapper layer. The most frequent mechanisms were missing data or fields and inconsistencies in search, filtering, or ranking criteria. Across the evaluated dimensions, completeness was most affected, with 28 occurrences; ranking and relevance had 21, and result appropriateness had 20.
+
+The authors propose contextual reliability: whether an agent–tool interaction preserves and communicates the information, qualifiers, provenance, scope, and meaning needed for the intended scientific conclusion. It is a concept rather than an implemented metric in this study. A transferable research operation is to create paired tests for each tool call: preserve the request while removing a field, changing ranking or filtering semantics, or dropping a qualifier, then compare the raw response, wrapper output, and final claim. Treat a discrepancy as a test target even when the API returns no explicit error.
+
+The evidence is not ecosystem-wide. The authors caution that the study is ToolUniverse-specific, covers 15 tools rather than the whole ecosystem, relies on LLM-assisted candidate generation with manual validation on only a subset, and may change as APIs, wrappers, interfaces, and data evolve. They also state that the operationalization of silent failure is not exhaustive, so reported counts should be read as audit results under this procedure, not as a prevalence estimate.
+
+Read it for a reusable way to test whether scientific evidence survives every tool, API, and wrapper transformation—not merely whether a call returns successfully.
+
+[abstract1.1](https://arxiv.org/abs/2609.26836v1) · [\[S3.p1.1\]](https://arxiv.org/abs/2607.04686v1)
+
+## Ajar Measures Harm-Weighted Open Privilege Separately from Attack Success and Utility
+
+*[Ajar: Measuring Open Privilege in Agent Defenses](https://arxiv.org/abs/2609.26900v1)*
+
+Existing agent-security scorecards commonly ask whether indirect prompt injections succeed and whether benign tasks remain useful. The paper identifies a concrete blind spot: a defense can score well on both while still leaving open a transfer, deletion, or broad read that no task needed. Ajar makes that residual privilege a third evaluation axis, rather than inferring it from attack success or utility.
+
+Ajar attaches to an existing benchmark and reuses its benign tasks, tool schemas, reference solutions, and goal states. For each task it constructs candidate tool calls the task does not need, labels the candidates, and presents them to the defense at every point where the agent could act. On AgentDojo v1.2.2, this produced 10,471 tests from 3,551 unique (task, tool, arguments) candidates across decision points k=0 to k=18. Its main score, over-privilege leakage (OPL), is the harm-weighted fraction of deny-labeled excess calls allowed by the defense; the weighting makes costly mistakes count more than equally.
+
+In the reported comparison of Progent, CaMeL, AC4A, Permission Assistant, and Claude Code Auto, OPL differed across defenses in ways not recoverable from attack success or benign utility alone. One concrete comparison is that two defenses whose OPL differed by less than 0.009 still differed by 37 percentage points in benign-task completion. Swapping the deciding model from Sonnet-5 to Haiku-4.5 also measurably changed OPL and sufficiency for the same defense and wrapper.
+
+The transferable research operation is to turn an existing benign-task benchmark into a defense test: generate excess-call candidates from its task artifacts, expose each candidate at action points, and report leakage alongside whether required calls are refused. Then rerun the suite while changing one defense component, such as the deciding model, to separate wrapper and component effects. The question to carry forward is not simply “did the attack succeed?” but “which unnecessary calls would this defense allow, under which labels, model, and integration?”
+
+The boundary matters. AgentDojo predicates validated 2,822 of 10,471 labels; 73% were asserted by Ajar’s oracle rules. Candidate generation samples a large space, so OPL estimates sampled coverage rather than exhaustive privilege. Ajar scores a fixed-point per-call allow/deny decision; it does not model later multi-step checks or certify deployment safety. Treat OPL as a measurement layer whose confidence depends on oracle quality, sampling, wrapper integration, and deciding-model variance—not as a standalone safety guarantee.
+
+To learn how to turn an existing benign-task benchmark into a sampled, harm-weighted test of unnecessary allowed calls—and how to audit the oracle and integration limits before reusing the metric.
+
+[abstract; Abstract (abstract1.2); Section 6.1 (Setup); Section 3.3 (Least-Privilege Precision — Over-Privilege Leakage); Section 1 (Introduction) and Section 6.3 (Leakage and Its Cost), Table 5 and Table 7; Section 6.4.2 (The Deciding Model); Section 7.1 (Oracle Labels); Section 7.2 (Limitations: Test Suite Coverage); Section 7.3 (Limitations: Defense Integration); Section 7.4 (Limitations: Verdict Variance); Section 7.5 (Limitations: Measurement Scope)](https://arxiv.org/abs/2609.26900v1)
+
+## TwinCheck Raises GPT-5.6 Sol Success from 45.3% to 58.5% on 159 Exact-Replay BFCL V4 Tasks
+
+*[TwinCheck: Evidence-Grounded Negative-Twin Verification for Stateful Tool Agents](https://arxiv.org/abs/2609.26911v1)*
+
+### Why this paper
+
+The paper frames a locally plausible tool call as potentially capable of derailing an otherwise successful stateful-agent trajectory. CRITIC supplies a concrete prior limitation: its ablation found that using the LLM alone to produce critiques, without external tool feedback, yielded marginal or negative gains. TwinCheck responds by making the replacement itself the object of verification, rather than treating suspicion as sufficient reason to revise.
+
+### What changes
+
+TwinCheck attempts repair only when the trace satisfies an evidence condition tied to a trace-local failure hypothesis. It constructs a trace-grounded counterfactual alternative—a “negative twin”—then checks the candidate structurally and asks a pairwise verifier to compare actor and twin in both candidate orders. The switch is accepted only when the twin passes these checks and wins both orders. In paired evaluation, exact replay holds the agent’s parsed responses and actions fixed until the first accepted replacement, separating intervention effects from actor resampling.
+
+### Decisive evidence
+
+In the primary analysis of 159 multi-turn BFCL V4 tasks with complete exact-replay pairs, the full policy raised GPT-5.6 Sol task success from 45.3% to 58.5% (13.2 points; 95% task-bootstrap CI [8.2, 18.8]); the authors observed no success-to-failure regressions. The paired comparison contained 21 rescues and 0 observed harms, with McNemar p=9.54×10^-7. A completed-primary sensitivity set shows the intended selectivity: the frozen gate selected 39 of 88 actor failures and none of 72 actor successes, for precision 1.000 and recall 0.443.
+
+For a small replication, log the trigger certificate, original action, twin, every structural rejection, both verifier orderings, and the post-switch outcome. Report rescue and harm transitions—not only aggregate success—and vary the switch threshold and actor/verifier model separation; this tests whether the reported precision persists beyond the frozen operating point and shared model family.
+
+### Boundary
+
+The evidence is narrow: evaluation covers stored trajectories from four BFCL V4 multi-turn categories under one actor model. Exact replay with one stored trajectory per task does not estimate robustness to model/API resampling, and the shared model family may correlate actor and verifier errors. The authors also caution that TwinCheck is not authorization for autonomous consequential action.
+
+Read this paper to extract a concrete high-precision intervention protocol: constrain a trace-local replacement before judging it, then evaluate rescue and harm transitions under exact replay.
+
+[Abstract and §6 (Results), paragraph 1; abstract](https://arxiv.org/abs/2609.26911v1) · [Section 4.1 (S4.SS1.p6) and Table 1](https://arxiv.org/abs/2305.11738v4)
+
+## LeakScale Estimates the Executable-Accuracy Effect of Controlled Benchmark Exposure
+
+*[Beyond Overlap: Estimating the Causal Effect of Benchmark Exposure](https://arxiv.org/abs/2609.27176v1)*
+
+Benchmark overlap or provenance can establish that evaluation material entered training, but it does not reveal how much the material affected evaluation. LeakScale addresses that missing counterfactual with a controlled intervention on executable tasks.
+
+The instrument pairs each fresh executable task with a family-specific private key-to-value association that is absent from—and non-derivable from—the public task. Before evaluation, hidden fixtures certify the association: exactly one candidate produces perfect executable behavior, while every incorrect candidate fails at least 25% of fixtures. Families are assigned to a targeted-exposure condition (C2) or a no-key control (C0). The exposure is implemented through one-epoch LoRA adapter training. The adapted model is measured alongside its base state, and the estimator subtracts the C0 adaptation-wide change from the C2 change in a two-group, two-state difference-in-differences contrast.
+
+The decisive result is not merely that exposure helped. Across 2,048 unique families, two model families, two executable domains, and 262,144 generations, controlled exposure increased estimated executable accuracy in every model-by-domain cell, with gains from +7.17 to +27.31 percentage points. In one concrete cell—Qwen3-4B-Instruct-2507 on the Python domain—the estimate was +27.31 percentage points (95% CI [+22.86, +31.75]); the calculation used 512 C2 families and 512 C0 families, with 32 draws per family per state. This makes the paper’s operational distinction useful: an audit can separately report evidence of contact and the score change attributable to a specified exposure mechanism.
+
+A practical research operation follows. Build a small family of executable tasks, hide a necessary variable, certify correctness with hidden fixtures, and preserve a contemporaneous no-exposure control. Then report the difference-in-differences estimate—not just the post-adaptation score—and repeat the intervention across domains or model families. Treat the resulting number as conditional: each model-domain cell used one adapter-training realization, and the family-clustered bootstrap does not capture training-seed variation. More fundamentally, this is an estimate for controlled post-training adapter exposure on the constructed instrument, not a direct estimate of organic web-scale contamination or pretraining ingestion.
+
+To learn how to turn benchmark exposure into a measurable score-change experiment using private executable tasks and a difference-in-differences control, while keeping its post-training scope explicit.
+
+[abstract; \[PDF page 1\]; \[PDF page 3\]; \[PDF page 4\]; \[PDF page 5\]](https://arxiv.org/abs/2609.27176v1)
