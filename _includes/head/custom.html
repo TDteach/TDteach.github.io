@@ -1,6 +1,10 @@
 {% include base_path %}
 
 <!-- start custom head snippets -->
+{% if page.layout == 'homepage' %}
+<link rel="stylesheet" href="{{ '/assets/css/homepage.css' | relative_url }}">
+<script src="{{ '/assets/js/homepage-figures.js' | relative_url }}" defer></script>
+{% endif %}
 {% if page.layout == 'paper-news' or page.layout == 'paper-news-index' or page.layout == 'paper-news-research' %}
 <link rel="stylesheet" href="{{ '/assets/css/paper-news.css' | relative_url }}">
 {% if page.layout == 'paper-news-index' %}<script src="{{ '/assets/js/paper-news.js' | relative_url }}" defer></script>{% endif %}
