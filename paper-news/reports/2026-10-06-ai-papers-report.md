@@ -1,0 +1,100 @@
+# 2026-10-06
+
+## ArrivalBench Replays Generated Pipelines to Expose Silent Failures Hidden by Snapshot Tests
+
+*[ArrivalBench: Agent-Generated Data Pipelines Are Correct Once and Wrong Under Time](https://arxiv.org/abs/2610.02363v1)*
+
+Snapshot grading checks a pipeline once against a fixed snapshot, so it does not test whether the same artifact remains correct when records arrive differently. ArrivalBench changes the evaluation unit from one execution to a persistent artifact replayed under adversarial delivery schedules.
+
+For each task, ArrivalBench holds the logical records and generated artifact fixed, replays late, duplicated, out-of-order, and retried deliveries, and compares the final state with an independent batch recomputation. The oracle distinguishes a wrong table from a crash: the former is a silent `FAIL`, while the latter is an `ERROR` visible to ordinary monitoring. This makes temporal correctness a property of the pipeline left behind, not just of the first successful run.
+
+The empirical gap is large but conditional. On 40 tasks, the snapshot-style check certified 86–100% of pipelines across eleven model arms; replay then found 7.0–79.2% of those certified artifacts silently wrong. The range is therefore a conditional silent-failure rate among snapshot passes, not an overall failure rate. A matched comparison found no evidence that the snapshot repair loop itself explains the replay gap, although its uncertainty still permits small effects. Across every unhinted model arm, idempotency hazards had lower group-mean pass rates than ordering hazards, but the authors caution that the suite shares an anti-join staging idiom.
+
+The FAIL/ERROR split changes how interventions should be read. For Sonnet 5, a hazard warning reduced silent failure from 48.2% to 10.5%, but increased crashes from 9.0% to 37.0%; all-in failure consequently improved only from 51.0% to 44.0%. A lower silent-failure rate can therefore reflect conversion into visible crashes rather than a fully repaired pipeline.
+
+The transferable research operation is to preserve each generated artifact, replay the same logical log under explicit arrival hazards, and compare its final state with a batch oracle while reporting silent wrong results and crashes separately. The evidence remains bounded: the 40 tasks, golds, and 42 negative controls were written by one author; the evaluation runs on DuckDB and SQL; and the schema-evolution crash result is identified as an engine-specific name-binding artifact. Every gold also shares one anti-join staging idiom, so the idempotency-versus-ordering pattern requires testing on other pipeline designs.
+
+Read it to borrow a replay-and-recompute test and a FAIL-versus-ERROR reporting split for agent benchmarks that currently grade only one clean execution.
+
+[abstract; §4.2; §4.3; Table 1; §4.5; Appendix B, Table 5; §5; Appendix B, Scope of the evaluation; Appendix B, Scope of the evaluation; §5](https://arxiv.org/abs/2610.02363v1)
+
+## PTH audits identify four harness details that changed a stale-data RL comparison
+
+*[Probe the Harness: Setup Checks for Stale-Data RL Comparisons in Language Models](https://arxiv.org/abs/2610.02911v1)*
+
+The paper introduces PTH (Probe The Harness), a set of checks that makes stale-data RL comparisons visible. In the reported SAN-versus-TIS case, four harness details changed the comparison: the PPO ratio used learner-recomputed probabilities, the intended data seed did not reach TIS, a replay queue reused its first batch for 33 updates, and two loss normalisers differed from their description.
+
+PTH’s transferable principle is to log and test the comparison-defining quantity, rather than rely on nearby proxy metrics such as clip fraction, run labels, or data age. In practice, this means treating the training harness as part of the experimental object, not as invisible plumbing.
+
+The paper gives four concrete failure signatures:
+
+- In the verl lagged-sampler baseline runs, the PPO ratio used learner-recomputed probabilities; the ratio was one and clipping stayed inactive despite sampler–learner divergence.
+- A launch-script variable replacement prevented the intended data seed from reaching TIS, making nominally separate TIS runs repeat one data order.
+- In the single-GPU trainer, the replay queue repeated batch 0 during its initial updates; correcting batch identity was associated with recovery of TIS learning.
+- The SAN variant comparison did not isolate the anchor: it jointly varied the anchor and normaliser, so differences cannot be attributed to the anchor alone.
+
+After harness corrections, TIS is stable on verl and the earlier broad SAN-over-TIS ranking is not supported by these comparisons. For Qwen2.5-Math-1.5B on GSM8K at refresh intervals 64 and 96, correctly configured TIS ended between .763 and .808 at update 100. In the single-GPU trainer, with distinct prefilled batches, TIS learned, but SAN retained a margin in the reported two-seed results. That trainer result used replay age 32, no KL penalty, and a fixed 256-problem test subset at update 100.
+
+The main results use a narrow model-and-benchmark setup; the paper does not establish that the same ranking or failure signatures hold across a broad range of models, tasks, or training systems. The checked trainer accuracy comparison is based on two seeds and a 256-problem test subset, so it is limited evidence about variability or broader generalisation. The paper also identifies several differences between the trainer and verl but does not disentangle which differences explain SAN’s remaining trainer margin; it explicitly leaves that factorial comparison for future work.
+
+Research operation: before a method sweep, assert that sampler probabilities feed the intended ratio, each arm receives its resolved data seed, batch identities are distinct, and implemented losses match the written equations. Then rerun paired seeds and expose the comparison-defining values in logs. The question to carry forward is not simply which correction wins, but whether every arm received the intended data and whether each logged proxy corresponds to the quantity that defines the comparison.
+
+To learn how to convert a plausible SAN–TIS ranking into executable harness checks before trusting stale-data RL results.
+
+[abstract; Section 6, PTH: probe the harness; Section 4.1, Policy in the PPO ratio; Section 4.2, Configuration of each arm; Section 4.3, Data for each update; Section 4.4, Implemented loss; Section 5, Reference results on verl; Table 3; Section 5, The trainer; Appendix A, Table 4; Section 2, The single-GPU trainer; Appendix A, Table 4 caption; Section 5, Two stacks, two regimes](https://arxiv.org/abs/2610.02911v1)
+
+## Matched-cost testing exposes difficulty blindness in commercial LLM routers
+
+*[Dynamic LLM Routers are Often Misguided](https://arxiv.org/abs/2610.02762v1)*
+
+Dynamic LLM routers are intended to cut inference cost by sending each query to the cheapest model that can answer it correctly. The paper’s central test is unfavorable: across six commercial routers and 14 settings, the evaluated systems did not outperform matched-cost random routing between two well-chosen models, and some fell by more than 10 percentage points.
+
+The concrete previous limitation is the accounting rule. Under realized-cost Pareto evaluation, escalating a moderately difficult query band can look better than escalating the hardest band, because the stronger model’s advantage is concentrated in some intermediate cases. In one reported comparison, escalating the 60–80 difficulty band outperformed escalating the hardest 80–100 band by 6.3 ± 3.0 percentage points. Length creates a second shortcut: escalating short-answer queries reached 59.5% accuracy at $1.03 per 1,000 queries, without selecting queries by difficulty. Consistent with this diagnosis, commercial routers’ choices were at most weakly associated with query difficulty under the paper’s measure.
+
+The method change is therefore evaluative as much as architectural. The authors propose charging each model its mean inference cost rather than each answer’s realized cost, while separately measuring escalation on a designated hard band, easy-band accuracy and cost, and within-source difficulty prediction. This makes “did the router spend capacity on hard queries?” a distinct question from “did it achieve a favorable aggregate frontier?”
+
+The paper also tests whether routing needs a large roster. On the tested 26-model set, an in-sample difficulty oracle’s two-model roster was never more than 1 percentage point below the best roster of any size. A specialization analysis likewise finds only a modest fit improvement when adding specialization dimensions. These results make roster construction a useful first experiment before adding router complexity, not proof that larger or specialized future model pools cannot help.
+
+The proof-of-concept difficulty router avoids the four diagnosed patterns, but its routed accuracies remain within noise of random routing on the selected strong model pair. The study is limited to single-turn routing; its benchmark-derived, English-only, single-sample evaluation does not establish production transfer, cross-language generalization, or repeated-generation stability. The authors also report weak out-of-distribution difficulty prediction. For a new routing study, first compare against matched-cost random allocation, then report hard-band escalation and mean-cost easy-band metrics before interpreting a cost–accuracy curve.
+
+Read it to redesign a router experiment around matched-cost random baselines and hard-band tests before investing in larger model rosters or more complex routing models.
+
+[abstract; Abstract; §4, Table 1; §4, Difficulty blindness; §5, Figure 2 caption; §5.1; §5.2; §5.4, correction 2; §6.1; §6.2; §7, Figure 5; Limitations, Single-turn routing; Limitations, Dataset composition; Limitations, Weak difficulty predictions; Limitations, Future models may specialize](https://arxiv.org/abs/2610.02762v1)
+
+## Paired interventions reveal unreliable updating in longitudinal clinical LLM predictions
+
+*[Large language models exhibit unreliable updating of clinical judgment as patient evidence evolves](https://arxiv.org/abs/2610.02684v1)*
+
+The paper frames longitudinal belief updating as a distinct reliability dimension. Its concrete question is whether supplying a model’s preceding clinical judgment improves a later risk estimate or lets prior model beliefs influence it.
+
+At each post-initial snapshot, the authors compare independent inference from current patient information with longitudinal inference that also supplies the model’s preceding structured assessment. They then intervene on one source at a time: respiratory evidence is worsened or improved while preceding context is fixed, and supplied prior risk is varied while current evidence is fixed. This design tests output dependence and paired predictive consequences; it does not establish a human-like cognitive mechanism.
+
+On the primary ventilation task, longitudinal context increased absolute prediction error in 46.20% of cases, reduced it in 30.28%, and left it unchanged in 23.52%; aggregate AUROC was 0.545 versus 0.541 and Brier score was 0.281 versus 0.284. The paired degradation pattern also appeared for vasopressor initiation: mean absolute prediction error increased by 3.44 percentage points even as aggregate AUROC rose from 0.574 to 0.582. Across all eight tested models, mean absolute prediction error increased by 0.4–3.6 percentage points under longitudinal relative to independent inference, although effect size varied.
+
+The controlled tests explain why aggregate metrics alone are insufficient. Respiratory interventions produced directionally appropriate, dose-responsive revisions, but worsening evidence caused larger changes than matched improvement evidence; the asymmetry survived headroom normalization at moderate and strong evidence levels. Holding current evidence fixed while changing only the supplied prior risk from 10% to 90% shifted the subsequent prediction by 26.18 percentage points; outcome-misaligned extreme priors also increased error. Evidence-first and anti-anchoring prompts reduced some prior-directed movement but did not restore reliable updating.
+
+The transferable research operation is to hold one changing information source fixed while intervening on the other, then score paired revision error separately from aggregate discrimination. EVLU-2 selected a more reliable subset of revisions than matched random retention, but retained the longitudinal branch for only 5.63% of post-initial predictions and did not improve mean absolute error on average.
+
+Interpretation is bounded: the evidence comes from one MIMIC-IV EHR dataset and trajectories built primarily from structured clinical variables; the controlled mechanism, prompting, and evidence-validation experiments focused on the primary model, and absolute discrimination was modest. EVLU is therefore a low-coverage proof of concept, not a clinically validated mitigation.
+
+A useful short research read for learning how to test sequential failure modes that snapshot accuracy can miss: intervene separately on new evidence and prior model output, then quantify whether a reliability gate improves revisions only by accepting very low coverage.
+
+[abstract](https://arxiv.org/abs/2610.02684v1)
+
+## OEB Turns Agent Execution Records into Evidence-Linked Research Scores
+
+*[Open-Endedness Bench: Measuring Epistemic Process from Agent Records](https://arxiv.org/abs/2610.02588v1)*
+
+Open-ended research creates a concrete evaluation problem: an outcome score does not establish that an agent’s claims follow from its experiments, and a reference answer may not exist. OEB addresses this by reading the execution record itself rather than a reference answer or outcome score. The paper presents this as a different target from judging only the final result: whether the agent forms hypotheses, tests them, and revises them in response to evidence.
+
+OEB converts each record into an epistemic event graph. Typed edges connect stated propositions—such as beliefs, hypotheses, predictions, and questions—to executed actions that test or otherwise bear on them; each extracted card includes an excerpt that code verifies against the record. The measurement layer scores four competence axes—evidence, experiment, revision, and no reward hacking—and separately profiles six research-style traits. Most constructs are measured as opportunities taken divided by eligible opportunities, with a five-opportunity floor before a construct enters an axis mean. The conversion still requires a benchmark-specific world manifest and semantic extraction and closed questions still use an LLM judge.
+
+The empirical evaluation applies OEB to 119 pre-existing runs spanning 12 tasks and three benchmarks. In the logged-result settings analyzed, only a minority of agent-claimed improvements were genuine; the paper summarizes the share as 16–29%. Against PostTrainBench’s external audits, E4 detected 10 of 11 runs identified as cheating, while missing one run whose relevant script was absent from the record. Across the studied runs, testing more new ideas in the second half was the strongest reported action-based correlate of a better run rank; this is an association, not evidence that late exploration causes better outcomes. In the PostTrainBench persona analysis, model identity explained more variation in each trait than task identity or the reported chance baseline.
+
+The boundaries matter for transfer. In pure hyperparameter search, models often reason through numerical parameter changes, so OEB extracts fewer propositions. E1–E3 evaluate the written account and cannot distinguish silent reasoning from reasoning that did not occur; the paper therefore uses executed actions alone for its outcome analysis. The runs were produced without knowledge of OEB, so the evaluation does not establish how well its defenses hold against agents optimizing the score. A run took a median of 652 judge calls, making the implementation an offline-evaluation instrument rather than an obvious training reward.
+
+For a new research-agent study, the transferable operation is to define the claim types and eligible evidence actions before scoring, require every credited proposition to point to a verified record excerpt, and report competence separately from research style. A useful follow-up question is whether the late-idea correlate survives when logs expose numerical search decisions as clearly as written hypotheses.
+
+Read it to borrow an execution-log design that credits research claims only when linked to verified evidence, while keeping competence scores separate from non-normative research-style profiles.
+
+[abstract; Section 3, paragraph 1; Section 4.1; Section 6, paragraph 1; Section 5.1; Section 6.2; Section 6.4; Section 8, Limitations](https://arxiv.org/abs/2610.02588v1)
