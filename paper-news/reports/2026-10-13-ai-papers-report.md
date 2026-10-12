@@ -1,0 +1,103 @@
+# 2026-10-13
+
+## In tested settings, finite-budget power samplers behave like likelihood selectors, while direct targeting remains task-dependent
+
+*[A Critical Look at Power Sampling when Test Time Sharpening LLMs](https://arxiv.org/abs/2610.13653v1)*
+
+## The audit
+
+Power sampling targets complete sequences with π_α(x|z) ∝ p₀(x|z)^α, not merely independently cooled next-token distributions. Earlier work had already distinguished this sequence-level target from low-temperature decoding and proposed blockwise Metropolis–Hastings against the powered likelihood. Related Power-SMC work used sequential importance correction to target the same distribution. The current paper therefore shifts the question from whether the target is well defined to whether practical finite-budget procedures actually reach it.
+
+That makes finite-budget behavior the concrete limitation to audit. The earlier MH work flags potentially exponential mixing time, and its finite-step experiments do not establish convergence. A rollout-based alternative restricts each decision to the top eight candidate tokens, uses eight rollouts per candidate, and adds truncated future estimation whose experimental horizon is not specified in the supplied settings. These conditions mean that an exact target identity or correction is not, by itself, evidence that the implemented sampler produces accurate target samples.
+
+## What changes
+
+Power-RLOO replaces repeated inference-time correction with direct optimization toward the sequence-level power distribution: it uses KL-regularized policy optimization with log base-model likelihood as the reward. Its low-temperature initialization at 1/α is intended to match local token sharpening first, leaving the adapter to learn the sequence-level lookahead correction.
+
+## What the evidence says
+
+At α=4 on Qwen2.5-7B-Instruct, Power-RLOO reports 78.4% on MATH500 and 41.0% on GPQA, the highest reported accuracy among the listed methods on both benchmarks; Power-SMC reports 76.9% and 35.8%, while Best-of-N-mean reports 77.0% and 36.5%. This is not a general win: the abstract describes the direct-targeting gains as noisy and specific to certain models and tasks. On Qwen2.5-7B-Base, Power-RLOO collapsed toward overly short completions, so Table 1 records N/A rather than an accuracy.
+
+The boundary is important for replication. The evaluation covers three model variants and two benchmarks, and all runs use seed 0; these results therefore do not establish run-to-run variability or statistical significance. The supplied text also reports a LoRA-rank discrepancy: rank 32 in Section 5.1 versus rank 16 in Appendix D.
+
+For a new inference method, the transferable operation is to measure realized behavior alongside target fidelity: match total token budgets, compare against Best-of-N and simple likelihood selection, log length and particle-weight diagnostics, and repeat across seeds before attributing gains to the intended distribution. The paper’s most useful question is consequently not “does sharpening work?” but “what distribution did the finite-budget algorithm actually sample?”
+
+Read it to practice auditing whether an inference-time algorithm reaches its stated distribution, rather than attributing gains to that target before checking finite-budget behavior.
+
+[abstract; Section 4, S4.SS0.SSS0.Px2.p1.2–p1.3; Table 1, S5.T1.2.15; comparisons in S5.T1.2.11–T1.2.12; Section 5.2, S5.SS2.SSS0.Px3.p2; Table 1, S5.T1.2.8; Section 5.1, S5.SS1.SSS0.Px1.p1; Appendix D, A4.SS0.SSS0.Px4.p1; Section 5.1, S5.SS1.SSS0.Px2.p1; Appendix D, A4.SS0.SSS0.Px1.p1](https://arxiv.org/abs/2610.13653v1) · [Section 4.1, Proposition 1; Section 4.3, paragraph 3; Section 4.3, paragraph 2](https://arxiv.org/abs/2510.14901v1) · [§4.1, Eq. (8)](https://arxiv.org/abs/2602.10273v2) · [§4.2, Baselines; see also §3.3, Algorithm 1](https://arxiv.org/abs/2601.21590v1)
+
+## S³R uses sparse attention for proposals while exact verification preserves GRPO response groups
+
+*[S$^3$R: Fast and Faithful RL Rollouts via Self-Sparse Speculative Decoding](https://arxiv.org/abs/2610.13202v1)*
+
+Long-context RLVR needs to reduce KV-cache traffic without changing the response groups used for policy optimization. S³R identifies why direct sparse sampling is not a harmless approximation: with learner and rollout parameters fixed, even exact response-wise importance weighting need not recover the expected dense GRPO update, because a response’s advantage depends on comparison responses whose distribution remains sparse. This is the concrete limitation to test before treating a faster sampler as an on-policy rollout.
+
+S³R changes the approximation boundary rather than correcting completed sparse samples. It uses sparse attention only to draft candidate tokens, then applies full-attention verification and exact speculative sampling; drafting and verification share the same policy parameter, so the method does not require a separately trained or updated drafter. At a fixed rollout snapshot and prompt, with independent responses, the stated sampling and termination rules, support coverage, full historical KV available for verification, and residual correction after rejection, the accept/reject procedure preserves the dense conditional response distribution and therefore the dense response-group distribution.
+
+The systems design follows from that exactness requirement. Dense verification still requires the complete historical KV cache, so S³R adds a KV-aware scheduler to limit repeated offloading and restoration while maintaining rollout parallelism. In the sparse-drafting/full-verification stack, its AIMD scheduler is reported at 59.5% above AR generation throughput in the Qwen3-1.7B KV-management ablation; this isolates scheduler behavior within that stack, not the whole end-to-end lifecycle.
+
+In the reported end-to-end setup—DAPO-MATH-17k, 256 prompts with eight responses each, one node with eight H100 GPUs, sparse budget 0.05, and draft length six—S³R reaches 1.39× and 1.35× AR training throughput on Qwen3-1.7B and Qwen3-8B, respectively, with comparable benchmark results. The motivation is visible in one profiling condition: attention accounts for 75.8% of measured full-attention AR GPU-kernel time, but this is not an end-to-end training measurement.
+
+The gain is conditional. At 64K–128K live KV tokens, the measured stage costs exceed the AR reference even at full acceptance. The reported main training experiments use Qwen3-1.7B and Qwen3-8B on DAPO-MATH-17k; broader model families and adaptive sparse budgets or context selection remain future work. A useful replication is therefore a break-even sweep over live KV size, draft budget, acceptance rate, and scheduler policy, reporting both exact-distribution checks and end-to-end training throughput.
+
+Read this paper for a reusable separation between approximating a behavior policy and approximating only a proposal mechanism, plus a concrete way to test whether exact verification savings repay full-cache and scheduling costs.
+
+[abstract](https://arxiv.org/abs/2610.13202v1)
+
+## SEEDS makes preview-guided full-evidence admission explicit in search agents
+
+*[SEEDS: Preview-Guided Evidence Admission for Search Agents](https://arxiv.org/abs/2610.12932v1)*
+
+Search systems often treat retrieval and evidence consumption as one pipeline. SEEDS names the missing control point **evidence admission**: deciding which retrieved candidates are allowed to enter the agent’s reasoning context, and how many should be fully inspected. The paper’s central change is to expose lightweight previews before expansion, rather than admitting a fixed or rank-based prefix.
+
+At each search step, SEEDS shows candidate previews and lets the agent choose an arbitrary subset, including its size, conditioned on the current reasoning state; only the selected candidates are then fully inspected. This distinction is not variable-size selection alone: DPS already autoregressively selects a variable-length sequence of passage indices, while Search-o1 already combines iterative retrieval with a separate document-analysis/refinement step. SEEDS’s narrower contribution is the timing and information flow of admission—preview first, full reading second, with the decision informed by the evolving search trajectory.
+
+The strongest local result is reported under QwQ-32B on six open-domain QA benchmarks using a Wikipedia-2018 corpus: Seeds-ReAct had the highest exact match among the multi-round methods without Reason-in-Documents on every benchmark. The efficiency comparison is also concrete: Seeds-ReAct averaged 3.1 full-document reads and 528 document tokens per question, versus 7.7 reads and 1,267 document tokens for ReAct dyn-k. In the reported live-web comparison, Seeds-o1 raised average accuracy from Search-o1’s 9.28 to 11.78 and reduced average fetched pages from 27.81 to 8.30, but HLE F1 was lower, 6.66 versus 10.60. The supplied comparison is therefore not an admission-only causal ablation, and its aggregate gain does not hold for every metric.
+
+The boundaries matter. The consumption analysis counts full-document reads and document tokens, excluding previews, prompts, reasoning, and generated output; it therefore does not establish lower total inference cost or latency. The answer-bearing analysis is only a proxy for evidence utility: answer-string occurrence can miss useful bridge passages or count irrelevant mentions, so it does not prove evidential sufficiency. The query-aware preview is a practical choice rather than a demonstrated universal optimum, since preview representations and lengths behave differently across datasets.
+
+A useful replication would hold the retriever, candidate pool, backbone, and search budget fixed, then compare prefix admission with arbitrary-subset admission. Log selected candidates, full reads, document tokens, total inference tokens, latency, and answer quality separately. The key question is whether the preview decision still improves the quality–cost frontier once the complete computation bill—not just full-document consumption—is measured.
+
+Read it for a concrete way to separate retrieval from expensive evidence consumption, with local and live-web comparisons that expose both the gain and the cost-measurement caveats.
+
+[abstract; §4.2, Main Results (RQ1); Table 1; Table 4, Evidence consumption; §4.2, Main Results (RQ1); Table 2; Table 2, live-web results; Appendix C.2, Per-Dataset Evidence Consumption; Appendix C.1, Answer-Bearing Evidence Proxy; Appendix B, Representation and Length](https://arxiv.org/abs/2610.12932v1) · [Methodology, Dynamic Passage Selection, paragraph 4](https://arxiv.org/abs/2508.09497v1) · [Section 3.4, Knowledge Refinement via Reason-in-Documents](https://arxiv.org/abs/2501.05366v1)
+
+## LQET trains provenance-aware belief updates to resist relay repetition
+
+*[Provenance-Aware Belief Updating in Human-AI Feedback Loops](https://arxiv.org/abs/2610.13008v1)*
+
+When one observation is quoted, summarized, and returned to a model, repetition can look like independent corroboration. The paper tests a narrower question than general provenance discovery: if report lineage is explicitly supplied, can training make a model treat a relay of an existing observation as non-new evidence while still updating on a genuinely new report? In its benchmark, transcripts are represented by distinct query-relevant evidence roots, so descendant reports carrying an already represented root do not add another observation.
+
+Latent Quotient Evidence Training (LQET) changes the training signal from separate pointwise answers alone to relationships among matched transcripts. It combines sparse Bayesian soft-target supervision with constraints requiring relay-only changes to preserve the model’s prediction and requiring the same new evidence to produce a consistent score change across different relay histories. It also tests composition across distinct evidence roots and presentation-order invariance. The model’s binary belief is read from the difference between its next-token YES and NO logits. This is relational training over supplied provenance, not a method for discovering hidden dependencies.
+
+The comparison needs careful interpretation: LQET uses 13 training views, whereas task-only training uses seven, although the methods use matched families and optimizer-update counts. Thus the reported full-protocol gain does not isolate relational losses from additional transcript-view exposure.
+
+On pooled controlled distribution shifts, across three paired seeds for Qwen3-4B and Phi-4-mini, LQET reduced new-evidence update RMSE by about 41% and 44%, respectively, relative to task-only training; both backbones met the paper’s prespecified conjunctive criterion. A useful matched control holds report author and displayed outcome fixed while changing whether the report is a relay or a new measurement. LQET better distinguished those cases without uniformly suppressing new-evidence updates, supporting selective use of the supplied provenance signal.
+
+In a prescribed deterministic three-round feedback simulation, LQET improved feedback drift, post-feedback update RMSE, and final log-odds MAE across backbone-seed pairs. This is simulation evidence for reduced amplification, not evidence from human participants. The scope is similarly bounded: the task is binary, lineage is explicit and usable, and the reliability model is specified; only two 4B-class backbones and three paired seeds were tested. On a held-out prior-and-calibration shift, update RMSE improved while supervised-view KL increased for both backbones, leaving pointwise numerical generalization as an open trade-off.
+
+The transferable research operation is to construct matched histories where only evidence novelty or lineage changes, then score invariance to relays and consistency of updates to new roots separately. That design can reveal whether a model is responding to evidence or merely to repeated presentation—but only when the dependency structure is available to the model.
+
+Read this for a concrete example of turning evidence provenance into matched-history training constraints, along with the controls needed to separate relay resistance from suppression of genuinely new evidence.
+
+[abstract; §3, relational constraints paragraph; §5.1; Table 1; Appendix D, Table 6; §5.2; Appendix E, Table 10 and §E.2; §5.3; Appendix F, Table 11; §7, first paragraph; §7, second paragraph; §3, relational objective paragraph; §7, second paragraph; Appendix D, Table 8 and §D.3; §7, second paragraph; Appendix F; Appendix A, §A.1](https://arxiv.org/abs/2610.13008v1)
+
+## Attention Source Changes Visual-Head Sets, but Tested Steering Does Not Beat Matched Randoms
+
+*[What Do Visual-Head Discovery Scores Actually Find? Attention Source, Necessity, and Random-Control Pitfalls in Vision-Language Models](https://arxiv.org/abs/2610.13111v1)*
+
+An attention-ranked head set has two unresolved dependencies: the choices that produce it and the intervention used to validate it. The limitation this paper targets is methodological: a successful steering result does not by itself show whether the score found necessary heads, or whether another token source, query wording, or corpus would select the same heads. The paper’s concrete change is an audit of those dependencies, not a new head-discovery algorithm.
+
+On Qwen3-VL-8B-Instruct, the authors run a full 2 × 3 × 2 design over query type, attention source, and discovery corpus. They rank the top 100 heads for each of 12 settings, then evaluate every set with separate steerability and necessity measures against layer-matched random head-sets. CERS tests the steering behavior; NCS tests necessity by measuring the contrastive effect of masking the selected heads on matched image questions. This separates the question of whether a set can act as a behavioral lever from whether the model needs it for image-derived evidence.
+
+The decisive selection result is that attention source and query type matter more than corpus in this design. Across the top-100 sets, changing the corpus preserves a median of 84 heads, compared with 55 for query type and 49 for attention source; split halves of the same discovery data preserve 96–99 heads. Thus, the selected set is not merely a stable property of the discovery examples.
+
+Necessity follows the attention source: query-span sets are more necessary than last-token sets, with a difference of 0.083 and p = 6 × 10⁻¹⁰. The two referring-plus-query-span sets also sit 17–19 standard deviations above 250 layer-matched random sets. Broader out-of-domain checks support a recurring NCS advantage for query-span and output-token sets, although last-token behavior is not uniformly null across models.
+
+Steering gives a different answer. At the tested strength, no discovered head-set steers better than its layer-matched random sets, with rank p ≥ 0.14; random sets drawn from the same or any layer span the discovered sets’ scores. The full factorial comparison is established on one model, while additional models receive narrower checks. Moreover, NCS is an attention-knockout intervention, so it does not establish that other ablations or activation patching would rank the sets identically.
+
+For a new mechanistic study, record the query wording, attention source, corpus, and layer composition that produced each set. Re-run discovery across data splits, then report steering and necessity separately against repeated, layer-matched random controls. The transferable question is not simply whether a selected set changes behavior, but which discovery choices make it necessary beyond what matched random structure already explains.
+
+Read it to learn how to separate an attention-based discovery score from causal validation using factorial comparisons and matched random controls.
+
+[abstract; §5.1, Table 1; Appendix C.1, Table 24; §6, Limitations; §6, Limitations; §5.3; Appendix C.1](https://arxiv.org/abs/2610.13111v1)
