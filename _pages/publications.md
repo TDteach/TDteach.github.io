@@ -12,6 +12,10 @@ Please refer to the [Google Scholar](https://scholar.google.com/citations?user=3
 ## Selected Conference Papers
 
 
+* [Trapping Attacker in Dilemma: Examining Internal Correlations and External Influences of Trigger for Defending GNN Backdoors](https://openreview.net/forum?id=7xWSWpsU5J#discussion)<br>
+Fan Yang, Binyan Xu, **Di Tang** (corresponding author), Kehuan Zhang  
+**NeurIPS**, 2027.
+
 * [Beyond Nodes vs. Edges: A Multi-View Fusion Framework for Provenance-Based Intrusion Detection](https://arxiv.org/pdf/2604.14685)<br>
 Fan Yang, Binyan Xu, **Di Tang** (corresponding author), Kehuan Zhang  
 **IEEE S&P**, 2026.
