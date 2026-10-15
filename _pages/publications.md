@@ -9,19 +9,16 @@ author_profile: true
 Please refer to the [Google Scholar](https://scholar.google.com/citations?user=3OTV95kAAAAJ&hl=en) for my full publication list.
 
 
-## Selected Journal Papers
-
-* [IndirectAD: Practical Data Poisoning Attacks Against Recommender Systems for Item Promotion](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=11711189)<br>
-Tianhao Mao, Zihao Wang, XiaoFeng Wang, **Di Tang**, Xiaozhong Liu<br>
-**IEEE Transactions on Information Forensics and Security (TIFS)**, 2026.
-
-
 ## Selected Conference Papers
 
 
 * [Trapping Attacker in Dilemma: Examining Internal Correlations and External Influences of Trigger for Defending GNN Backdoors](https://openreview.net/forum?id=7xWSWpsU5J#discussion)<br>
 Fan Yang, Binyan Xu, **Di Tang** (corresponding author), Kehuan Zhang  
 **NeurIPS**, 2027.
+
+* [When Core-Network Elements Become Reachable: Field-Level Exploitability Analysis in Diameter](https://cycle1.sp2027.ieee-security.org/doc/sp2027c1-final204.pdf)<br>
+Wei Yi, Changlong Han, Xue Zhang, Qiao Zhang, Yi Chen, Jin Cao, **Di Tang**, Yulong Fu, Ben Niu, Hui Li<br>
+**IEEE S&P**, 2027.
 
 * [Beyond Nodes vs. Edges: A Multi-View Fusion Framework for Provenance-Based Intrusion Detection](https://arxiv.org/pdf/2604.14685)<br>
 Fan Yang, Binyan Xu, **Di Tang** (corresponding author), Kehuan Zhang  
@@ -117,3 +114,8 @@ Zhe Zhou, **Di Tang**, Wenhao Wang, Xiaofeng Wang, Zhou Li, Kehuan Zhang.<br>
 **NDSS**, 2018.  
 
 
+## Selected Journal Papers
+
+* [IndirectAD: Practical Data Poisoning Attacks Against Recommender Systems for Item Promotion](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=11711189)<br>
+Tianhao Mao, Zihao Wang, XiaoFeng Wang, **Di Tang**, Xiaozhong Liu<br>
+**IEEE Transactions on Information Forensics and Security (TIFS)**, 2026.
