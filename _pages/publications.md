@@ -9,6 +9,13 @@ author_profile: true
 Please refer to the [Google Scholar](https://scholar.google.com/citations?user=3OTV95kAAAAJ&hl=en) for my full publication list.
 
 
+## Selected Journal Papers
+
+* [IndirectAD: Practical Data Poisoning Attacks Against Recommender Systems for Item Promotion](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=11711189)<br>
+Tianhao Mao, Zihao Wang, XiaoFeng Wang, **Di Tang**, Xiaozhong Liu<br>
+**IEEE Transactions on Information Forensics and Security (TIFS)**, 2026.
+
+
 ## Selected Conference Papers
 
 
