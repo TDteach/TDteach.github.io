@@ -1,0 +1,91 @@
+# 2026-10-18
+
+## Experimental Records Improve LLM Ranking of Unseen AI Interventions
+
+*[Language Models as AI Research World Models](https://arxiv.org/abs/2610.12235v1)*
+
+AI research agents can propose experiments faster than they can execute them, so outcome prediction matters when budgets are limited. This paper treats that mismatch as a selection problem, not merely a generation problem.
+
+The method change is to use an LLM as a Research World Model. Given an environment description, a candidate intervention, and permitted experimental history, it predicts the intervention’s median gain before execution. The study compares no-history, in-environment, and cross-environment records, then tests whether the resulting rankings change which experiments are run under a fixed budget and across an eight-round loop.
+
+The evaluation draws on 2,653 records from nine research environments spanning pretraining, post-training, and inference, representing 171,862 H100 GPU-hours. In the cross-environment test, the target contributes no records: records from the other four environments raise mean Spearman correlation from 0.628 to 0.729 across five autoregressive-pretraining targets. On Qwen3, using only pretraining experience from OLMo3, Marin, and Nanochat reduces selection regret by 78% relative to zero experience.
+
+The selection result is the more transferable evidence. In the reported multi-round setting, in-environment and cross-environment knowledge increase the best gain by 15.8% and 11.6%, respectively. The multi-round evidence comes from five Autoresearch evaluations, each with eight rounds, on OLMo3-100M. On the tested OLMo3-100M panel with Claude Opus 5, the authors find that adding records improves rankings more than increasing reasoning effort alone.
+
+The boundaries matter. Cross-environment transfer is demonstrated across five autoregressive-pretraining environments, not the paper’s post-training or inference environments. The default RWM uses a commercial API, and fixing the model version and inference settings does not make predictions bitwise reproducible. Reference-repeatability measurements do not estimate intervention-specific variance, so small predicted or measured gains remain difficult to interpret.
+
+A useful replication operation follows: log each run as an environment/intervention/outcome record, reveal only records available before each decision, rank held-out interventions, and measure selection regret under a fixed budget—not just forecast correlation. A next question is whether this record value survives new train/test partitions and research environments, especially where the current transfer result has not been tested.
+
+Read this for a concrete design pattern: use serialized experimental history to rank costly interventions, then evaluate the predictor by the experiments it causes an agent to select under a fixed budget.
+
+[abstract; §1 Introduction; §1 Introduction; §3.2.2; Table 3; §3.5 Research Knowledge, Backbone Choice, and Reasoning Effort; Appendix E.1 Candidate sampling and arrivals; §5 Discussion and Future Work; Reproducibility statement; Appendix B.1 Reference repeatability](https://arxiv.org/abs/2610.12235v1)
+
+## TasteVal isolates experimental efficiency from implementation, but does not measure full research taste
+
+*[TasteVal: Measuring the Experimental Research Taste of AI Systems Against Human Experts](https://arxiv.org/abs/2610.06824v1)*
+
+TasteVal narrows “research taste” to a fixed-problem question: can a model design experiments and update its conclusions efficiently? The paper explicitly does not measure choosing which problems are worth solving. The concrete confound it addresses is that an end-to-end result can mix experimental judgment with implementation ability.
+
+The benchmark therefore separates roles. A Researcher proposes experiments and interprets validation results; a fixed Opus 4.8 Coder implements and runs them. Runs end at 40 H100 GPU-hours or 120 wall-clock hours, and the Researcher sees validation results rather than the test set. Instead of reporting only a final score, TasteVal defines experimental taste through the serial compute needed to reach a target score. The human reference is the best attempt on each task from 24 experts, with at least two experts per task.
+
+On TasteVal and under stated budgets, Opus 5.5 exceeded the expert baseline’s score-versus-serial-compute efficiency, with a compute multiplier of 2.30 and a 95% CI of 1.15–4.37. The authors also report that Opus 5.5 averaged $282 per run, so this is not an equal-dollar comparison. They fit a marked post-December-2025 acceleration in frontier models’ TasteVal compute multiplier relative to the earlier trend, with a doubling time of 3.0 months (95% CI 1.7–5.0). By contrast, the paper reports no statistically significant corresponding break in final normalized performance. Removing explicit scoring feedback reduced the two tested models’ estimated multipliers, but the four-task experiment did not establish a statistically significant reduction.
+
+That makes the central lesson methodological: score-versus-compute trajectories and final score should be reported separately. The paper’s scope is narrower than full research taste because problem selection is outside the benchmark. Its eight tasks are withheld to prevent contamination. The expert comparator is selected: it is the best attempt per task, not an estimate of typical expert performance. A transferable evaluation operation is to hold implementation fixed, log each experiment and interpretation, measure score-versus-serial-compute trajectories, and report final score separately. A useful follow-up is to rerun the same setup with scoring feedback removed; TasteVal’s small probe makes that a robustness question, not a settled conclusion.
+
+Read it to learn how to evaluate experiment-selection efficiency separately from coding ability, and how to test whether an apparent gain survives removal of explicit scoring feedback.
+
+[abstract; Section 1, paragraph 3; Section 2.1](https://arxiv.org/abs/2610.06824v1)
+
+## MECHVAR Selects Finite-Library Discrimination Probes with Posterior-Weighted Response Variance
+
+*[MECHVAR: Variance-Guided Mechanism Discrimination for Autonomous Machine Learning Experiment Selection](https://arxiv.org/abs/2610.01819v1)*
+
+MECHVAR targets a constrained planning problem: a finite library of candidate mechanisms, executable probes, posterior weights, and a limited budget are already given. Its aim is to choose experiments that discriminate mechanisms rather than simply reproduce an improvement whose cause remains ambiguous.
+
+For each candidate probe, the method scores the posterior-weighted variance of its predicted scalar responses and selects the highest-scoring remaining probe. Under scalar Gaussian predictive responses with a shared positive variance across mechanisms and probes, Proposition 1 shows that this ordering has the same argmax set as the classical Box–Hill posterior-weighted pairwise-KL criterion. The score’s relationship to expected information gain is local, not global: when response separations are sufficiently small relative to the shared noise scale, Proposition 2 gives the same pairwise ordering for probes with a nonzero variance-score gap; higher-order terms can change rankings outside that regime.
+
+The empirical evidence is correspondingly narrow. In the 25-block stress audit with prediction-template noise σ_pred=0.5, MECHVAR’s accuracy advantage over confirmation-first was 3.20 points (95% CI [1.81, 4.59]; Holm-adjusted p=0.00196). The same audit did not statistically resolve MECHVAR versus EIG: 94.32% versus 94.08% (Holm-adjusted p=1.0). In the held-out Digits loop, normalized mechanism-identification AUC was 0.8975 for MECHVAR, 0.7825 for score-greedy, and 0.9092 for EIG.
+
+The computational result is substantial but specifically scoped. At K=100 mechanisms and E=200 probes, full-library MECHVAR scoring took a median 10.36 μs, versus 57,687.03 μs for six-node quadrature EIG in the recorded single-thread environment. These timings cover score computation only; they exclude model fitting and probe execution.
+
+The Box–Hill equivalence is conditional: it does not generally hold with mechanism- or probe-dependent predictive scales, and the paper’s synthetic sensitivity check reports declining top-probe agreement as heteroscedasticity increases. MECHVAR also assumes that candidate mechanisms and response templates are supplied; it does not generate hypotheses or probes. The transferable research operation is to log the mechanism-pair contributions behind each selected probe, then ask whether the next experiment separates the pairs that remain plausible.
+
+Read it to learn how to audit whether a selected probe separates plausible mechanisms—and where the shared-variance assumption makes that shortcut unsafe.
+
+[abstract; Section 3.2, Proposition 1; Section 3.2, Proposition 2; Section 4.3; Section 4.5; Appendix F, Table 7; Section 4.4; Section 5.1; Appendix E.2, Table 6; Section 5.1](https://arxiv.org/abs/2610.01819v1)
+
+## RINI adds attribution auditing and bounded repair to prior-paper comparison
+
+*[RINI: Seeing the Prior Is Not Enough](https://arxiv.org/abs/2609.33284v1)*
+
+A proposal can describe an established mechanism correctly while claiming to introduce it. RINI tests whether supplying the earlier paper corrects that contribution claim; its workflow then audits attribution and repairs the claim locally. OpenNovelty compares claimed contributions with retrieved candidates and gates positive refutations on source-verified quotations; its supplied record also reports no benchmark-based retrieval evaluation.
+
+**Method.** The authors use three controlled experiments with a contribution-bearing prior and same-topic control. RINI receives a proposal, target contribution, and decisive-prior excerpt; it links claims to evidence, checks whether a proposed remaining distinction is also covered by that prior, and applies at most four validated exact-span edits. A deterministic validator retains the original when reconstruction fails. This changes the operation from finding a relevant paper to checking ownership, testing the proposed remainder, and constraining revision.
+
+**Evidence.** In the 175 interpretable exposed proposals, 137 recognized the prior’s relation to the target, but only 61 correctly attributed the covered contribution to the prior. Of 71 proposed remainders, 37 were already established by the same prior, 24 survived comparison with it, and 10 remained unresolved. The exposure result showed no clear aggregate reduction in unsupported novelty on the reported automated measure; it should not be read as a human-rated aggregate novelty result.
+
+On the matched 240 originals judged to require correction under all three policies, seed-balanced successful repair was 72.2% for RINI, versus 39.1% for Retrieve-and-Revise and 11.7% for Self-Revision; RINI’s difference from same-evidence direct revision was 33.0 percentage points. In the full 360-source set, RINI’s higher repair rate was accompanied by high retention of the original technical method and research question.
+
+**Boundary and takeaway.** The repair result is a human-rated comparison among three revision policies. Formal repair items were annotated once, without repeated annotation or adjudication. RINI checks a remainder only against the supplied decisive prior, so survival is not a certification of global novelty. For a research workflow, separate retrieval, contribution ownership, remainder checking, and edit validation—and report the evidence scope beside any surviving novelty claim.
+
+Read this to see how a prior can be recognized without being credited—and how a matched human-rated repair test separates attribution diagnosis from mere retrieval.
+
+[abstract; Appendix A.2, Table 7 workflow; Section 4.1, paragraphs 2 and Table 3; Section 4.1, paragraph 4 and Table 3; Section 7.1, Table 5; Section 7.2, paragraph 2; Appendix J.1, task and evidence; Appendix I.2, contribution-diagnosis instructions](https://arxiv.org/abs/2609.33284v1) · [Section 2.3.3, Contribution-level Comparison and Evidence Verification (S2.SS3.SSS3.Px2.p1; S2.SS3.SSS3.Px5.p1); Section 4.2, Retrieval Benchmarking (S4.SS2.p1)](https://arxiv.org/abs/2601.01576v2)
+
+## External Preprocessing Changes Forecasting Performance Across M4 Models
+
+*[Are We Really Benchmarking Forecasting Models? The Impact of Preprocessing on Time Series Performance](https://arxiv.org/abs/2610.09096v1)*
+
+The paper studies a benchmark protocol problem. Its authors argue that modern benchmarks typically resort to simple scaling while overlooking transformations such as differencing for nonstationarity, creating a structural preprocessing bias that can favor models with built-in data treatment. The proposed change is to make external preprocessing an explicit experimental factor rather than silent infrastructure.
+
+On about 29,000 M4 time series, the benchmark evaluates 11 forecasting models across 16 reversible preprocessing pipelines. The 16-way grid crosses optional Box–Cox transformation, first-order differencing, seasonal differencing, and z-score scaling in a fixed order. Parameters are fitted on training windows and forecasts are inverted before scoring. The comparison includes a uniform pipeline applied across the dataset and a per-series Oracle that chooses the best tested pipeline; most model hyperparameters are fixed to isolate preprocessing.
+
+Under the uniform-pipeline evaluation, models classified as having internalized preprocessing generally fare better than models without it, conditional on the selected M4 subsets and this evaluation protocol. But aggressive, globally applied preprocessing can catastrophically worsen errors for some model–series combinations, so adding transformations is not automatically beneficial. In the Oracle comparison, MASE improves for every evaluated model. Table 15 lists gains of 33.98% (Linear Regression), 41.48% (XGBoost), 59.21% (MLP), 44.86% (N-BEATS), and 86.73% (Informer) over No Pipeline; only MLP and Informer exceed 50%.
+
+That result is decisive for benchmark design: a single recipe can reward preprocessing robustness, while per-series pipeline choice exposes performance that the shared recipe leaves hidden. Research operation: rerun an architecture comparison across the same pipeline grid, report fixed-pipeline results alongside the distribution across pipelines, and use the Oracle–fixed gap to formulate a prospective selector. The paper’s Oracle is hindsight selection, not an evaluated deployable policy.
+
+Scope matters. All experiments are univariate, and the empirical evaluation uses selected quarterly, weekly, daily, and hourly M4 subsets while excluding yearly series. The preprocessing search space is intentionally small—established reversible transformations—and does not cover every useful treatment. Finally, the reported rankings are not a fully optimized leaderboard because most model hyperparameters were fixed. The transferable question is whether a selector trained without test-label hindsight can choose preprocessing from series characteristics; this paper supplies the benchmark evidence and a metadataset, not that selector.
+
+Read this if you compare forecasting architectures on leaderboards: the paper gives a concrete design for measuring how much the comparison changes when preprocessing is varied rather than held constant.
+
+[abstract; Section 4, paragraph 3; Section 3, paragraph 4; Section 5, paragraph 2; Table 3; Section 5, paragraph 5; Appendix I.2, Table 15; Section 5, paragraph 1; Table 3; Section 5, paragraph 5; Appendix J, paragraphs 1–2; Appendix A, paragraph 3; Section 4, paragraph 2; Appendix A, paragraph 2; Appendix A, paragraph 4](https://arxiv.org/abs/2610.09096v1)
