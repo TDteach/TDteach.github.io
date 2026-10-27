@@ -23,7 +23,7 @@ author_profile: false
 {% assign featured = latest_zh | default: latest %}
 {% assign has_homepage = false %}
 {% if featured.homepage.headline and featured.homepage.dek and featured.homepage.items.size > 0 %}{% assign has_homepage = true %}{% endif %}
-<section class="pn-home-issue" aria-labelledby="latest-headline">
+<section class="pn-home-issue" aria-labelledby="latest-headline" data-issue-date="{{ latest_date }}" data-content-hash="{{ featured.content_hash | escape }}">
   <header class="pn-home-lead">
     <p class="pn-home-date"><time datetime="{{ latest_date }}">{{ latest_date | date: '%Y年%m月%d日' }}</time></p>
     {% if has_homepage %}
