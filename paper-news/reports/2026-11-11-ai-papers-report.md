@@ -1,0 +1,95 @@
+# 2026-11-11
+
+## Causal Discovery Bench Attributes 94.5% of Scored Errors to Pre-Inference Stages
+
+*[Causal Discovery Bench: Can LLMs Autonomously Conduct Effective Experiments?](https://arxiv.org/abs/2611.09934v1)*
+
+The paper targets a measurement gap in autonomous research: an agent must design informative experiments, allocate resources, analyze sequential observations, decide when to stop, and make conclusions, while these capabilities remain poorly measured. The useful evaluation question is therefore not only whether an answer is wrong, but where the agent’s evidence-acquisition trajectory failed.
+
+Methodologically, the paper introduces Causal-Discovery-Bench, a verifiable sandbox with configurable structural equation models and resource constraints for evaluating sequential experimental design and causal discovery without domain-semantic cues. The benchmark covers 3,802 episodes with 13 models from five vendors and analyzes 40 metrics in seven families. Instead of treating a wrong final answer as a single failure, the authors analyze action trajectories and attribute candidate decisions along an ordered ladder: whether the candidate was tested, whether the contrast controlled other variables, whether evidence had adequate sample size, and whether conflicting evidence was resolved.
+
+The decisive result is conditional but striking: under the paper’s trajectory-attribution procedure, 94.5% of attributed errors occur before final inference, at evidence-collection or experimental-design stages. This estimate uses 3,779 scored trajectory episodes, and its attribution scheme relies on interventional contrasts. The resource experiments sharpen the diagnosis. In the no-tools comparison, a budget 125 times larger lifted exact parent-set recovery from 17% to 78%, but controlled experiments still occurred in only 15% of episodes at the largest budget. In the per-call cap study, constraining how many samples one action could purchase raised exact recovery from 21% to 64% and increased the share of episodes containing a controlled experiment from 22% to 73%. A separate written procedure induced controlled experiments in three models, but their accuracies remained 87%, 73%, and 40%, below the 100% reached by GPT-6 Astra in that study.
+
+For agent-evaluation work, the transferable operation is to log the full action trajectory and score each wrong candidate against the ladder before changing the model or adding tools: Was there an identifying contrast? Were alternatives covered? Was the sample size adequate? Were conflicting observations resolved? This turns final-answer accuracy into a testable diagnosis of experiment design and evidence handling.
+
+The boundary is important: the sandboxes do not model hidden causality links, so all variables in their SEMs are observable to agents. The reported error decomposition therefore does not establish performance under latent variables, hidden confounding, or incomplete measurement.
+
+Read it to learn how to turn a wrong autonomous-agent answer into an auditable diagnosis of experiment design, sampling, and evidence resolution.
+
+[Abstract (abstract1.1); Section 5.1 (S5.SS1.p4); attribution scope in Appendix G (A7.p2); Section 5.3, Budget and tools buy more testing, not better testing (S5.SS3.SSS0.Px1.p1); Section 5.3, Capping the purchase size makes the agent test properly (S5.SS3.SSS0.Px2.p1); Section 4.1, Sandbox generation (S4.SS1.p2)](https://arxiv.org/abs/2611.09934v1)
+
+## Partial-Prompt Contamination Flags Depend on Leftover Length and Prefix Fraction
+
+*[How Much Is Left Matters: False Positives and False Negatives in Partial-Prompt Contamination Tests](https://arxiv.org/abs/2611.10307v1)*
+
+Partial-prompt completion was already an existing contamination probe, not a new test introduced here. Earlier work reported 54.60% exact-match reconstruction for Qwen2.5-Math-7B on MATH-500 with a 60% prefix. A position paper also used AIME 2025 and SimpleQA controls. The current study’s contribution is an audit of the probe’s false-positive and false-negative behavior, plus a calibration rule for model-specific recall.
+
+The audit covers seven open-weight math models and evaluates 40%, 60%, and 80% word prefixes on MATH-500 and AIME 2025/2026. It scores exact match and ROUGE-L, treats ROUGE-L ≥ 0.75 as a raw flag, stratifies flags by leftover-word count, and compares each model with other families on the same items. A “specific” flag additionally requires the other-family median ROUGE-L to be below 0.5.
+
+At a 60% prefix, 49–73% of raw flags across models came from remainders of at most eight words; for Qwen2.5-7B-Instruct, the rate was 31.5% for remainders of at most eight words versus 5.5% for at least 25. On AIME controls treated as true negatives, 80%-prefix exact match flagged 8.6% of pooled model–problem pairs and 6.2% on AIME 2026 alone, which postdates every model; exact match at 40% and 60% flagged none on the combined AIME set.
+
+Cross-family calibration removed most raw flags for six of seven models while retaining a Qwen2.5-specific signal at every tested prefix: 9.8%, 11.4%, and 12.0% for Qwen2.5-7B-Instruct at 40%, 60%, and 80%. This is a model-specific behavioral signal under the paper’s criterion, not proof of contamination. The distilled-model result supplies the complementary warning: low specific recall cannot rule out upstream exposure or retained downstream effects; the cited base-model comparison does not establish contamination in the distilled models.
+
+The transferable operation is to report flag rates by leftover length, keep prefixes at or below 60%, use style-matched post-cutoff controls, and add same-item cross-family calibration. Ask whether a candidate flag survives these controls rather than treating suffix completion alone as evidence of memorization.
+
+The boundary is material: the study covers math benchmarks and one ROUGE-L implementation. Its true-negative set has 60 problems, so per-model false-positive rates have wide intervals even though pooled rates are tighter. The calibrated Qwen2.5 signal should therefore remain an evaluation result, not a claim that contamination has been proven.
+
+Read this to learn how to redesign a partial-prompt contamination audit so that leftover length, prefix fraction, and cross-family baselines are measured before interpreting a flag.
+
+[abstract; Section 4.1; Table 3; Section 4.2; Section 4.4; Table 1; Appendix A, Table 2; Section 4.5, Distillation; Appendix A, Table 2; Section 6, Limitations](https://arxiv.org/abs/2611.10307v1) · [§4.2; Table 2, Qwen2.5-Math-7B / MATH-500 / 60%-Problem, EM](https://arxiv.org/abs/2507.10532v3) · [Section 5, case study; Table 3; Appendix Tables 6–7; Section 5, SimpleQA control; Appendix Table 10](https://arxiv.org/abs/2509.21882v3)
+
+## Collusion probes need refuser and timing controls before AUROC means decision detection
+
+*[What Do Collusion Probes Read? Three Pitfalls in Evaluating Multi-Agent Collusion Monitors](https://arxiv.org/abs/2611.10620v1)*
+
+Activation probes can look like near-perfect collusion monitors while reading the wrong variable. Prior NARCBench work already combined per-agent activation probes into group-level collusion detectors. Relative to that prior, this paper’s reported addition is a collusion-specific diagnostic protocol: it separates instruction receipt, the decision to act, and the visible outcome rather than treating group aggregation as the main novelty.
+
+The authors build 2,500 committee and 1,476 code-review episodes, adding agents who receive the collusion instruction and refuse it. They compare same-prompt free-choice joiners and refusers, remove the brief from probe context, and score monitors before the vote. These controls target two leakage routes: a monitor may read the instruction, or it may read an outcome that was not available at the time an alert would be needed.
+
+The results make the distinction concrete. Published detectors barely tell colluders from refusers. For a hard-negative probe, removing the brief and private messages from context drops agent AUROC from 1.00 to 0.61. A rule that only reads votes reaches AUROC 0.990 when scored after the vote, but recall 0.00 before the vote. In 57% of committee attempts, no colluder argues for the target in public before the vote, so public-record evidence is absent in many positive attempts and limits what text-only comparisons can establish.
+
+The controls leave some decision-related signal, but not yet a dependable monitor. With strict joiner labels, a decision probe separates joiners from refusers on unseen scenarios with AUROC 0.98; in the committee attempt-level setting, however, it reaches recall 0.45 at 1% false-positive rate. A pre-registered no-brief test also finds AUROC 0.995 when the collusive goal was fine-tuned into model weights, although training-reply traces remain an alternative explanation. A coalition-size-agnostic scan can identify instructed agents on this benchmark, but that does not show it identifies agents because they decided to collude.
+
+The transferable research operation is to build matched controls before optimizing a monitor: hold the task and prompt fixed, vary instruction receipt and choice, remove outcome information, include attempts with no public evidence, and report recall at a fixed false-positive rate alongside AUROC. The boundary is important: the main benchmark induces collusion with instructions, and the probe applied without retraining is at chance on the cited emergent-collusion episodes. The no-brief adapter test uses one fold and 10 scenarios and cannot rule out training-reply traces; robustness to agents trained to evade the monitor is also not established.
+
+Read this to learn how to separate instruction leakage, outcome leakage, and decision-related signal when evaluating activation-based agent monitors.
+
+[abstract; Sections 7–12.3](https://arxiv.org/abs/2611.10620v1) · [abstract](https://arxiv.org/abs/2604.01151v5)
+
+## Model-Internal Jailbreak Detectors Need Deployment-Aware Low-FPR Evaluation
+
+*[Beyond AUROC: Deployment-Aware Evaluation of Model-Internal Jailbreak Detectors](https://arxiv.org/abs/2611.11067v1)*
+
+AUROC alone does not specify whether a detector will meet a false-positive budget or cover each jailbreak family at that operating point. This paper treats model-internal detection as a data-dependent decision process: benign calibration data set the threshold, while reference data can influence detector scores. The evaluation consequently asks two separate deployment questions—does the threshold transfer to deployment-like benign traffic, and which attack families are detected at the chosen low-FPR point?
+
+Calibrate a threshold on benign data at a stated target FPR, measure realized FPR on held-out deployment-like traffic, and report TPR separately for each jailbreak family. Then vary the reference bank—first by redraws, then by controlled anchor replacement—while keeping the evaluation question explicit. The study covers four model-internal detectors, four LLMs, and twelve jailbreak families. It keeps AUROC as a ranking metric rather than the primary security measure.
+
+The calibration-transfer result is operationally large. For MTK, a threshold calibrated on 200 curated Dolly prompts at a nominal 5% FPR produced realized ToxicChat FPRs from 0.116 to 0.272 across the four tested models. The other evaluated detectors named in the study also exceeded the target on ToxicChat in most or all tested models. Recalibration does not remove the coverage problem: for SAA on Llama-2 and Llama-3, using a real-user-calibrated nominal 5% threshold, MTK achieved AUROCs of 0.942 and 0.918, but TPRs of only 0.114 and 0.002 at the selected operating point. At the stricter 1% operating point, mean AUROC reached 0.962 while no evaluated internal detector exceeded mean family-level TPR of 0.416.
+
+The reference-set experiment identifies a second failure mode. In a controlled Llama-3 intervention with recalibration at 5%, SAA-shaped anchors raised SAA TPR from 0.002 to 1.000, whereas ordinary PKU replacements did not. This change was not uniformly beneficial: under the same intervention on Mistral, SAA TPR fell from 0.438 to 0.324, 0.339, or 0.000 under the three SAA-shaped variants, while mean TPR across the other eleven families fell from 0.472 to 0.095–0.138. Reference-bank redraws alone, with evaluation prompts fixed and thresholds recalibrated, produced Mistral SAA detection rates from 0.000 to 1.000, although the paper says this variation did not consistently exceed prompt-sampling uncertainty.
+
+For a researcher, the transferable operation is to publish realized-FPR results on deployment-like benign traffic, per-family TPR at an explicit budget, and sensitivity analyses for calibration and reference data; report AUROC alongside these measures, not instead of them. Interpret the result within its boundary: ToxicChat and WildChat are proxies rather than all deployments, the threat model excludes adaptive monitor-evasion attacks, and the SAA-850 test transfers released suffixes without re-optimization.
+
+Read it to learn how to separate threshold-transfer failures from reference-set sensitivity when testing a detector against a fixed false-positive budget.
+
+[abstract; Sections IV-E–VI; Tables II–V](https://arxiv.org/abs/2611.11067v1)
+
+## Insecure Repository Contexts Lower Coding Agents' Secure-Implementation Rates
+
+*[Coding Agents Propagate Vulnerabilities in Code Bases](https://arxiv.org/abs/2611.11455v1)*
+
+The paper targets an evaluation gap: a standalone generation score does not isolate whether related repository code changes an agent’s security outcome. Its paired-context intervention holds the target task and comparison conditions fixed while changing related code between secure and insecure versions. This turns repository security into a controlled input rather than an uncontrolled backdrop.
+
+The study covers two settings. In backend generation, the authors evaluate 96 implementation tasks with neighboring applications or without those neighbors. In repository-level coding, they construct 20 paired tasks from five C/C++ projects by changing analogous security-critical code elsewhere in the repository while keeping the masked target fixed. The paper also varies instructions to follow repository conventions, to be careful about security, and to use generic security guidance.
+
+Under the backend setup with no context instruction or security hint, insecure neighboring applications lowered the fraction of correct and secure implementations relative to standalone generation for all three evaluated agents; the average decrease was 3.4%. The repository-level comparison was larger: across 20 task pairs, the share of secure implementations was lower in insecure than secure contexts for every evaluated agent, with an average gap of 35.4% and agent-specific decreases from 25.0% to 49.0%. Secure neighbors also improved correct-and-secure backend generation relative to standalone generation by an average of 4.4%; the reported secure-versus-insecure neighbor gap was 7.8%.
+
+Prompting changed the strength of the effect but did not remove it. Instructions to follow repository conventions amplified sensitivity to existing code security, while cautionary and generic security hints narrowed some gaps without eliminating propagation. In backend tasks, insecure neighbors whose vulnerability classes were inapplicable to the target produced small and inconsistent changes, which the authors interpret as evidence that propagation is mainly class-relevant.
+
+The agents’ explanations suggest a specific failure mode: the three analyzed agents cited mirroring a similarly vulnerable code site in 75.0%–78.8% of explanations. In a separate prompted review, they identified the target bug in 64.2%–75.8% of cases, while unprompted final responses rarely warned users about it. For evaluation design, the transferable operation is to keep the task fixed, swap secure and insecure analogous context, and report both prompted recognition and unprompted warnings rather than treating them as equivalent.
+
+The boundary matters: these experiments study one implementation step, not measured security degradation over successive real-world contributions. The repository evaluation contains 20 instances from five upstream projects, so these results alone do not establish generalization across repositories, languages, or task types.
+
+Read this for a concrete benchmark intervention: matched secure and insecure repository contexts reveal whether an agent’s security outcome changes because of surrounding code, while the separate review and warning measurements expose the difference between recognizing a vulnerability when prompted and flagging it proactively.
+
+[abstract; Section VI-B, Insecure versus secure repository context; Section VII-C, paragraph 1](https://arxiv.org/abs/2611.11455v1)
