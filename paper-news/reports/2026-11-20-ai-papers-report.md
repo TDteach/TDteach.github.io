@@ -1,0 +1,103 @@
+# 2026-11-20
+
+## ACaM turns Python agent source into a constrained capability graph for threat-chain analysis
+
+*[ACaM: Automated Capability Modeling for Agentic AI Security](https://arxiv.org/abs/2611.23507v1)*
+
+ACaM targets a concrete failure mode: an agent may invoke a tool for a benign stated purpose even though the implementation contains dangerous behavior omitted from its description. The paper calls this capability laundering. MCPDiFF and DCIChecker are described as systems that extract implementation behavior and compare it with a tool description; ACaM changes the analysis target to an agent-level capability model and threat-chain reconstruction.
+
+ACaM compiles agent source into an Agent Capability Property Graph (ACPG). Its division of labor is asymmetric: static analysis locks code-derived facts, while the LLM supplies behavioral meaning only where those facts cannot express it. The graph supports candidate paths spanning multiple tool calls. The transferable design lesson is to use the model for bounded semantic interpretation, not to override mechanically established security facts.
+
+Evidence is separated by task. On 24 agents—10 base agents and 14 vulnerable variants—with manually annotated core properties, ACaM reaches 0.983 macro-F1, versus 0.934 for static-only ACaM-SA and 0.814 for the best-per-agent LLM-only configuration. On 14 variants with injected, ground-truth-verified chains and a seven-fact scoring scheme, reconstruction reaches a mean 0.980, versus 0.903 for the strongest LLM-only baseline; static baselines score 0.342 or lower. The largest reported gap concerns recovering the ordered chain of intermediate hops.
+
+On 43 unmodified agents, ACaM surfaces many structurally vulnerable paths: the authors manually reviewed all 123 Critical paths and confirmed that each exists in code, while ten findings across nine agents received working PoC exploits in local deployments with synthetic data. These are different evidentiary layers, not one end-to-end accuracy number: property scoring covers only fixed core properties on 24 agents, and real-world candidate-path confirmation partly rests on a separate LLM verifier; PoCs validate only a subset.
+
+The boundary is operationally important. The implementation is Python-specific. It assumes white-box source and does not cover runtime-mutating or opaque components or code using evasion techniques; unresolved constructs are marked unknown rather than safe. Conservative worst-case choices can add false positives, while runtime-built file paths can cause false negatives. For a new agent, a useful research operation is to generate the code-grounded inventory first, inspect cross-tool paths, and then test high-risk candidates separately—reporting them as candidates until independently validated. ACaM is therefore best read as pre-deployment analysis, not as a runtime defense or proof that every candidate path is exploitable.
+
+Read this to study a concrete pattern for separating code-established security facts from bounded LLM interpretation before deploying a tool-using agent.
+
+[abstract; Section III, S3.p2; Section VI-B and Table V, S6.SS2.p1; S6.T5](https://arxiv.org/abs/2611.23507v1) · [Design of MCPDiFF, P-I to P-III (Sx4.I3.i1–Sx4.I3.i3)](https://arxiv.org/abs/2602.03580v1) · [§IV-A, two-stage pipeline (S4.SS1.p3); §IV-D (S4.SS4.p1); Appendix A (A1.SS1–A1.SS2)](https://arxiv.org/abs/2606.04769v1)
+
+## A receiver-only finite-sample gate skips helper messages while certifying answer-change risk
+
+*[Safe to Omit, Worth Omitting? Keeping the Answer and Cutting Latency When an LLM Agent Skips Another's Message](https://arxiv.org/abs/2611.23570v1)*
+
+Earlier communication-pruning work in the supplied comparison takes a topology-level route: AgentPrune learns separate spatial and temporal graph masks, applies one-shot magnitude pruning, and fixes the resulting sparse topology for later interaction. In one reported GPTSwarm-on-MMLU setting, adding AgentPrune lowered score by 0.93 points while lowering reported prompt tokens and cost. Its supplied evaluation therefore reports a task/cost tradeoff rather than finite-sample answer-agreement certification.
+
+This paper changes the decision unit from the communication topology to the individual question. It reads the receiver agent’s confidence without the helper message and uses a finite-sample test to certify a threshold at which, with high probability, at most 5% of skipped answers change. If no threshold passes, the system keeps communicating. The certificate bounds answer changes, not accuracy: agreement with the deployed reference is not a guarantee that the skipped answer preserves the reference path’s accuracy or its gain over the receiver alone.
+
+The empirical case is strongest when treated as three separate measurements. In four unseen-question settings where text helped, the policies skipped 59–80% of questions and retained an estimated 76–95% of the helper’s accuracy gain; retained gain is an estimate, not the certificate itself. In the reported batch-one OBQA/ARC replays, skipping text saved 319–718 ms per query, whereas skipping KV-cache communication saved 37–111 ms. Two prospective tests with rules fixed in advance skipped a three-agent verifier on 39.9% of sealed questions while keeping 12.55 of its 12.80-point gain, and skipped a 32B helper on 68.4% of held-out questions while keeping its whole gain.
+
+The boundary conditions are operationally important. The tested frozen policies passed the paper’s reported out-of-sample 95%-upper-bound-below-5% criterion under its parsers, but most tests lacked a prespecified pass rule. The sealed ARC C2C result was 5.2% under the official extraction despite passing under the paper’s parser, because extraction treated some option text differently. A pooled MMLU-Pro certificate provides no joint or subgroup guarantee; the development evidence included 12 changes among 72 skipped engineering C2C answers. Certification also fell back on GSM8K because the probe ranked answer changes poorly.
+
+For a router implementation, reproduce the parser and calibration split first, then report agreement risk, retained helper gain, and paired end-to-end latency as separate outcomes. The useful research question is not simply whether communication is redundant, but whether a receiver-only signal predicts when omission is safe under the exact task and extraction rule.
+
+Read it to design an agent-router evaluation that separates answer-change risk, retained helper benefit, and measured latency, then stress-tests parser and subgroup assumptions.
+
+[abstract; §4.3, Table 2 and paragraph 1; §4.4, paragraph 1; Table 4; §4.5, paragraph 1; Appendix I, opening paragraph and “Sealed ARC under the official extraction”; Appendix A, “Families and assumptions”; Appendix C, Table 10 and §“MMLU-Pro”; §4.3, “Agreement and accuracy,” paragraphs 2–3; §2, Eq. (2); §6, “Scope and failure modes”; Appendix G.4, “A numeric-answer check: GSM8K”](https://arxiv.org/abs/2611.23570v1) · [Sections 3.2–3.3; Table 3, MMLU, five-agent GPTSwarm rows](https://arxiv.org/abs/2410.02506v1)
+
+## SkillCFI Compiles Boundary-Observable Skill Obligations into a Deterministic Control-Flow Contract
+
+*[Guarding the Kingdom of Skill-Based Agents in the AI Dynasty of Computation: Control-Flow Integrity for Agent Skills](https://arxiv.org/abs/2611.24185v1)*
+
+SkillCFI addresses a concrete gap in permission-style control. A skill may require an operation that an allowlist permits, yet still violate order—for example, overwriting a file before validation—and a model can evade a monitor by claiming that a check passed. The paper instead asks whether a trusted execution boundary can establish the prerequisite for the next effect.
+
+Its offline compiler derives both agent instructions and an executable contract from one skill. It classifies obligations as enforceable, guidance, or unsupported: a mandatory obligation is rejected when its protected effect or decision-relevant evidence cannot be grounded at the tool boundary. At runtime, a deterministic enforcer admits requests only on trusted, correlated evidence and refuses unmediated channels such as inline scripts.
+
+Across 24 source mutations in eight self-written skills, all 116 observed verdict deviations were stricter than expected; none was permissive. In the authored-skill violation evaluation, SkillCFI blocked all 240 qualified targets before dispatch, whereas both No-Gate and the permission-style Allowlist dispatched all 80 targets in their respective abnormal-task conditions. On normal routes, outcome completion was 79/80 for No-Gate and 78/80 for SkillCFI.
+
+Returning enabled next steps raised strict post-refusal recovery from 21% to 65% in the tested abnormal sessions. Checking took about 2% of task time. None of 53 sampled public skill packages was accepted as written; seven selected packages were later adapted or ported into accepted contracts.
+
+The guarantee has a hard boundary. The theorem concerns admitted boundary traces and is conditional on complete mediation, trusted result correlation, protected monitor state, and verified activation; applying it to the source skill also requires a source-to-contract audit. It does not guarantee task completion or the semantic quality of model-produced content, and its guarantee is limited to effects covered by the mediated boundary. The main violation study issued direct abnormal-task requests rather than measuring violations induced through indirect prompt injection, and the current contract model assumes serialized single-skill sessions.
+
+A reusable research operation is to audit observability before writing a monitor: for each mandatory step, name the trusted event that proves it occurred, the effect the monitor can stop, and the channel that could bypass it. If any of these is missing, report guidance or rejection instead of treating the model’s assertion as evidence.
+
+Read it for the boundary-observability test: it turns each mandatory workflow requirement into a question about trusted evidence, mediated effects, or explicit rejection.
+
+[abstract; §IV-B, Proposition 1 and its consequences; §V-E, Theorem 1(b); §IV-C; §IV-D; §VI-B, Mutations; §VI-C, In-vocabulary violations and Boundary probes and relations; §VI-D, Normal routes; §VI-D, After a refusal; §VI-B, Public skills as written and Adaptation; §VII, Scope and validity; §IV-C; §VII, Beyond the tool-call boundary; §VI-A, Skills and tasks; §VII, Scope and validity](https://arxiv.org/abs/2611.24185v1)
+
+## PIPETTE Adds Strategy Coverage to Prompt-Injection Purple-Teaming
+
+*[PIPETTE: Prompt Injection Purple-Teaming for Robust LLM Agents](https://arxiv.org/abs/2611.24362v1)*
+
+### The gap
+
+RL-Hammer uses group-relative rewards from black-box target responses to optimize an attacker that rewrites malicious goals as injections; it does not require a value model or curated preference pairs. Adding a diversity reward raises diversity as measured by the chosen metric while generally retaining high ASR, but the authors' examples indicate metric gaming—for example, case or wording changes and irrelevant prefixed questions—rather than reliably novel strategies. Higher attack success during red-teaming was not a reliable proxy for better downstream robustness: PISmith achieved higher train-time ASR than RL-Hammer but produced higher worst-case inference-time ASR in three of four tested model/training settings.
+
+### What changes
+
+PIPETTE introduces a unified purple-teaming framework whose red-team reward uses dictionary learning to encourage broader coverage of attack strategies. Its defensive stage uses an on-policy adversarial-training pipeline tailored to indirect prompt-injection defense, enabling agents to resist attacks while completing legitimate user tasks. The practical change is to judge attack generation by the defender it produces, not only by whether the attacker breaks a target during training.
+
+### Evidence
+
+Pipette-Red attained 70.54% train-time cumulative ASR on Qwen3-4B and 41.07% on Llama-8B. Training on its data gave the lowest worst-case ASR among the three red-team datasets in all four tested model/training combinations: 20.0% and 2.5% for Qwen3-4B (RL and SFT), and 10.0% and 5.0% for Llama-8B (RL and SFT). The authors note that dataset size and sampling also differed.
+
+Pipette-Blue reached 64.95% benign utility on Qwen3-4B versus 61.86% for its base policy, and 41.24% on Llama-8B versus 40.21% for its base policy; ordinary RL and SFT on the same attack dataset were lower. Under the tested iterative-adaptive searches, Pipette's ASR was 0%/2.5% on Llama-8B, 2.5%/5.0% on Qwen3.6-27B, and 5.0%/10.0% on GPT-OSS-20B (TAP/Genetic), lower than the corresponding training-based baseline on each model. Utility under attack did not uniformly match the baselines.
+
+### Boundary and research operation
+
+The 40 task pairs used for iterative-adaptive evaluation were selected from pairs already compromised by static attacks on undefended Qwen3-4B, so these ASR results are not estimates across all 420 task pairs. The experiments support an association between strategy coverage and defense results, but do not isolate low strategy coverage as the sole cause of the train-time/inference-time gap.
+
+For a replication, keep attack-dataset size and sampling matched, then report train-time ASR, strategy coverage, unseen-attack ASR, and benign utility together. The transferable question is whether the coverage measure still predicts defender robustness when the red team and evaluation attacks are held constant.
+
+Read it for a concrete evaluation lesson: successful attacks should be judged by downstream robustness and benign utility, not only by train-time ASR or surface-text diversity.
+
+[abstract; §V-B, discussion of Figure 5; §V-B, Table IV and discussion; §V-C, Table V and discussion; Appendix C, Evaluation Protocol; §VI, Discussion and Limitations](https://arxiv.org/abs/2611.24362v1) · [Section 3.1, Naive Attack with GRPO; Section 5.2, Diversity; Tables 5–6](https://arxiv.org/abs/2510.04885v1)
+
+## Residual reuse gives a factual JEPA a short-horizon counterfactual predictor
+
+*[Counterfactual World Models: JEPAs That Reason About "What If"](https://arxiv.org/abs/2611.24778v1)*
+
+Factual outcome distributions alone do not identify individual counterfactuals. The paper’s stronger claim is that a world model trained on factual transitions cannot answer the same-event, same-disturbance question from those transitions alone. Unlike CoPhy, which supplies paired original and intervened sequences with counterfactual targets, this method reuses a factual transition at inference time.
+
+After observing a transition, it predicts the alternative outcome as the observed endpoint plus the factual predictor’s alternative-action prediction minus its factual-action prediction. The observed endpoint carries the event-specific residual, while the two predictor evaluations provide the action contrast. The construction needs no counterfactual data, extra parameters, or retraining. This is a change in inference rather than a new counterfactual training objective.
+
+Under the paper’s smooth short-transition assumptions, residual reuse has O(h^4) squared absolute error and O(h^2) error relative to disturbance-induced variance. A matching worst-case minimax lower bound gives the same leading-order absolute rate for estimators with unpaired factual laws and one observed outcome. The individual-counterfactual interpretation additionally requires that logged actions be conditionally unconfounded given model context and that queried actions have support. The small-error guarantee also depends on separate action and disturbance channels, limited interaction, and suitable coordinates.
+
+In four rendered environments, readout-space residual correction raises counterfactual physical R² to 85.6–95.7% with 8k factual episodes, compared with 38.1–45.6% for the same predictors without the observed outcome. Most of the improvement can be obtained without physical-state labels on four environments, but BlueROV2 shows that the choice of correction coordinates and additional factual data can materially affect performance. Residual reuse can be worse than ignoring the observed outcome when interactions are large or the coordinates fail to preserve the needed structure; the contact failure is present even with exact simulator means. Using the observed transition can improve hindsight action selection over a planner that knows the simulator but lacks the event’s realized disturbance.
+
+The boundaries matter: empirical validation is simulation-only and uses deliberately specified disturbances; the results do not establish performance on real systems or arbitrary uncertainty. The demonstrated residual reuse is for a one-transition counterfactual; carrying it into later decisions is useful only when the disturbance persists. A useful replication is therefore to vary correction coordinates, transition duration, contact regime, and action logging policy, while reporting both counterfactual error and planner selection quality rather than factual prediction error alone.
+
+Read it for a compact test of whether an observed visual transition can supply event-specific information for counterfactual control—and for explicit theory and diagnostics showing when that shortcut should fail.
+
+[abstract; S2.SS2.SSS0.Px1.p1; Proposition 2.1; S3.SS1.p2.3; equations (8)–(11); S3.SS3.p8–p9; Theorem 3.4 and Corollary 3.5; S4.SS2.SSS0.Px3.p1; Table 5; S4.SS2.SSS0.Px4.p1; S4.SS3.SSS0.Px5.p1; Table 3; S4.SS4.p2; Table 15; S5.p8; S5.p8; S3.SS3.SSS0.Px2; S5.p8; S3.SS4.SSS0.Px2; S5.p9; S5.p8; S4.SS4.SSS0.Px1](https://arxiv.org/abs/2611.24778v1) · [Section 1, paragraph 6; Section 3, paragraphs 1–6](https://arxiv.org/abs/1909.12000v2)
